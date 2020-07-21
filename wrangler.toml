@@ -1,5 +1,5 @@
 name = "applause-worker"
-type = "javascript"
+type = "webpack"
 account_id = "efb289061241436254219b424fcea4cf"
 workers_dev = true
 route = ""
