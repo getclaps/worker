@@ -1,0 +1,9 @@
+name = "applause-worker"
+type = "javascript"
+account_id = "efb289061241436254219b424fcea4cf"
+workers_dev = true
+route = ""
+zone_id = ""
+kv_namespaces = [
+  { binding = "APPLAUSE_KV", id = "9f6198ef8be24c79bf068a7dafbaa663", preview_id = "9f6198ef8be24c79bf068a7dafbaa663" }
+]
