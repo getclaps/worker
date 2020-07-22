@@ -1,5 +1,5 @@
 import { Base64Encoder } from 'base64-wasm';
-import { WebUUID } from 'web-uuid';
+import { UUID } from 'uuid-class';
 
 import { JSONResponse } from './json-response.js'
 
@@ -15,6 +15,13 @@ self.addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request, new URL(event.request.url)))
 });
 
+const SEPARATOR = ':';
+
+/**
+ * @param {string} message 
+ */
+const digest = async (message) => crypto.subtle.digest('SHA-256', new TextEncoder().encode(message));
+
 /**
  * @param {URL} url 
  * @param {string} [id]
@@ -23,11 +30,11 @@ async function makeKey(url, id) {
   const keyUrl = new URL(url.searchParams.get('url') || 'https://hydejack.com/');
   keyUrl.search = '';
   keyUrl.hash = '';
-  const urlBytes = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(keyUrl.href)));
-  // const idUint8Array = id ? new Uint8Array(new UUID(id).buffer) : EMPTY_UINT8;
-  const urlB64 = new Base64Encoder({ urlFriendly: true }).encode(urlBytes);
-  const idB64 = id ? new WebUUID(id).wid : '';
-  return `${urlB64}/${idB64}`;
+  const b64e = new Base64Encoder();
+  const urlB64 = b64e.encode(await digest(keyUrl.href));
+  const idB64 = id ? b64e.encode(new UUID(id).buffer) : '';
+  return [urlB64, idB64].join(SEPARATOR);
+}
 }
 
 /**
