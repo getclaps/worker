@@ -35,6 +35,27 @@ async function makeKey(url, id) {
   const idB64 = id ? b64e.encode(new UUID(id).buffer) : '';
   return [urlB64, idB64].join(SEPARATOR);
 }
+
+/**
+ * @param {{ prefix?: string, cursor?: string }} listArg 
+ * @param {number} init
+ * @return {Promise<number>}
+ */
+async function recurse(listArg, init = 0) {
+  const { keys, list_complete: done, cursor: next } = await APPLAUSE_KV.list(listArg);
+  let sum = init;
+  for (const { name: key } of keys) {
+    sum += Number(await APPLAUSE_KV.get(key)) || 0;
+  }
+  return done ? sum : recurse({ cursor: next }, sum);
+}
+
+/**
+ * @param {URL} url 
+ */
+async function count(key) {
+  const [prefix] = key.split(SEPARATOR);
+  return recurse({ prefix }, 0);
 }
 
 /**
@@ -48,23 +69,16 @@ async function handleRequest(request, url) {
       if (request.method === 'POST') {
         const { claps, id } = await request.json();
         const key = await makeKey(url, id);
-        console.log(key)
-        const value = Number(await APPLAUSE_KV.get(key)) || 0;
-        const newValue = value + claps || value;
-        await APPLAUSE_KV.put(key, newValue);
-        return new JSONResponse(newValue, { headers: CORS_HEADERS });
+        await APPLAUSE_KV.put(key, claps);
+        const sum = await count(key);
+        return new JSONResponse(sum, { headers: CORS_HEADERS });
       }
       return new JSONResponse(null, { headers: CORS_HEADERS });
     }
     case '/get-claps': {
       if (request.method === 'GET') {
-        const prefix = await makeKey(url);
-        // TODO: pagination
-        const { keys } = await APPLAUSE_KV.list({ prefix });
-        let sum = 0;
-        for (const { name: key } of keys) {
-          sum += Number(await APPLAUSE_KV.get(key)) || 0;
-        }
+        const key = await makeKey(url);
+        const sum = await count(key);
         return new JSONResponse(sum, { headers: CORS_HEADERS });
       }
       return new JSONResponse(null, { headers: CORS_HEADERS });
