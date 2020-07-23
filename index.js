@@ -1,4 +1,4 @@
-import { Base64Encoder } from 'base64-wasm';
+import { Base64Encoder } from 'base64-encoding';
 import { UUID } from 'uuid-class';
 
 import { JSONResponse } from './json-response.js'

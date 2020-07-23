@@ -12,5 +12,9 @@
   "license": "MIT",
   "devDependencies": {
     "prettier": "^1.18.2"
+  },
+  "dependencies": {
+    "base64-encoding": "^0.2.0",
+    "uuid-class": "^0.2.0"
   }
 }
