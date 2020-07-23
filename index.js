@@ -9,8 +9,6 @@ const CORS_HEADERS = new Headers({
   'Access-Control-Allow-Headers': 'Content-Type, Cache-Control, Pragma',
 });
 
-// const EMPTY_UINT8 = new Uint8Array([]);
-
 self.addEventListener('fetch', event => {
   event.respondWith(handleRequest(event.request, new URL(event.request.url)))
 });
@@ -25,15 +23,19 @@ const digest = async (message) => crypto.subtle.digest('SHA-256', new TextEncode
 /**
  * @param {URL} url 
  * @param {string} [id]
+ * @param {string|number} [tx]
  */
-async function makeKey(url, id) {
+async function makeKey(url, id, tx) {
   const keyUrl = new URL(url.searchParams.get('url') || 'https://hydejack.com/');
   keyUrl.search = '';
   keyUrl.hash = '';
-  const b64e = new Base64Encoder();
+
+  const b64e = await new Base64Encoder().initialized;
   const urlB64 = b64e.encode(await digest(keyUrl.href));
-  const idB64 = id ? b64e.encode(new UUID(id).buffer) : '';
-  return [urlB64, idB64].join(SEPARATOR);
+  const idB64 = id != null ? [b64e.encode(new UUID(id).buffer)] : [];
+  const txArr = tx ? [tx] : []
+
+  return [urlB64, ...idB64, ...txArr].join(SEPARATOR);
 }
 
 /**
@@ -67,11 +69,15 @@ async function handleRequest(request, url) {
   switch (url.pathname) {
     case '/update-claps': {
       if (request.method === 'POST') {
-        const { claps, id } = await request.json();
-        const key = await makeKey(url, id);
-        await APPLAUSE_KV.put(key, claps);
-        const sum = await count(key);
-        return new JSONResponse(sum, { headers: CORS_HEADERS });
+        const { claps, id, tx } = await request.json();
+        const key = await makeKey(url, id, tx);
+        if (!await APPLAUSE_KV.get(key)) {
+          await APPLAUSE_KV.put(key, claps);
+          const sum = await count(key);
+          return new JSONResponse(sum, { headers: CORS_HEADERS });
+        } else {
+          return new JSONResponse(null, { headers: CORS_HEADERS, status: 409 });
+        }
       }
       return new JSONResponse(null, { headers: CORS_HEADERS });
     }
