@@ -24,8 +24,8 @@ export async function makeKey({ url, id, tx, nonce }) {
 
   const urlB64 = b64e.encode(await digest(keyUrl.href));
   const idB64 = id != null ? [b64e.encode(new UUID(id.toString()).buffer)] : [];
-  const txArr = tx ? [tx] : []
-  const nonceArr = nonce ? [nonce] : []
+  const txArr = tx != null ? [tx] : []
+  const nonceArr = nonce != null ? [nonce] : []
 
   return [urlB64, ...idB64, ...txArr, ...nonceArr].join(SEPARATOR);
 }
@@ -49,6 +49,13 @@ function youKnowTheThing(hash, difficulty) {
   return arr
     .every(bit => bit === 0);
 }
+
+const BASE_DIFFICULTY = 9;
+
+/**
+ * @param {number} claps 
+ */
+export const calcDifficulty = claps => BASE_DIFFICULTY + Math.round(Math.log2(claps));
 
 /**
  * @param {{

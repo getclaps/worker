@@ -1,16 +1,18 @@
 import { JSONResponse } from './json-response.js';
-import { SEPARATOR, makeKey, checkProofOfClap } from './util.js';
+import { SEPARATOR, makeKey, checkProofOfClap, calcDifficulty } from './util.js';
 
-const CORS_HEADERS = new Headers({
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS, POST',
-  'Access-Control-Allow-Headers': 'Content-Type, Cache-Control, Pragma',
-});
-
-const BASE_DIFFICULTY = 9;
+/**
+ * @param {Response} r 
+ */
+const addCORSHeaders = (r) => {
+  r.headers.set('Access-Control-Allow-Origin', '*');
+  r.headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS, POST');
+  r.headers.set('Access-Control-Allow-Headers', 'Content-Type, Cache-Control, Pragma');
+  return r;
+}
 
 self.addEventListener('fetch', event => {
-  event.respondWith(handleRequest(event.request, new URL(event.request.url)))
+  event.respondWith(handleRequest(event.request, new URL(event.request.url)).then(addCORSHeaders));
 });
 
 /**
@@ -47,24 +49,26 @@ async function handleRequest(request, url) {
         const { claps, id, tx, nonce } = await request.json();
 
         const targetUrl = url.searchParams.get('url') || 'https://hydejack.com/';
-        const difficulty = BASE_DIFFICULTY + Math.round(Math.log2(claps));
+        const difficulty = calcDifficulty(claps);
+
         console.time('check-proof-of-clap');
         const check = await checkProofOfClap({ url: targetUrl, id, tx, nonce }, difficulty);
         console.timeEnd('check-proof-of-clap');
+
         if (check) {
           const key = await makeKey({ url: targetUrl, id, tx });
           if (!(await APPLAUSE_KV.get(key))) {
             await APPLAUSE_KV.put(key, claps);
             const sum = await count(key);
-            return new JSONResponse(sum, { headers: CORS_HEADERS });
+            return new JSONResponse(sum);
           } else {
-            return new JSONResponse(null, { headers: CORS_HEADERS, status: 409 });
+            return new JSONResponse(null, { status: 409 });
           }
         } else {
-          return new JSONResponse(null, { headers: CORS_HEADERS, status: 400 });
+          return new JSONResponse(null, { status: 400 });
         }
       }
-      return new JSONResponse(null, { headers: CORS_HEADERS });
+      return new JSONResponse(null, { status: 404 });
     }
     case '/get-claps': {
       if (request.method === 'GET') {
@@ -73,12 +77,12 @@ async function handleRequest(request, url) {
 
         const sum = await count(key);
 
-        return new JSONResponse(sum, { headers: CORS_HEADERS });
+        return new JSONResponse(sum);
       }
-      return new JSONResponse(null, { headers: CORS_HEADERS });
+      return new JSONResponse(null, { status: 404 });
     }
     default: {
-      return new Response(null, { headers: CORS_HEADERS, status: 404 });
+      return new Response(null, { status: 404 });
     }
   }
 }
