@@ -24,7 +24,7 @@ export const validateURL = (url) => {
 const addCORSHeaders = (r) => {
   r.headers.set('Access-Control-Allow-Origin', '*');
   r.headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS, POST');
-  r.headers.set('Access-Control-Allow-Headers', 'Content-Type, Cache-Control, Pragma');
+  r.headers.set('Access-Control-Allow-Headers', 'Content-Type, Cache-Control, Pragma, Authorization');
   return r;
 }
 
@@ -43,9 +43,15 @@ async function handleRequest(request, requestURL) {
     fetch: self.fetch.bind(self),
   });
 
+  if (request.method === 'OPTIONS') return new Response();
+
   switch (requestURL.pathname) {
     case '/__init': {
       try {
+        if (request.headers.get('Authorization') !== Reflect.get(self, 'AUTH')) {
+          return new Response(null, { status: 401 });
+        }
+
         const $1 = await client.query(q.CreateCollection({ name: 'claps' }));
         console.log($1)
 
@@ -135,9 +141,6 @@ async function handleRequest(request, requestURL) {
           console.error(err);
           return new Response(null, { status: 500 });
         }
-      }
-      else if (request.method === 'OPTIONS') {
-        return new Response();
       }
       return new Response(null, { status: 404 });
     }
