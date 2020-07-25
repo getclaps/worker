@@ -35,7 +35,7 @@ const digest = (message) => digestAB(new TextEncoder().encode(message));
  *   nonce: number,
  * }} param0 
  */
-export async function makeKey({ url, id, tx, nonce }) {
+async function makeKey({ url, id, tx, nonce }) {
   return concatArrayBuffers(
     await digest(url.href),
     new UUID(id.toString()).buffer,
@@ -68,7 +68,7 @@ function leadingZeros(ab, n) {
 /**
  * @param {number} claps 
  */
-export const calcDifficulty = claps => BASE_DIFFICULTY + Math.round(Math.log2(claps));
+const calcDifficulty = claps => BASE_DIFFICULTY + Math.round(Math.log2(claps));
 
 /**
  * @param {{

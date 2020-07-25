@@ -1,6 +1,6 @@
 import { Client as FaunaDBClient, query as q } from 'faunadb';
 import { JSONResponse } from './json-response.js';
-import { makeKey, checkProofOfClap } from './util.js';
+import { checkProofOfClap } from './util.js';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
@@ -46,30 +46,34 @@ async function handleRequest(request, requestURL) {
   switch (requestURL.pathname) {
     case '/__init': {
       try {
-        // const $1 = await client.query(q.CreateCollection({ name: 'claps' }));
-        // console.log($1)
+        const $1 = await client.query(q.CreateCollection({ name: 'claps' }));
+        console.log($1)
 
-        // const $2 = await client.query(
-        //   q.CreateIndex({
-        //     name: 'claps_by_url',
-        //     source: q.Collection('claps'),
-        //     terms: [{ field: ['data', 'url'] }],
-        //   })
-        // );
-        // console.log($2)
+        const $2 = await client.query(
+          q.CreateIndex({
+            name: 'claps_by_url',
+            source: q.Collection('claps'),
+            terms: [{ field: ['data', 'url'] }],
+          })
+        );
+        console.log($2)
 
-        // const $3 = await client.query(q.CreateCollection({ name: 'proofs' }));
-        // console.log($3)
+        const $3 = await client.query(q.CreateCollection({ name: 'proofs' }));
+        console.log($3)
 
-        // const $4 = await client.query(
-        //   q.CreateIndex({
-        //     name:   'proofs_by_binary',
-        //     source: q.Collection('proofs'),
-        //     terms:  [{ field: [ 'data', 'key' ] }],
-        //     unique: true
-        //   }),
-        // );
-        // console.log($4);
+        const $4 = await client.query(
+          q.CreateIndex({
+            name:   'proofs_unique_tx',
+            source: q.Collection('proofs'),
+            terms:  [
+              { field: [ 'data', 'url' ] },
+              { field: [ 'data', 'id' ] },
+              { field: [ 'data', 'tx' ] },
+            ],
+            unique: true,
+          }),
+        );
+        console.log($4);
 
         return new Response()
 
@@ -95,11 +99,16 @@ async function handleRequest(request, requestURL) {
             return new Response('Invalid nonce', { status: 400 })
           }
 
-          const key = await makeKey({ url, id, tx, nonce });
           try { 
             const { data } = await client.query(
               q.Do(
-                q.Create(q.Collection('proofs'), { data: { key } }),
+                q.Create(q.Collection('proofs'), { 
+                  data: { 
+                    id, tx, claps, nonce,
+                    url: url.href, 
+                    country: request.headers.get('cf-ipcountry') || 'VN',
+                  },
+                }),
                 q.If(q.Exists(q.Match(q.Index('claps_by_url'), url.href)),
                   q.Update(
                     q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), url.href))),
@@ -137,7 +146,7 @@ async function handleRequest(request, requestURL) {
         try {
           const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
           const { data } = await client.query(q.Get(q.Match(q.Index('claps_by_url'), url.href)));
-          return new JSONResponse(data.claps);
+          return new JSONResponse(data);
         } catch (err) {
           if (err instanceof Response) return err;
           if (err.name === 'NotFound') return new JSONResponse(0);
