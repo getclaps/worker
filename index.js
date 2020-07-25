@@ -95,32 +95,32 @@ async function handleRequest(request, requestURL) {
             return new Response('Invalid nonce', { status: 400 })
           }
 
-          const key = await makeKey({ url, id, tx })
+          const key = await makeKey({ url, id, tx, nonce });
           try { 
-            await client.query(q.Create(q.Collection('proofs'), { data: { key } }))
+            const { data } = await client.query(
+              q.Do(
+                q.Create(q.Collection('proofs'), { data: { key } }),
+                q.If(q.Exists(q.Match(q.Index('claps_by_url'), url.href)),
+                  q.Update(
+                    q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), url.href))),
+                    {
+                      data: {
+                        claps: q.Add(
+                          q.Select(['data', 'claps'], q.Get(q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), url.href))))),
+                          claps,
+                        ),
+                      },
+                    },
+                  ),
+                  // else
+                  q.Create(q.Collection('claps'), { data: { claps, url: url.href } }),
+                ),
+              )
+            );
+            return new JSONResponse(data.claps);
           } catch { 
             return new Response(null, { status: 409 })
           }
-
-          const { data } = await client.query(
-            q.If(q.Exists(q.Match(q.Index('claps_by_url'), url.href)),
-              q.Update(
-                q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), url.href))),
-                {
-                  data: {
-                    claps: q.Add(
-                      q.Select(['data', 'claps'], q.Get(q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), url.href))))),
-                      claps,
-                    ),
-                  },
-                },
-              ),
-              // else
-              q.Create(q.Collection('claps'), { data: { claps, url: url.href } }),
-            ),
-          );
-
-          return new JSONResponse(data.claps);
         } catch (err) {
           if (err instanceof Response) return err;
           console.error(err);
