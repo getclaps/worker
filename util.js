@@ -2,8 +2,6 @@ import { UUID } from "uuid-class";
 
 const BASE_DIFFICULTY = 12;
 
-export const SEPARATOR = ':';
-
 /**
  * @param  {...ArrayBuffer} as 
  */
@@ -30,27 +28,19 @@ const digest = async (message) => crypto.subtle.digest('SHA-256', typeof message
  * @param {{
  *   url: URL|string,
  *   id?: UUID|string,
- *   tx?: number|string,
- *   nonce?: number|string,
+ *   tx?: number,
+ *   nonce?: number,
  * }} param0 
  */
 export async function makeKey({ url, id, tx, nonce }) {
   const keyUrl = new URL(url.toString());
   keyUrl.search = '';
 
-  // return [
-  //   b64e.encode(await digest(keyUrl.href)), 
-  //   ...id != null ? [b64e.encode(new UUID(id.toString()).buffer)] : [], 
-  //   ...tx != null ? [tx] : [], 
-  //   ...nonce != null ? [nonce] : []
-  // ].join(SEPARATOR);
-
-  // 256/8 + 128/8 + 32/8
   return concatArrayBuffers(
-    await digest(keyUrl.href), // 256 / 8
-    ...id != null ? [new UUID(id.toString()).buffer] : [], // 128 / 8
-    ...tx != null ? [new Uint32Array([Number(tx)]).buffer] : [], // 32 / 8
-    ...nonce != null ? [new Uint32Array([Number(nonce)]).buffer] : [],
+    await digest(keyUrl.href),
+    ...id != null ? [new UUID(id.toString()).buffer] : [],
+    ...tx != null ? [new Uint32Array([tx]).buffer] : [],
+    ...nonce != null ? [new Uint32Array([nonce]).buffer] : []
   );
 }
 
@@ -82,12 +72,14 @@ export const calcDifficulty = claps => BASE_DIFFICULTY + Math.round(Math.log2(cl
 /**
  * @param {{
  *   url: URL|string,
+ *   claps: number,
  *   id: UUID|string,
- *   tx: number|string,
+ *   tx: number,
  * }} param0 
- * @param {number} difficulty
  */
-export async function proofOfClap({ url, id, tx }, difficulty) {
+export async function proofOfClap({ url, claps, id, tx }) {
+  const difficulty = calcDifficulty(claps);
+
   let nonce = 0;
 
   const key = new Uint32Array(await makeKey({ url, id, tx, nonce }));
@@ -97,7 +89,6 @@ export async function proofOfClap({ url, id, tx }, difficulty) {
     nonce++;
     key[key.length - 1] = nonce;
     hash = await digest(key);
-    // await new Promise(r => setTimeout(r, 1000));
   }
 
   return nonce;
@@ -106,13 +97,14 @@ export async function proofOfClap({ url, id, tx }, difficulty) {
 /**
  * @param {{
  *   url: URL|string,
+ *   claps: number,
  *   id: UUID|string,
- *   tx: number|string,
- *   nonce: number|string,
+ *   tx: number,
+ *   nonce: number,
  * }} param0 
- * @param {number} difficulty
  */
-export async function checkProofOfClap({ url, id, tx, nonce }, difficulty) {
+export async function checkProofOfClap({ url, claps, id, tx, nonce }) {
+  const difficulty = calcDifficulty(claps);
   const hash = await digest(await makeKey({ url, id, tx, nonce }));
   return checkZeros(hash, difficulty);
 }

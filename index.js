@@ -1,7 +1,7 @@
 import { Client as FaunaDBClient, query as q } from 'faunadb';
 import { JSONResponse } from './json-response.js';
-import { makeKey, calcDifficulty, checkProofOfClap } from './util.js';
 import { StorageArea } from './storage-area';
+import { makeKey, checkProofOfClap } from './util.js';
 
 /**
  * @param {Response} r 
@@ -57,9 +57,7 @@ async function handleRequest(request, url) {
           const key = await makeKey({ url: targetURL });
           const { claps, id, tx, nonce } = await request.json();
 
-          const difficulty = calcDifficulty(claps);
-
-          if (await checkProofOfClap({ url: targetURL, id, tx, nonce }, difficulty) != true) {
+          if (await checkProofOfClap({ url: targetURL, claps, id, tx, nonce }) != true) {
             return new Response(null, { status: 400 })
           }
 
