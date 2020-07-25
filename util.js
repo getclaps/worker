@@ -1,6 +1,6 @@
 import { UUID } from "uuid-class";
 
-const BASE_DIFFICULTY = 12;
+const BASE_DIFFICULTY = 8;
 
 /**
  * @param  {...ArrayBuffer} abs 
@@ -68,7 +68,7 @@ function leadingZeros(ab, n) {
 /**
  * @param {number} claps 
  */
-const calcDifficulty = claps => BASE_DIFFICULTY + Math.round(Math.log2(claps));
+const calcDifficulty = claps => BASE_DIFFICULTY + Math.floor(Math.log2(15 + claps));
 
 /**
  * @param {{
