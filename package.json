@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "base64-encoding": "^0.2.0",
+    "faunadb": "^2.14.2",
     "uuid-class": "^0.2.0"
   }
 }

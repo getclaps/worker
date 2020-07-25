@@ -1,5 +1,6 @@
+import { Client as FaunaDBClient, query as q } from 'faunadb';
 import { JSONResponse } from './json-response.js';
-import { SEPARATOR, makeKey, checkProofOfClap, calcDifficulty } from './util.js';
+import { makeKey } from './util.js';
 
 /**
  * @param {Response} r 
@@ -16,73 +17,104 @@ self.addEventListener('fetch', event => {
 });
 
 /**
- * @param {{ prefix?: string, cursor?: string }} listArg 
- * @param {number} init
- * @return {Promise<number>}
- */
-async function recurse(listArg, init = 0) {
-  const { keys, list_complete: done, cursor: next } = await APPLAUSE_KV.list(listArg);
-  let sum = init;
-  for (const { name: key } of keys) {
-    sum += Number(await APPLAUSE_KV.get(key)) || 0;
-  }
-  return done ? sum : recurse({ cursor: next }, sum);
-}
-
-/**
- * @param {URL} url 
- */
-async function count(key) {
-  const [prefix] = key.split(SEPARATOR);
-  return recurse({ prefix }, 0);
-}
-
-/**
  * @param {Request} request
  * @param {URL} url
  * @returns {Promise<Response>}
  */
 async function handleRequest(request, url) {
+  const client = new FaunaDBClient({
+    secret: self.FAUNA_DB_TEST,
+    fetch: self.fetch.bind(self),
+  });
+
   switch (url.pathname) {
+    case '/__init': {
+      try {
+        const $1 = await client.query(
+          q.CreateCollection({ name: 'claps' }),
+        );
+        console.log($1)
+
+        const $2 = await client.query(
+          q.CreateIndex({
+            name: 'claps_by_url',
+            source: q.Collection('claps'),
+            terms: [{ field: ['data', 'url'] }],
+          })
+        );
+        console.log($2)
+
+      } catch (e) { console.error(e) }
+      return new JSONResponse(null);
+    }
     case '/update-claps': {
       if (request.method === 'POST') {
+        const targetURL = url.searchParams.get('url') || 'https://hydejack.com/';
+        const key = await makeKey({ url: targetURL });
         const { claps, id, tx, nonce } = await request.json();
 
-        const targetUrl = url.searchParams.get('url') || 'https://hydejack.com/';
-        const difficulty = calcDifficulty(claps);
+        // const difficulty = calcDifficulty(claps);
 
-        console.time('check-proof-of-clap');
-        const check = await checkProofOfClap({ url: targetUrl, id, tx, nonce }, difficulty);
-        console.timeEnd('check-proof-of-clap');
+        // console.time('check-proof-of-clap');
+        // const check = await checkProofOfClap({ url: targetURL, id, tx, nonce }, difficulty);
+        // console.timeEnd('check-proof-of-clap');
 
+        const check = true;
         if (check) {
-          const key = await makeKey({ url: targetUrl, id, tx });
-          if (!(await APPLAUSE_KV.get(key))) {
-            await APPLAUSE_KV.put(key, claps);
-            const sum = await count(key);
-            return new JSONResponse(sum);
-          } else {
-            return new JSONResponse(null, { status: 409 });
+          try {
+            const { data } = await client.query(
+              q.If(q.Exists(q.Match(q.Index('claps_by_url'), key)),
+                q.Update(
+                  q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), key))),
+                  {
+                    data: {
+                      claps: q.Add(
+                        q.Select(['data', 'claps'], q.Get(q.Select('ref', q.Get(q.Match(q.Index('claps_by_url'), key))))),
+                        claps,
+                      ),
+                    },
+                  },
+                ),
+                // else
+                q.Create(
+                  q.Collection('claps'),
+                  {
+                    data: { claps, url: key },
+                  },
+                ),
+              ),
+            );
+            return new JSONResponse(data.claps);
+          } catch (err) { 
+            return new JSONResponse(null, { status: 500 });
           }
         } else {
           return new JSONResponse(null, { status: 400 });
         }
       }
+      else if (request.method === 'OPTIONS') {
+        return new JSONResponse(null);
+      }
       return new JSONResponse(null, { status: 404 });
     }
     case '/get-claps': {
       if (request.method === 'GET') {
-        const targetUrl = url.searchParams.get('url') || 'https://hydejack.com/';
-        const key = await makeKey({ url: targetUrl });
+        const targetURL = url.searchParams.get('url') || 'https://hydejack.com/';
+        const key = await makeKey({ url: targetURL });
 
-        const sum = await count(key);
-
-        return new JSONResponse(sum);
+        try {
+          const { data } = await client.query(q.Get(q.Match(q.Index('claps_by_url'), key)));
+          return new JSONResponse(data.claps);
+        } catch (err) { 
+          if (err.name === 'NotFound') return new JSONResponse(0);
+          console.error('err', err);
+          return new JSONResponse(null, { status: 500 });
+        }
       }
       return new JSONResponse(null, { status: 404 });
     }
     default: {
-      return new Response(null, { status: 404 });
+      return new JSONResponse(null, { status: 404 });
     }
   }
 }

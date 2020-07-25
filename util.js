@@ -28,6 +28,7 @@ export async function makeKey({ url, id, tx, nonce }) {
   const nonceArr = nonce != null ? [nonce] : []
 
   return [urlB64, ...idB64, ...txArr, ...nonceArr].join(SEPARATOR);
+  // return await digest(keyUrl.href);
 }
 
 /**
