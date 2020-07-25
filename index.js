@@ -46,30 +46,30 @@ async function handleRequest(request, requestURL) {
   switch (requestURL.pathname) {
     case '/__init': {
       try {
-        const $1 = await client.query(q.CreateCollection({ name: 'claps' }));
-        console.log($1)
+        // const $1 = await client.query(q.CreateCollection({ name: 'claps' }));
+        // console.log($1)
 
-        const $2 = await client.query(
-          q.CreateIndex({
-            name: 'claps_by_url',
-            source: q.Collection('claps'),
-            terms: [{ field: ['data', 'url'] }],
-          })
-        );
-        console.log($2)
+        // const $2 = await client.query(
+        //   q.CreateIndex({
+        //     name: 'claps_by_url',
+        //     source: q.Collection('claps'),
+        //     terms: [{ field: ['data', 'url'] }],
+        //   })
+        // );
+        // console.log($2)
 
-        const $3 = await client.query(q.CreateCollection({ name: 'proofs' }));
-        console.log($3)
+        // const $3 = await client.query(q.CreateCollection({ name: 'proofs' }));
+        // console.log($3)
 
-        const $4 = await client.query(
-          q.CreateIndex({
-            name:   'proofs_by_binary',
-            source: q.Collection('proofs'),
-            terms:  [{ field: [ 'data', 'key' ] }],
-            unique: true
-          }),
-        );
-        console.log($4);
+        // const $4 = await client.query(
+        //   q.CreateIndex({
+        //     name:   'proofs_by_binary',
+        //     source: q.Collection('proofs'),
+        //     terms:  [{ field: [ 'data', 'key' ] }],
+        //     unique: true
+        //   }),
+        // );
+        // console.log($4);
 
         return new Response()
 
