@@ -1,6 +1,7 @@
 import { Client as FaunaDBClient, query as q } from 'faunadb';
+
 import { JSONResponse } from './json-response.js';
-import { StorageArea } from './storage-area';
+
 import { makeKey, checkProofOfClap } from './util.js';
 
 /**
@@ -23,7 +24,6 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
  * @returns {Promise<Response>}
  */
 async function handleRequest(request, url) {
-  const storage = new StorageArea('APPLAUSE_KV');
   const client = new FaunaDBClient({
     secret: Reflect.get(self, 'FAUNA_DB_TEST'),
     fetch: self.fetch.bind(self),
@@ -32,9 +32,7 @@ async function handleRequest(request, url) {
   switch (url.pathname) {
     case '/__init': {
       try {
-        // const $1 = await client.query(
-        //   q.CreateCollection({ name: 'claps' }),
-        // );
+        // const $1 = await client.query(q.CreateCollection({ name: 'claps' }));
         // console.log($1)
 
         // const $2 = await client.query(
@@ -45,6 +43,20 @@ async function handleRequest(request, url) {
         //   })
         // );
         // console.log($2)
+
+        // const $3 = await client.query(q.CreateCollection({ name: 'proofs' }));
+        // console.log($3)
+
+        // const $4 = await client.query(
+        //   q.CreateIndex({
+        //     name:   'proofs_by_binary',
+        //     source: q.Collection('proofs'),
+        //     terms:  [{ field: [ 'data', 'key' ] }],
+        //     unique: true
+        //   }),
+        // );
+        // console.log($4);
+
         return new Response(null)
 
       } catch (e) { console.error(e) }
@@ -62,10 +74,11 @@ async function handleRequest(request, url) {
           }
 
           const key2 = await makeKey({ url: targetURL, id, tx })
-          if (await storage.get(key2) != null) {
+          try {
+            await client.query(q.Create(q.Collection('proofs'), { data: { key: key2 } }));
+          } catch (e) {
             return new Response(null, { status: 409 });
           }
-          await storage.set(key2, true);
 
           const { data } = await client.query(
             q.If(q.Exists(q.Match(q.Index('claps_by_url'), key)),
@@ -90,7 +103,7 @@ async function handleRequest(request, url) {
             ),
           );
           return new JSONResponse(data.claps);
-        } catch (err) { 
+        } catch (err) {
           console.error(err);
           return new Response(null, { status: 500 });
         }
@@ -108,7 +121,7 @@ async function handleRequest(request, url) {
 
           const { data } = await client.query(q.Get(q.Match(q.Index('claps_by_url'), key)));
           return new JSONResponse(data.claps);
-        } catch (err) { 
+        } catch (err) {
           if (err.name === 'NotFound') return new JSONResponse(0);
           console.error('err', err);
           return new Response(null, { status: 500 });
