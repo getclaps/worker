@@ -59,21 +59,18 @@ async function handleRequest(request, requestURL) {
 
         switch (request.method) {
           case 'POST': {
-            const { claps, id, tx, nonce } = await request.json();
+            const { claps, id, nonce } = await request.json();
             if (!RE_UUID.test(id)) {
               return new Response('Malformed id. Needs to be UUID', { status: 400 });
-            }
-            if (!Number.isInteger(tx) || tx < 0 || tx > Number.MAX_SAFE_INTEGER) {
-              return new Response('Tx needs to be integer between 0 and MAX_SAFE_INTEGER', { status: 400 });
             }
             if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
               return new Response('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER', { status: 400 });
             }
-            if (await checkProofOfClap({ url, claps, id, tx, nonce }) != true) {
+            if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
               return new Response('Invalid nonce', { status: 400 })
             }
 
-            return dao.updateClaps({ url, id, tx, claps, nonce }, request);
+            return dao.updateClaps({ url, id, claps, nonce }, request);
           }
           case 'GET': {
             const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
