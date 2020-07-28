@@ -57,6 +57,10 @@ async function handleRequest(request, requestURL) {
       try {
         const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
 
+        if (request.headers.get('Origin') !== url.origin) {
+          return new Response("Origin doesn't match" , { status: 400 });
+        }
+
         switch (request.method) {
           case 'POST': {
             const { claps, id, nonce } = await request.json();
