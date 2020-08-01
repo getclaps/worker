@@ -57,7 +57,12 @@ async function handleRequest(request, requestURL) {
       try {
         const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
 
-        if (request.headers.get('Origin') !== url.origin) {
+        const reqOrigin = request.headers.get('Origin');
+        if (!reqOrigin) {
+          return new Response("Origin not sent" , { status: 400 });
+        }
+        const reqHostname = new URL(reqOrigin).hostname;
+        if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
           return new Response("Origin doesn't match" , { status: 400 });
         }
 
