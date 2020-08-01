@@ -1,5 +1,5 @@
 import { checkProofOfClap } from './util.js';
-import { DAO } from './dao';
+import { FaunaDAO } from './fauna-dao.js';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
@@ -44,7 +44,7 @@ async function handleRequest(request, requestURL) {
 
   if (request.method === 'OPTIONS') return new Response();
 
-  const dao = await DAO.getDAOForPlatform();
+  const dao = new FaunaDAO();
 
   switch (requestURL.pathname) {
     case '/claps/__init': {
