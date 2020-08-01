@@ -79,11 +79,11 @@ async function handleRequest(request, requestURL) {
               return new Response('Invalid nonce', { status: 400 })
             }
 
-            return dao.updateClaps({ url, id, claps, nonce }, request);
+            return dao.updateClaps({ hostname: reqHostname, url, id, claps, nonce }, request);
           }
           case 'GET': {
             const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
-            return await dao.getClaps(url);
+            return await dao.getClaps({ url, hostname: reqHostname }, request);
           }
           default: {
             return new Response(null, { status: 404 });
