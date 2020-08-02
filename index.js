@@ -1,7 +1,17 @@
 import { checkProofOfClap } from './util.js';
 import { FaunaDAO } from './fauna-dao.js';
+import { JSONResponse, JSONRequest } from './json-response.js';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
+
+const basicAuth = (username = '', password = '') => `Basic ${btoa(`${username}:${password}`)}`;
+
+const STRIPE_API = 'https://api.stripe.com/v1';
+const STRIPE_API_VERSION = '2020-03-02';
+const STRIPE_HEADERS = {
+  'Authorization': basicAuth(Reflect.get(self, 'STRIPE_SECRET_KEY')),
+  'Stripe-Version': STRIPE_API_VERSION,
+};
 
 /**
  * @param {string} url 
@@ -84,15 +94,125 @@ async function handleRequest(request, requestURL) {
 
           return dao.updateClaps({ hostname: reqHostname, url, id, claps, nonce }, request);
         }
+
         case 'GET': {
           const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
           return await dao.getClaps({ url, hostname: reqHostname }, request);
         }
-        default: {
-          return new Response(null, { status: 404 });
-        }
+
+        default: return new Response(null, { status: 404 });
       }
     }
+
+    case '/stripe/checkout-session': {
+      switch (request.method) {
+        case 'POST': {
+          const { priceId } = await request.json();
+
+          // curl https://api.stripe.com/v1/checkout/sessions \
+          //   -u sk_test_0ISRffdXEoUxgOZDMLFFPnqI: \
+          //   -d success_url="https://example.com/success" \
+          //   -d cancel_url="https://example.com/cancel" \
+          //   -d "payment_method_types[0]"=card \
+          //   -d "line_items[0][price]"=price_H5ggYwtDq4fbrJ \
+          //   -d "line_items[0][quantity]"=2 \
+          //   -d mode=payment
+
+          const formData = new URLSearchParams();
+          formData.append('mode', 'subscription');
+          formData.append('payment_method_types[0]', 'card');
+          formData.append('line_items[0][quantity]', '1');
+          formData.append('line_items[0][price]', priceId);
+          formData.append('success_url', `${requestURL.origin}/success.html?session_id={CHECKOUT_SESSION_ID}`);
+          formData.append('cancel_url', `${requestURL.origin}/canceled.html`);
+          
+          const stripeRequest = new JSONRequest(new URL('/v1/checkout/sessions', STRIPE_API), {
+            headers: STRIPE_HEADERS,
+            method: 'POST',
+            body: formData,
+          });
+
+          const stripeResponse = await fetch(stripeRequest);
+
+          if (stripeResponse.ok) {
+            const session = await stripeResponse.json();
+            return new JSONResponse({ sessionId: session.id });
+          } else {
+            const { error } = await stripeResponse.json()
+            console.error(error);
+            return new Response(error.message, { status: 400 });
+          }
+        }
+
+        case 'GET': {
+          const sessionId = requestURL.searchParams.get('sessionId')
+
+          // curl https://api.stripe.com/v1/checkout/sessions/cs_test_UESUpjXpxiOy72fNubOpJenKJhlOAEMQts5XFBB4l01ZJPI6hiRALfbT \
+          //   -u sk_test_0ISRffdXEoUxgOZDMLFFPnqI:
+
+          const stripeResponse = await fetch(new JSONRequest(new URL(`/v1/checkout/sessions/${sessionId}`, STRIPE_API), {
+            headers: STRIPE_HEADERS,
+          }));
+
+          const session = await stripeResponse.json()
+
+          return new JSONResponse(session);
+        }
+
+        default: return new Response(null, { status: 404 });
+      }
+    }
+
+    case '/stripe/setup': {
+      switch (request.method) {
+        case 'GET': {
+          return new JSONResponse({
+            publishableKey: Reflect.get(self, 'STRIPE_PUBLISHABLE_KEY'),
+            priceId: Reflect.get(self, 'STRIPE_PRICE_ID'),
+          })
+        }
+
+        default: return new Response(null, { status: 404 });
+      }
+    }
+
+    // case '/stripe/webhook': {
+    //   const stripe = new Stripe(Reflect.get(self, 'STRIPE_SECRET_KEY'), { apiVersion: '2020-03-02' })
+
+    //   if (request.method !== 'POST') return new Response(null, { status: 404 });
+
+    //   let data, eventType;
+    //   // Check if webhook signing is configured.
+    //   if (Reflect.get(self, 'STRIPE_WEBHOOK_SECRET')) {
+    //     // Retrieve the event by verifying the signature using the raw body and secret.
+    //     let event;
+    //     let signature = request.headers.get('stripe-signature');
+
+    //     try {
+    //       event = stripe.webhooks.constructEvent(
+    //         await request.text(),
+    //         signature,
+    //         Reflect.get(self, 'STRIPE_WEBHOOK_SECRET'),
+    //       );
+    //     } catch (err) {
+    //       console.log(`⚠️  Webhook signature verification failed.`);
+    //       return new Response(null, { status: 400 });
+    //     }
+    //     // Extract the object from the event.
+    //     ({ data, type: eventType } = event);
+    //   } else {
+    //     // Webhook signing is recommended, but if the secret is not configured in `config.js`,
+    //     // retrieve the event data directly from the request body.
+    //     ({ data, type: eventType } = await request.json());
+    //   }
+
+    //   if (eventType === "checkout.session.completed") {
+    //     console.log(`🔔  Payment received!`);
+    //   }
+
+    //   return new Response(null, { status: 200 });
+    // }
+
     default: {
       return new Response(null, { status: 404 });
     }
