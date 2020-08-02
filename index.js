@@ -18,6 +18,7 @@ const STRIPE_HEADERS = {
  */
 export const validateURL = (url) => {
   try {
+    if (!url) throw new Response('No url provided', { status: 400 });
     if (url.length > 4096) throw new Response('URL too long. 4096 characters max.', { status: 400 });
     const targetURL = new URL(url)
     targetURL.search = ''
@@ -68,7 +69,7 @@ async function handleRequest(request, requestURL) {
 
     case '/claps': {
       const dao = new FaunaDAO();
-      const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
+      const url = validateURL(requestURL.searchParams.get('url'));
 
       const reqOrigin = request.headers.get('Origin');
       if (!reqOrigin) {
@@ -91,13 +92,19 @@ async function handleRequest(request, requestURL) {
           if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
             return new Response('Invalid nonce', { status: 400 })
           }
+           
+          const country = request.headers.get('cf-ipcountry');
 
-          return dao.updateClaps({ hostname: reqHostname, url, id, claps, nonce }, request);
+          return dao.updateClaps({ 
+            id, claps, nonce, country,
+            hostname: url.hostname, 
+            href: url.href, 
+          });
         }
 
         case 'GET': {
-          const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
-          return await dao.getClaps({ url, hostname: reqHostname }, request);
+          const url = validateURL(requestURL.searchParams.get('url'));
+          return await dao.getClaps({ href: url.href });
         }
 
         default: return new Response(null, { status: 404 });
