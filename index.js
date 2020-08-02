@@ -93,13 +93,13 @@ async function handleRequest(request, requestURL) {
           if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
             return new Response('Invalid nonce', { status: 400 })
           }
-           
+
           const country = request.headers.get('cf-ipcountry');
 
-          return dao.updateClaps({ 
+          return dao.updateClaps({
             id, claps, nonce, country,
-            hostname: url.hostname, 
-            href: url.href, 
+            hostname: url.hostname,
+            href: url.href,
           });
         }
 
@@ -117,23 +117,14 @@ async function handleRequest(request, requestURL) {
         case 'POST': {
           const { priceId } = await request.json();
 
-          // curl https://api.stripe.com/v1/checkout/sessions \
-          //   -u sk_test_0ISRffdXEoUxgOZDMLFFPnqI: \
-          //   -d success_url="https://example.com/success" \
-          //   -d cancel_url="https://example.com/cancel" \
-          //   -d "payment_method_types[0]"=card \
-          //   -d "line_items[0][price]"=price_H5ggYwtDq4fbrJ \
-          //   -d "line_items[0][quantity]"=2 \
-          //   -d mode=payment
-
           const formData = new URLSearchParams();
           formData.append('mode', 'subscription');
           formData.append('payment_method_types[0]', 'card');
           formData.append('line_items[0][quantity]', '1');
           formData.append('line_items[0][price]', priceId);
-          formData.append('success_url', `${requestURL.origin}/success.html?session_id={CHECKOUT_SESSION_ID}`);
-          formData.append('cancel_url', `${requestURL.origin}/canceled.html`);
-          
+          formData.append('success_url', new URL('/thank-you/?session_id={CHECKOUT_SESSION_ID}', requestURL.origin).href);
+          formData.append('cancel_url', new URL('/', requestURL.origin).href);
+
           const stripeRequest = new JSONRequest(new URL('/v1/checkout/sessions', STRIPE_API), {
             headers: STRIPE_HEADERS,
             method: 'POST',
@@ -154,9 +145,6 @@ async function handleRequest(request, requestURL) {
 
         case 'GET': {
           const sessionId = requestURL.searchParams.get('sessionId')
-
-          // curl https://api.stripe.com/v1/checkout/sessions/cs_test_UESUpjXpxiOy72fNubOpJenKJhlOAEMQts5XFBB4l01ZJPI6hiRALfbT \
-          //   -u sk_test_0ISRffdXEoUxgOZDMLFFPnqI:
 
           const stripeResponse = await fetch(new JSONRequest(new URL(`/v1/checkout/sessions/${sessionId}`, STRIPE_API), {
             headers: STRIPE_HEADERS,
