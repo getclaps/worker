@@ -30,7 +30,11 @@ const addCORSHeaders = (r) => {
 self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
   event.respondWith(
     handleRequest(event.request, new URL(event.request.url))
-      .catch(err => (console.error('err', err), new Response(null, { status: 500 })))
+      .catch(err => {
+        if (err instanceof Response) return err;
+        console.error('err', err);
+        new Response(null, { status: 500 });
+      })
       .then(addCORSHeaders)
   );
 });
@@ -41,57 +45,52 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
  * @returns {Promise<Response>}
  */
 async function handleRequest(request, requestURL) {
-
   if (request.method === 'OPTIONS') return new Response();
 
-  const dao = new FaunaDAO();
-
   switch (requestURL.pathname) {
-    case '/claps/__init': {
+    case '/__init': {
+      const dao = new FaunaDAO();
       if (request.headers.get('Authorization') === Reflect.get(self, 'AUTH')) {
         return await dao.init()
       }
       return new Response(null, { status: 401 });
     }
+
     case '/claps': {
-      try {
-        const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
+      const dao = new FaunaDAO();
+      const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
 
-        const reqOrigin = request.headers.get('Origin');
-        if (!reqOrigin) {
-          return new Response("Origin not sent" , { status: 400 });
-        }
-        const reqHostname = new URL(reqOrigin).hostname;
-        if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
-          return new Response("Origin doesn't match" , { status: 400 });
-        }
+      const reqOrigin = request.headers.get('Origin');
+      if (!reqOrigin) {
+        return new Response("Origin not sent", { status: 400 });
+      }
+      const reqHostname = new URL(reqOrigin).hostname;
+      if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
+        return new Response("Origin doesn't match", { status: 400 });
+      }
 
-        switch (request.method) {
-          case 'POST': {
-            const { claps, id, nonce } = await request.json();
-            if (!RE_UUID.test(id)) {
-              return new Response('Malformed id. Needs to be UUID', { status: 400 });
-            }
-            if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
-              return new Response('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER', { status: 400 });
-            }
-            if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
-              return new Response('Invalid nonce', { status: 400 })
-            }
+      switch (request.method) {
+        case 'POST': {
+          const { claps, id, nonce } = await request.json();
+          if (!RE_UUID.test(id)) {
+            return new Response('Malformed id. Needs to be UUID', { status: 400 });
+          }
+          if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
+            return new Response('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER', { status: 400 });
+          }
+          if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
+            return new Response('Invalid nonce', { status: 400 })
+          }
 
-            return dao.updateClaps({ hostname: reqHostname, url, id, claps, nonce }, request);
-          }
-          case 'GET': {
-            const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
-            return await dao.getClaps({ url, hostname: reqHostname }, request);
-          }
-          default: {
-            return new Response(null, { status: 404 });
-          }
+          return dao.updateClaps({ hostname: reqHostname, url, id, claps, nonce }, request);
         }
-      } catch (err) {
-        if (err instanceof Response) return err;
-        throw err;
+        case 'GET': {
+          const url = validateURL(requestURL.searchParams.get('url') || 'https://hydejack.com/');
+          return await dao.getClaps({ url, hostname: reqHostname }, request);
+        }
+        default: {
+          return new Response(null, { status: 404 });
+        }
       }
     }
     default: {
