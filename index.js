@@ -1,6 +1,7 @@
 import { checkProofOfClap } from './util.js';
 import { FaunaDAO } from './fauna-dao.js';
 import { JSONResponse, JSONRequest } from './json-response.js';
+import { constructEvent } from './webhook.js';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
@@ -183,42 +184,41 @@ async function handleRequest(request, requestURL) {
       }
     }
 
-    // case '/stripe/webhook': {
-    //   const stripe = new Stripe(Reflect.get(self, 'STRIPE_SECRET_KEY'), { apiVersion: '2020-03-02' })
+    case '/stripe/webhook': {
+      if (request.method !== 'POST') return new Response(null, { status: 404 });
 
-    //   if (request.method !== 'POST') return new Response(null, { status: 404 });
+      let data, eventType;
+      // Check if webhook signing is configured.
+      if (Reflect.get(self, 'STRIPE_WEBHOOK_SECRET')) {
+        // Retrieve the event by verifying the signature using the raw body and secret.
+        let event;
+        let signature = request.headers.get('stripe-signature');
 
-    //   let data, eventType;
-    //   // Check if webhook signing is configured.
-    //   if (Reflect.get(self, 'STRIPE_WEBHOOK_SECRET')) {
-    //     // Retrieve the event by verifying the signature using the raw body and secret.
-    //     let event;
-    //     let signature = request.headers.get('stripe-signature');
+        try {
+          event = await constructEvent(
+            await request.text(),
+            signature,
+            Reflect.get(self, 'STRIPE_WEBHOOK_SECRET'),
+          );
+        } catch (err) {
+          console.log(`⚠️  Webhook signature verification failed.`);
+          return new Response(null, { status: 400 });
+        }
+        // Extract the object from the event.
+        ({ data, type: eventType } = event);
+      } else {
+        // Webhook signing is recommended, but if the secret is not configured in `config.js`,
+        // retrieve the event data directly from the request body.
+        ({ data, type: eventType } = await request.json());
+      }
 
-    //     try {
-    //       event = stripe.webhooks.constructEvent(
-    //         await request.text(),
-    //         signature,
-    //         Reflect.get(self, 'STRIPE_WEBHOOK_SECRET'),
-    //       );
-    //     } catch (err) {
-    //       console.log(`⚠️  Webhook signature verification failed.`);
-    //       return new Response(null, { status: 400 });
-    //     }
-    //     // Extract the object from the event.
-    //     ({ data, type: eventType } = event);
-    //   } else {
-    //     // Webhook signing is recommended, but if the secret is not configured in `config.js`,
-    //     // retrieve the event data directly from the request body.
-    //     ({ data, type: eventType } = await request.json());
-    //   }
+      console.log(eventType, data);
+      if (eventType === "checkout.session.completed") {
+        console.log(`🔔  Payment received!`);
+      }
 
-    //   if (eventType === "checkout.session.completed") {
-    //     console.log(`🔔  Payment received!`);
-    //   }
-
-    //   return new Response(null, { status: 200 });
-    // }
+      return new Response(null, { status: 200 });
+    }
 
     default: {
       return new Response(null, { status: 404 });
