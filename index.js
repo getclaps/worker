@@ -44,8 +44,8 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
     handleRequest(event.request, new URL(event.request.url))
       .catch(err => {
         if (err instanceof Response) return err;
-        console.error('err', err);
-        new Response(null, { status: 500 });
+        console.error('err', err.message);
+        return new Response(null, { status: 500 });
       })
       .then(addCORSHeaders)
   );
