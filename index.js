@@ -14,10 +14,29 @@ const notFound = (msg = null) => new Response(msg, { status: 404 });
 
 const STRIPE_API = 'https://api.stripe.com/v1';
 const STRIPE_API_VERSION = '2020-03-02';
-const STRIPE_HEADERS = {
-  'Authorization': basicAuth(Reflect.get(self, 'STRIPE_SECRET_KEY')),
-  'Stripe-Version': STRIPE_API_VERSION,
-};
+
+/**
+ * @param {string} endpoint 
+ * @param {{ method?: string, body?: any, headers?: object }=} params 
+ */
+async function stripeAPI(endpoint, { headers, ...params } = {}) {
+  const stripeResponse = await fetch(new JSONRequest(new URL(endpoint, STRIPE_API), {
+    headers: {
+      ...headers,
+      'Authorization': basicAuth(Reflect.get(self, 'STRIPE_SECRET_KEY')),
+      'Stripe-Version': STRIPE_API_VERSION,
+    },
+    ...params,
+  }));
+
+  if (!stripeResponse.ok) {
+    const { error } = await stripeResponse.json();
+    console.error(error);
+    throw badRequest(error.message);
+  }
+
+  return await stripeResponse.json();
+}
 
 /**
  * @param {string} url 
@@ -131,33 +150,13 @@ async function handleRequest(request, requestURL) {
           formData.append('success_url', new URL('/thank-you/?session_id={CHECKOUT_SESSION_ID}', requestURL.origin).href);
           formData.append('cancel_url', new URL('/', requestURL.origin).href);
 
-          const stripeRequest = new JSONRequest(new URL('/v1/checkout/sessions', STRIPE_API), {
-            headers: STRIPE_HEADERS,
-            method: 'POST',
-            body: formData,
-          });
-
-          const stripeResponse = await fetch(stripeRequest);
-
-          if (stripeResponse.ok) {
-            const session = await stripeResponse.json();
-            return new JSONResponse({ sessionId: session.id });
-          } else {
-            const { error } = await stripeResponse.json()
-            console.error(error);
-            return new Response(error.message, { status: 400 });
-          }
+          const session = await stripeAPI('/v1/checkout/sessions')
+          return new JSONResponse({ sessionId: session.id });
         }
 
         case 'GET': {
           const sessionId = requestURL.searchParams.get('sessionId')
-
-          const stripeResponse = await fetch(new JSONRequest(new URL(`/v1/checkout/sessions/${sessionId}`, STRIPE_API), {
-            headers: STRIPE_HEADERS,
-          }));
-
-          const session = await stripeResponse.json()
-
+          const session = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
           return new JSONResponse(session);
         }
 
