@@ -7,6 +7,11 @@ const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
 const basicAuth = (username = '', password = '') => `Basic ${btoa(`${username}:${password}`)}`;
 
+const ok = (msg = null) => new Response(msg, { status: 200 });
+const badRequest = (msg = null) => new Response(msg, { status: 400 });
+const forbidden = (msg = null) => new Response(msg, { status: 401 });
+const notFound = (msg = null) => new Response(msg, { status: 404 });
+
 const STRIPE_API = 'https://api.stripe.com/v1';
 const STRIPE_API_VERSION = '2020-03-02';
 const STRIPE_HEADERS = {
@@ -19,13 +24,13 @@ const STRIPE_HEADERS = {
  */
 export const validateURL = (url) => {
   try {
-    if (!url) throw new Response('No url provided', { status: 400 });
-    if (url.length > 4096) throw new Response('URL too long. 4096 characters max.', { status: 400 });
+    if (!url) throw badRequest('No url provided')
+    if (url.length > 4096) throw badRequest('URL too long. 4096 characters max.');
     const targetURL = new URL(url)
     targetURL.search = ''
     return targetURL;
   } catch {
-    throw new Response('Invalid URL. Needs to be fully qualified, e.g. https://hydejack.com', { status: 400 });
+    throw badRequest('Invalid URL. Needs to be fully qualified, e.g. https://hydejack.com');
   }
 }
 
@@ -65,7 +70,7 @@ async function handleRequest(request, requestURL) {
       if (request.headers.get('Authorization') === Reflect.get(self, 'AUTH')) {
         return await dao.init()
       }
-      return new Response(null, { status: 401 });
+      return forbidden();
     }
 
     case '/claps': {
@@ -74,24 +79,24 @@ async function handleRequest(request, requestURL) {
 
       const reqOrigin = request.headers.get('Origin');
       if (!reqOrigin) {
-        return new Response("Origin not sent", { status: 400 });
+        return badRequest('Origin not sent');
       }
       const reqHostname = new URL(reqOrigin).hostname;
       if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
-        return new Response("Origin doesn't match", { status: 400 });
+        return badRequest("Origin doesn't match");
       }
 
       switch (request.method) {
         case 'POST': {
           const { claps, id, nonce } = await request.json();
           if (!RE_UUID.test(id)) {
-            return new Response('Malformed id. Needs to be UUID', { status: 400 });
+            return badRequest('Malformed id. Needs to be UUID');
           }
           if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
-            return new Response('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER', { status: 400 });
+            return badRequest('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER');
           }
           if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
-            return new Response('Invalid nonce', { status: 400 })
+            return badRequest('Invalid nonce');
           }
 
           const country = request.headers.get('cf-ipcountry');
@@ -109,7 +114,7 @@ async function handleRequest(request, requestURL) {
           return await dao.getClaps({ href: url.href });
         }
 
-        default: return new Response(null, { status: 404 });
+        default: return notFound();
       }
     }
 
@@ -169,12 +174,12 @@ async function handleRequest(request, requestURL) {
           })
         }
 
-        default: return new Response(null, { status: 404 });
+        default: return notFound();
       }
     }
 
     case '/stripe/webhook': {
-      if (request.method !== 'POST') return new Response(null, { status: 404 });
+      if (request.method !== 'POST') return notFound();
 
       let data, eventType;
       // Check if webhook signing is configured.
@@ -191,7 +196,7 @@ async function handleRequest(request, requestURL) {
           );
         } catch (err) {
           console.log(`⚠️  Webhook signature verification failed.`);
-          return new Response(null, { status: 400 });
+          return badRequest();
         }
         // Extract the object from the event.
         ({ data, type: eventType } = event);
@@ -206,11 +211,11 @@ async function handleRequest(request, requestURL) {
         console.log(`🔔  Payment received!`);
       }
 
-      return new Response(null, { status: 200 });
+      return ok();
     }
 
     default: {
-      return new Response(null, { status: 404 });
+      return notFound();
     }
   }
 }
