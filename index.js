@@ -213,6 +213,41 @@ async function handleRequest(request, requestURL) {
       return ok();
     }
 
+    case '/stripe/forward': {
+      if (request.method !== 'POST') return notFound();
+
+      const formData = await request.formData();
+
+      // @ts-ignore
+      const body = new URLSearchParams([...formData].filter(([, v]) => typeof v === 'string'));
+
+      const psk = Reflect.get(self, 'STRIPE_PUBLISHABLE_KEY');
+      const session = await stripeAPI('/v1/checkout/sessions', { method: 'POST', body });
+
+      return new Response(`
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Redirecting</title>
+  </head>
+  <body>
+    <p>Taking you to Stripe Checkout...</p>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+      var stripe = Stripe('${psk}');
+      stripe.redirectToCheckout({ sessionId: '${session.id}' });
+    </script>
+  </body>
+</html>
+      `, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
+
+      // const res = await fetch('http://localhost:4002/stripe/');
+      // return new HTMLRewriter()
+      //   .on('*#session-id', new class {
+      //     element(element) { element.setInnerContent(session.id) }
+      //   })
+      //   .transform(res);
+    }
     default: {
       return notFound();
     }
