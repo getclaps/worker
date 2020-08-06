@@ -100,6 +100,7 @@ async function handleRequest(request, requestURL) {
             id, claps, nonce, country,
             hostname: url.hostname,
             href: url.href,
+            hash: url.hash,
           });
         }
 
