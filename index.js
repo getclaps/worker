@@ -2,6 +2,7 @@ import { checkProofOfClap } from './util.js';
 import { FaunaDAO } from './fauna-dao.js';
 import { JSONResponse, JSONRequest } from './json-response.js';
 import { constructEvent } from './webhook.js';
+import { UUID } from 'uuid-class/mjs';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
@@ -121,7 +122,8 @@ async function handleRequest(request, requestURL) {
           const country = request.headers.get('cf-ipcountry');
 
           return dao.updateClaps({
-            id, claps, nonce, country,
+            claps, nonce, country,
+            id: new UUID(id).buffer,
             hostname: url.hostname,
             href: url.href,
             hash: url.hash,
