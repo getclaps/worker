@@ -102,12 +102,10 @@ async function handleRequest(request, requestURL) {
 
     case '/claps': {
       const dao = new FaunaDAO();
-      const url = validateURL(requestURL.searchParams.get('url'));
+      const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
+      const originURL = validateURL(headers.get('Origin'));
 
-      const reqOrigin = headers.get('Origin');
-      if (!reqOrigin) return badRequest('Origin not sent');
-
-      const reqHostname = new URL(reqOrigin).hostname;
+      const reqHostname = originURL.hostname;
       if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
         return badRequest("Origin doesn't match");
       }
@@ -121,7 +119,7 @@ async function handleRequest(request, requestURL) {
           if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
             return badRequest('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER');
           }
-          if (await checkProofOfClap({ url, claps, id, nonce }) != true) {
+          if (await checkProofOfClap({ url, claps, id, nonce }) !== true) {
             return badRequest('Invalid nonce');
           }
 
@@ -130,16 +128,15 @@ async function handleRequest(request, requestURL) {
           return dao.updateClaps({
             claps, nonce, country,
             id: new UUID(id).buffer,
-            hostname: requestURL.hostname,
+            hostname: originURL.hostname,
             href: url.href,
             hash: url.hash,
           });
         }
 
         case 'GET': {
-          const url = validateURL(requestURL.searchParams.get('url'));
           return await dao.getClaps({ 
-            hostname: requestURL.hostname,
+            hostname: originURL.hostname,
             href: url.href,
           });
         }
