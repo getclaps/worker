@@ -38,7 +38,7 @@ function compareArrayBufferTo(expected) {
  * @param {string} signedPayload 
  * @param {string} secret 
  */
-async function _computeSignature(signedPayload, secret) {
+async function computeSignature(signedPayload, secret) {
   const cryptoKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: { name: "SHA-256" } }, false, ["sign"]);
   const signature = await crypto.subtle.sign({ name: "HMAC" }, cryptoKey, new TextEncoder().encode(signedPayload));
   return signature;
@@ -85,7 +85,7 @@ export async function generateTestHeaderString(opts) {
 
   opts.signature =
     opts.signature ||
-    arrayBufferToHexString(await _computeSignature(
+    arrayBufferToHexString(await computeSignature(
       `${opts.timestamp}.${opts.payload}`,
       opts.secret
     ));
@@ -117,7 +117,7 @@ async function verifyHeader(payload, header, secret, tolerance) {
     throw new Error('No signatures found with expected scheme');
   }
 
-  const expectedSignature = await _computeSignature(
+  const expectedSignature = await computeSignature(
     `${details.timestamp}.${payload}`,
     secret
   );
