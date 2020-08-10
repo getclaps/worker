@@ -22,6 +22,7 @@ const DASHBOARD_ORIGIN = 'http://localhost:3000';
 const RE_ENTRY = /\/dashboard\/?/;
 const RE_DASHBOARD_ID = /\/dashboard\/([0-9A-Za-z-_]{22})\/?/;
 const RE_DASHBOARD_DOMAIN = /\/dashboard\/([0-9A-Za-z-_]{22})\/domain\/?/;
+const RE_DASHBOARD_RELOCATE = /\/dashboard\/([0-9A-Za-z-_]{22})\/relocate\/?/;
 
 /**
  * @param {string} endpoint 
@@ -258,6 +259,14 @@ async function handleRequest(request, requestURL) {
         //   })
         //   .transform(res);
       }
+      else if (match = requestURL.pathname.match(RE_DASHBOARD_RELOCATE)) {
+        if (method !== 'POST') return notFound();
+
+        const oldUUID = elongateId(match[1]);
+        const newUUID = UUID.v4();
+        await new FaunaDAO().relocateDashboard(oldUUID.buffer, newUUID.buffer);
+        return redirect(new URL(`/dashboard/${shortenId(newUUID)}`, ORIGIN));
+      }
       else if (match = requestURL.pathname.match(RE_DASHBOARD_DOMAIN)) {
         if (method !== 'POST') return notFound();
 
@@ -285,6 +294,16 @@ async function handleRequest(request, requestURL) {
     <form method="POST" action="/dashboard/${match[1]}/domain">
       <input type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
       <button type="submit">Add domain</button>
+    </form>
+    <hr/>
+    <p>You current dashboard key is: <strong><code>${match[1]}</code></strong></p>
+    <form method="POST" action="/dashboard/${match[1]}/relocate">
+      <p><small>If you've accidentally published your dashboard key, you can invalidate it by <em>relocating</em> this dashboard to a new URL:</small></p>
+      <button type="submit">Relocate Dashboard</button>
+      <div>
+        <input type="checkbox" id="okay" name="okay" required>
+        <label for="okay">I understand that the old URL will be inaccessible after relocate this dashboard</label>
+      </div>
     </form>
   </body>
 </html>
