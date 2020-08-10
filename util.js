@@ -1,4 +1,4 @@
-import { UUID } from "uuid-class";
+import { UUID } from "uuid-class/mjs";
 
 const BASE_DIFFICULTY = 8;
 const BASE_CLAPS = 15;

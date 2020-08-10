@@ -48,3 +48,17 @@ export class JSONRequest extends Request {
     super(input instanceof URL ? input.href : input, { headers, body, ...rest });
   }
 }
+
+/**
+ * @param {string} url 
+ * @param {Object<string, any>} [params] 
+ * @param {string|URL} [base] 
+ */
+export const urlWithParams = (url, params, base) => {
+  const u = new URL(url, base || self.location.origin);
+  if (params) {
+    // @ts-ignore
+    u.search = new URLSearchParams([...u.searchParams, ...Object.entries(params)]).toString();
+  }
+  return u.href;
+}

@@ -1,20 +1,27 @@
 import { checkProofOfClap } from './util.js';
 import { FaunaDAO } from './fauna-dao.js';
-import { JSONResponse, JSONRequest } from './json-response.js';
+import { JSONResponse, JSONRequest, urlWithParams } from './json-response.js';
 import { constructEvent } from './webhook.js';
+import { elongateId, shortenId } from './short-id';
 import { UUID } from 'uuid-class/mjs';
+import { ok, badRequest, forbidden, notFound, redirect } from './response-types';
+
+const MY_NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef'
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
 const basicAuth = (username = '', password = '') => `Basic ${btoa(`${username}:${password}`)}`;
 
-const ok = (msg = null) => new Response(msg, { status: 200 });
-const badRequest = (msg = null) => new Response(msg, { status: 400 });
-const forbidden = (msg = null) => new Response(msg, { status: 401 });
-const notFound = (msg = null) => new Response(msg, { status: 404 });
 
 const STRIPE_API = 'https://api.stripe.com/v1';
 const STRIPE_API_VERSION = '2020-03-02';
+
+const ORIGIN = 'http://localhost:8787';
+const DASHBOARD_ORIGIN = 'http://localhost:3000';
+
+const RE_ENTRY = /\/dashboard\/?/;
+const RE_DASHBOARD_ID = /\/dashboard\/([0-9A-Za-z-_]{22})\/?/;
+const RE_DASHBOARD_DOMAIN = /\/dashboard\/([0-9A-Za-z-_]{22})\/domain\/?/;
 
 /**
  * @param {string} endpoint 
@@ -82,31 +89,30 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
  * @returns {Promise<Response>}
  */
 async function handleRequest(request, requestURL) {
-  if (request.method === 'OPTIONS') return new Response();
+  const { method, headers } = request;
+
+  if (method === 'OPTIONS') return new Response();
 
   switch (requestURL.pathname) {
     case '/__init': {
       const dao = new FaunaDAO();
-      if (request.headers.get('Authorization') === Reflect.get(self, 'AUTH')) {
-        return await dao.init()
-      }
-      return forbidden();
+      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
+      return await dao.init()
     }
 
     case '/claps': {
       const dao = new FaunaDAO();
       const url = validateURL(requestURL.searchParams.get('url'));
 
-      const reqOrigin = request.headers.get('Origin');
-      if (!reqOrigin) {
-        return badRequest('Origin not sent');
-      }
+      const reqOrigin = headers.get('Origin');
+      if (!reqOrigin) return badRequest('Origin not sent');
+
       const reqHostname = new URL(reqOrigin).hostname;
       if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
         return badRequest("Origin doesn't match");
       }
 
-      switch (request.method) {
+      switch (method) {
         case 'POST': {
           const { claps, id, nonce } = await request.json();
           if (!RE_UUID.test(id)) {
@@ -119,12 +125,12 @@ async function handleRequest(request, requestURL) {
             return badRequest('Invalid nonce');
           }
 
-          const country = request.headers.get('cf-ipcountry');
+          const country = headers.get('cf-ipcountry');
 
           return dao.updateClaps({
             claps, nonce, country,
             id: new UUID(id).buffer,
-            hostname: url.hostname,
+            hostname: requestURL.hostname,
             href: url.href,
             hash: url.hash,
           });
@@ -132,7 +138,10 @@ async function handleRequest(request, requestURL) {
 
         case 'GET': {
           const url = validateURL(requestURL.searchParams.get('url'));
-          return await dao.getClaps({ href: url.href });
+          return await dao.getClaps({ 
+            hostname: requestURL.hostname,
+            href: url.href,
+          });
         }
 
         default: return notFound();
@@ -140,7 +149,7 @@ async function handleRequest(request, requestURL) {
     }
 
     case '/stripe/checkout-session': {
-      switch (request.method) {
+      switch (method) {
         case 'POST': {
           const { priceId } = await request.json();
 
@@ -167,7 +176,7 @@ async function handleRequest(request, requestURL) {
     }
 
     case '/stripe/setup': {
-      switch (request.method) {
+      switch (method) {
         case 'GET': {
           return new JSONResponse({
             publishableKey: Reflect.get(self, 'STRIPE_PUBLISHABLE_KEY'),
@@ -180,14 +189,14 @@ async function handleRequest(request, requestURL) {
     }
 
     case '/stripe/webhook': {
-      if (request.method !== 'POST') return notFound();
+      if (method !== 'POST') return notFound();
 
       let data, eventType;
       // Check if webhook signing is configured.
       if (Reflect.get(self, 'STRIPE_WEBHOOK_SECRET')) {
         // Retrieve the event by verifying the signature using the raw body and secret.
         let event;
-        let signature = request.headers.get('stripe-signature');
+        let signature = headers.get('stripe-signature');
 
         try {
           event = await constructEvent(
@@ -215,18 +224,20 @@ async function handleRequest(request, requestURL) {
       return ok();
     }
 
-    case '/stripe/forward': {
-      if (request.method !== 'POST') return notFound();
+    default: {
+      let match;
+      if (match = requestURL.pathname.match(/\/stripe\/forward\/?/)) {
+        if (method !== 'POST') return notFound();
 
-      const formData = await request.formData();
+        const formData = await request.formData();
 
-      // @ts-ignore
-      const body = new URLSearchParams([...formData].filter(([, v]) => typeof v === 'string'));
+        // @ts-ignore
+        const body = new URLSearchParams([...formData].filter(([, v]) => typeof v === 'string'));
 
-      const psk = Reflect.get(self, 'STRIPE_PUBLISHABLE_KEY');
-      const session = await stripeAPI('/v1/checkout/sessions', { method: 'POST', body });
+        const psk = Reflect.get(self, 'STRIPE_PUBLISHABLE_KEY');
+        const session = await stripeAPI('/v1/checkout/sessions', { method: 'POST', body });
 
-      return new Response(`
+        return new Response(`
 <!DOCTYPE html>
 <html>
   <head>
@@ -243,14 +254,69 @@ async function handleRequest(request, requestURL) {
 </html>
       `, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
 
-      // const res = await fetch('http://localhost:4002/stripe/');
-      // return new HTMLRewriter()
-      //   .on('*#session-id', new class {
-      //     element(element) { element.setInnerContent(session.id) }
-      //   })
-      //   .transform(res);
-    }
-    default: {
+        // const res = await fetch('http://localhost:4002/stripe/');
+        // return new HTMLRewriter()
+        //   .on('*#session-id', new class {
+        //     element(element) { element.setInnerContent(session.id) }
+        //   })
+        //   .transform(res);
+      }
+      else if (match = requestURL.pathname.match(RE_DASHBOARD_DOMAIN)) {
+        if (method !== 'POST') return notFound();
+
+        const uuid = elongateId(match[1]);
+        const fd = await request.formData();
+        // @ts-ignore
+        const hostnameURL = new URL(fd.get('hostname'));
+        await new FaunaDAO().updateDomain(uuid.buffer, hostnameURL.hostname);
+        return redirect(new URL(`/dashboard/${match[1]}`, ORIGIN));
+      }
+      else if (match = requestURL.pathname.match(RE_DASHBOARD_ID)) {
+        if (method !== 'GET') return notFound();
+
+        const uuid = elongateId(match[1]);
+        const dashboard = await new FaunaDAO().getDashboard(uuid.buffer);
+
+        return new Response(`
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Clap Button Dashboard</title>
+  </head>
+  <body>
+    <p>You current domain is: <strong>${dashboard.hostname}</strong></p>
+    <form method="POST" action="/dashboard/${match[1]}/domain">
+      <input type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
+      <button type="submit">Add domain</button>
+    </form>
+  </body>
+</html>
+      `, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
+      }
+      else if (match = requestURL.pathname.match(RE_ENTRY)) {
+        if (method !== 'GET') return notFound();
+
+        const sessionId = requestURL.searchParams.get('session_id');
+        if (!sessionId) return notFound();
+
+        const data = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
+        const { customer, subscription } = data;
+        // const subscription = await stripeAPI(`/v1/subscriptions/${session.subscription}`);
+
+        if (!subscription || !customer) return badRequest();
+
+        const id = await UUID.v5(sessionId, MY_NAMESPACE);
+
+        await new FaunaDAO().upsertDashboard({
+          id: id.buffer,
+          customer,
+          subscription,
+          active: true,
+        });
+
+        return redirect(new URL(`/dashboard/${shortenId(id)}`, ORIGIN));
+        // return redirect(urlWithParams('/', { 'dashboard_id': shortenId(id) }, DASHBOARD_ORIGIN));
+      }
       return notFound();
     }
   }
