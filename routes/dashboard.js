@@ -5,12 +5,6 @@ import { elongateId, shortenId } from '../short-id';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 import { stripeAPI } from './stripe.js';
 
-
-const RE_DASHBOARD = /\/dashboard\/?/;
-const RE_DASHBOARD_ID = /\/dashboard\/([0-9A-Za-z-_]{22})\/?/;
-const RE_DASHBOARD_DOMAIN = /\/dashboard\/([0-9A-Za-z-_]{22})\/domain\/?/;
-const RE_DASHBOARD_RELOCATE = /\/dashboard\/([0-9A-Za-z-_]{22})\/relocate\/?/;
-
 const ORIGIN = 'http://localhost:8787';
 const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
@@ -21,11 +15,12 @@ const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
  * headers: Headers,
  * method: string,
  * pathname: string,
+ * path: string[],
  * }} param0 
  */
 export async function handleDashboard({ request, requestURL, method, pathname, headers }) {
   let match;
-  if (match = pathname.match(RE_DASHBOARD_RELOCATE)) {
+  if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/relocate\/?/)) {
     if (method !== 'POST') return notFound();
     if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
 
@@ -34,18 +29,17 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     await new FaunaDAO().relocateDashboard(oldUUID.buffer, newUUID.buffer);
     return redirect(new URL(`/dashboard/${shortenId(newUUID)}`, ORIGIN));
   }
-  else if (match = pathname.match(RE_DASHBOARD_DOMAIN)) {
+  else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/cancel\/?/)) {
     if (method !== 'POST') return notFound();
     if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
 
     const uuid = elongateId(match[1]);
     const fd = await request.formData();
     // @ts-ignore
-    const hostnameURL = new URL(fd.get('hostname'));
-    await new FaunaDAO().updateDomain(uuid.buffer, hostnameURL.hostname);
+    await new FaunaDAO().updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
     return redirect(new URL(`/dashboard/${match[1]}`, ORIGIN));
   }
-  else if (match = pathname.match(RE_DASHBOARD_ID)) {
+  else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?/)) {
     if (method !== 'GET') return notFound();
     if (!headers.get('accept').includes('text/html')) return badRequest();
 
@@ -78,7 +72,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 </html>
       `, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
   }
-  else if (match = pathname.match(RE_DASHBOARD)) {
+  else if (match = pathname.match(/\/dashboard\/?/)) {
     if (method !== 'GET') return notFound();
 
     const sessionId = requestURL.searchParams.get('session_id');
