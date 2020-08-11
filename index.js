@@ -1,8 +1,10 @@
 import { FaunaDAO } from './fauna-dao.js';
-import { ok, badRequest, forbidden, notFound, redirect } from './response-types';
+import { ok, badRequest, forbidden, notFound, redirect, internalServerError } from './response-types';
 import { handleDashboard } from './routes/dashboard.js';
 import { handleClaps } from './routes/claps.js';
 import { handleViews } from './routes/views.js';
+
+const DEBUG = true;
 
 /**
  * @param {string} pathname 
@@ -28,8 +30,8 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
     handleRequest(event.request, new URL(event.request.url))
       .catch(err => {
         if (err instanceof Response) return err;
-        console.error('err', err.message);
-        return new Response(null, { status: 500 });
+        else if (DEBUG) throw err;
+        else return internalServerError();
       })
       .then(addCORSHeaders(event.request))
   );
