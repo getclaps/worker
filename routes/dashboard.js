@@ -12,7 +12,7 @@ const RE_DASHBOARD_DOMAIN = /\/dashboard\/([0-9A-Za-z-_]{22})\/domain\/?/;
 const RE_DASHBOARD_RELOCATE = /\/dashboard\/([0-9A-Za-z-_]{22})\/relocate\/?/;
 
 const ORIGIN = 'http://localhost:8787';
-const MY_NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef'
+const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 /**
  * @param {{
@@ -84,13 +84,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     const sessionId = requestURL.searchParams.get('session_id');
     if (!sessionId) return notFound();
 
-    const data = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
-    const { customer, subscription } = data;
-    // const subscription = await stripeAPI(`/v1/subscriptions/${session.subscription}`);
+    const { customer, subscription } = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
 
     if (!subscription || !customer) return badRequest();
 
-    const id = await UUID.v5(sessionId, MY_NAMESPACE);
+    const id = await UUID.v5(sessionId, NAMESPACE);
 
     await new FaunaDAO().upsertDashboard({
       id: id.buffer,
