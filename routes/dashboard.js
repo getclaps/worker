@@ -27,7 +27,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
   let match;
   if (match = pathname.match(RE_DASHBOARD_RELOCATE)) {
     if (method !== 'POST') return notFound();
-    if (!headers.get('content-type')?.includes('application/x-www-form-urlencoded')) return badRequest();
+    if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
 
     const oldUUID = elongateId(match[1]);
     const newUUID = UUID.v4();
@@ -36,7 +36,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
   }
   else if (match = pathname.match(RE_DASHBOARD_DOMAIN)) {
     if (method !== 'POST') return notFound();
-    if (!headers.get('content-type')?.includes('application/x-www-form-urlencoded')) return badRequest();
+    if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
 
     const uuid = elongateId(match[1]);
     const fd = await request.formData();
@@ -47,7 +47,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
   }
   else if (match = pathname.match(RE_DASHBOARD_ID)) {
     if (method !== 'GET') return notFound();
-    if (!headers.get('accept')?.includes('text/html')) return badRequest();
+    if (!headers.get('accept').includes('text/html')) return badRequest();
 
     const uuid = elongateId(match[1]);
     const dashboard = await new FaunaDAO().getDashboard(uuid.buffer);
