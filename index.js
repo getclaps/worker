@@ -2,6 +2,7 @@ import { FaunaDAO } from './fauna-dao.js';
 import { ok, badRequest, forbidden, notFound, redirect } from './response-types';
 import { handleDashboard } from './routes/dashboard.js';
 import { handleClaps } from './routes/claps.js';
+import { handleViews } from './routes/views.js';
 
 /**
  * @param {string} pathname 
@@ -55,6 +56,9 @@ async function handleRequest(request, requestURL) {
     }
     case 'claps': {
       return handleClaps({ request, requestURL, method, pathname, path, headers });
+    }
+    case 'views': {
+      return handleViews({ request, requestURL, method, pathname, path, headers });
     }
     case 'dashboard': {
       return handleDashboard({ request, requestURL, method, pathname, path, headers })
