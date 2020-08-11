@@ -34,15 +34,13 @@ export const validateURL = (url) => {
 export async function handleClaps({ request, requestURL, method, path, headers }) {
   if (path.length > 1) return notFound();
 
-  const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
-  const originURL = validateURL(headers.get('Origin'));
+  const dao = new FaunaDAO();
 
-  const reqHostname = originURL.hostname;
-  if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
+  const originURL = validateURL(headers.get('Origin'));
+  const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
+  if (![url.hostname, 'localhost', '0.0.0.0'].includes(originURL.hostname)) {
     return badRequest("Origin doesn't match");
   }
-
-  const dao = new FaunaDAO();
 
   switch (method) {
     case 'POST': {

@@ -12,13 +12,14 @@ const getPath = (pathname) => {
 }
 
 /**
- * @param {Response} r 
+ * @param {Request} request 
+ * @returns {(response: Response) => Response} 
  */
-const addCORSHeaders = (r) => {
-  r.headers.set('Access-Control-Allow-Origin', '*');
-  r.headers.set('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS, POST');
-  r.headers.set('Access-Control-Allow-Headers', 'Content-Type, Cache-Control, Pragma, Authorization');
-  return r;
+const addCORSHeaders = (request) => (response) => {
+  response.headers.set('access-control-allow-origin', request.headers.get('origin'));
+  if (request.headers.has('access-control-request-method')) response.headers.set('access-control-allow-methods', request.headers.get('access-control-request-method'));
+  if (request.headers.has('access-control-request-headers')) response.headers.set('access-control-allow-headers', request.headers.get('access-control-request-headers'));
+  return response;
 }
 
 self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
@@ -29,7 +30,7 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
         console.error('err', err.message);
         return new Response(null, { status: 500 });
       })
-      .then(addCORSHeaders)
+      .then(addCORSHeaders(event.request))
   );
 });
 
