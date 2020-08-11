@@ -28,54 +28,53 @@ export const validateURL = (url) => {
  * headers: Headers,
  * method: string,
  * pathname: string,
+ * path: string[],
  * }} param0 
  */
-export async function handleClaps({ request, requestURL, method, pathname, headers }) {
-  switch (pathname) {
-    case '/claps': {
-      const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
-      const originURL = validateURL(headers.get('Origin'));
+export async function handleClaps({ request, requestURL, method, path, headers }) {
+  if (path.length > 1) return notFound();
 
-      const reqHostname = originURL.hostname;
-      if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
-        return badRequest("Origin doesn't match");
+  const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
+  const originURL = validateURL(headers.get('Origin'));
+
+  const reqHostname = originURL.hostname;
+  if (![url.hostname, 'localhost', '0.0.0.0'].includes(reqHostname)) {
+    return badRequest("Origin doesn't match");
+  }
+
+  const dao = new FaunaDAO();
+
+  switch (method) {
+    case 'POST': {
+      const { claps, id, nonce } = await request.json();
+      if (!RE_UUID.test(id)) {
+        return badRequest('Malformed id. Needs to be UUID');
+      }
+      if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
+        return badRequest('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER');
+      }
+      if (await checkProofOfClap({ url, claps, id, nonce }) !== true) {
+        return badRequest('Invalid nonce');
       }
 
-      const dao = new FaunaDAO();
+      const country = headers.get('cf-ipcountry');
 
-      switch (method) {
-        case 'POST': {
-          const { claps, id, nonce } = await request.json();
-          if (!RE_UUID.test(id)) {
-            return badRequest('Malformed id. Needs to be UUID');
-          }
-          if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
-            return badRequest('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER');
-          }
-          if (await checkProofOfClap({ url, claps, id, nonce }) !== true) {
-            return badRequest('Invalid nonce');
-          }
-
-          const country = headers.get('cf-ipcountry');
-
-          return dao.updateClaps({
-            claps, nonce, country,
-            id: new UUID(id).buffer,
-            hostname: originURL.hostname,
-            href: url.href,
-            hash: url.hash,
-          });
-        }
-
-        case 'GET': {
-          return await dao.getClaps({
-            hostname: originURL.hostname,
-            href: url.href,
-          });
-        }
-
-        default: return notFound();
-      }
+      return dao.updateClaps({
+        claps, nonce, country,
+        id: new UUID(id).buffer,
+        hostname: originURL.hostname,
+        href: url.href,
+        hash: url.hash,
+      });
     }
+
+    case 'GET': {
+      return await dao.getClaps({
+        hostname: originURL.hostname,
+        href: url.href,
+      });
+    }
+
+    default: return notFound();
   }
 }

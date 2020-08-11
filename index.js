@@ -4,6 +4,14 @@ import { handleDashboard } from './routes/dashboard.js';
 import { handleClaps } from './routes/claps.js';
 
 /**
+ * @param {string} pathname 
+ */
+const getPath = (pathname) => {
+  const x = `/${pathname}/`.replace(/\/+/g, '/');
+  return x.substr(1, x.length - 2).split('/');
+}
+
+/**
  * @param {Response} r 
  */
 const addCORSHeaders = (r) => {
@@ -36,17 +44,22 @@ async function handleRequest(request, requestURL) {
 
   if (method === 'OPTIONS') return new Response();
 
-  if (pathname.startsWith('/__init')) {
-    const dao = new FaunaDAO();
-    if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
-    return dao.init()
-  }
-  else if (pathname.startsWith('/claps')) {
-    return handleClaps({ request, requestURL, method, pathname, headers });
-  } 
-  else if (pathname.startsWith('/dashboard')) {
-    return handleDashboard({ request, requestURL, method, pathname, headers })
-  }
+  const path = getPath(pathname);
 
-  return notFound();
+  switch (path[0]) {
+    case '__init': {
+      const dao = new FaunaDAO();
+      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
+      return dao.init()
+    }
+    case 'claps': {
+      return handleClaps({ request, requestURL, method, pathname, path, headers });
+    }
+    case 'dashboard': {
+      return handleDashboard({ request, requestURL, method, pathname, path, headers })
+    }
+    default: {
+      return notFound();
+    }
+  }
 }
