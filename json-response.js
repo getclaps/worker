@@ -18,11 +18,22 @@ export {
 /** @typedef {BodyInit | object} JSONBodyInit */
 /** @typedef {Omit<RequestInit, 'body'> & { body?: JSONBodyInit | null }} JSONRequestInit */
 
+function isPOJO(arg) {
+  if (arg == null || typeof arg !== 'object') {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(arg);
+  if (proto == null) {
+    return true; // `Object.create(null)`
+  }
+  return proto === Object.prototype;
+}
+
 /**
  * @param {JSONBodyInit} b 
  */
 function isBodyInit(b) {
-  return (b == null || typeof b === 'string' || b instanceof Blob || b instanceof ArrayBuffer || ArrayBuffer.isView(b) || b instanceof FormData || b instanceof URLSearchParams || b instanceof ReadableStream);
+  return !isPOJO(b);
 }
 
 export class JSONRequest extends Request {
