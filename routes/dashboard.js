@@ -35,7 +35,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
     const oldUUID = elongateId(match[1]);
     const newUUID = UUID.v4();
-    await new FaunaDAO().relocateDashboard(oldUUID.buffer, newUUID.buffer);
+    const { subscription } = await new FaunaDAO().relocateDashboard(oldUUID.buffer, newUUID.buffer);
+    await stripeAPI(`/v1/subscriptions/${subscription}`, {
+      method: 'POST',
+      data: { 'metadata[dashboard_id]': shortenId(newUUID) },
+    })
     return redirect(new URL(`/dashboard/${shortenId(newUUID)}`, ORIGIN));
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/cancel\/?/)) {
@@ -170,6 +174,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     if (!subscription || !customer) return badRequest();
 
     const id = await UUID.v5(sessionId, NAMESPACE);
+
+    await stripeAPI(`/v1/subscriptions/${subscription}`, {
+      method: 'POST',
+      data: { 'metadata[dashboard_id]': shortenId(id) },
+    });
 
     await new FaunaDAO().upsertDashboard({
       id: id.buffer,
