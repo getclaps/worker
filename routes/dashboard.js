@@ -28,8 +28,7 @@ const page = ({ id, title = 'Clap Button Dashboard' }) => (content) => new Respo
     <main>
       <nav class="bp3-tabs">
         <ul class="bp3-tab-list" role="tablist">
-          <li class="bp3-tab" role="tab"><a href="/dashboard/${id}/domain">Domain</a></li>
-          <li class="bp3-tab" role="tab"><a href="/dashboard/${id}/key">Key</a></li>
+          <li class="bp3-tab" role="tab"><a href="/dashboard/${id}/setup">Setup</a></li>
           <li class="bp3-tab" role="tab"><a href="/dashboard/${id}/subscription">Subscription</a></li>
           <li class="bp3-tab" role="tab"><a href="/dashboard/${id}/invoices">Invoices</a></li>
           <li class="bp3-tab" role="tab"><a href="/dashboard/${id}/stats">Stats</a></li>
@@ -54,44 +53,6 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
   const dao = new FaunaDAO();
 
   let match;
-  // if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/relocate\/?$/)) {
-  //   if (method !== 'POST') return notFound();
-  //   if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
-
-  //   const oldUUID = elongateId(match[1]);
-  //   const newUUID = UUID.v4();
-  //   const { subscription } = await dao.relocateDashboard(oldUUID.buffer, newUUID.buffer);
-  //   await stripeAPI(`/v1/subscriptions/${subscription}`, {
-  //     method: 'POST',
-  //     data: { 'metadata[dashboard_id]': shortenId(newUUID) },
-  //   })
-  //   return redirect(new URL(`/dashboard/${shortenId(newUUID)}`, WORKER_DOMAIN));
-  // }
-  // else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/cancel\/?$/)) {
-  //   if (method !== 'POST') return notFound();
-  //   if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
-
-  //   const uuid = elongateId(match[1]);
-  //   const dashboard = await dao.getDashboard(uuid.buffer);
-  //   const fd = await request.formData();
-
-  //   await stripeAPI(`/v1/subscriptions/${dashboard.subscription}`, {
-  //     method: 'POST',
-  //     data: { 'cancel_at_period_end': fd.get('undo') ? 'false' : 'true' },
-  //   });
-
-  //   return redirect(new URL(`/dashboard/${match[1]}`, WORKER_DOMAIN));
-  // }
-  // else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/domain\/?$/)) {
-  //   if (method !== 'POST') return notFound();
-  //   if (!headers.get('content-type').includes('application/x-www-form-urlencoded')) return badRequest();
-
-  //   const uuid = elongateId(match[1]);
-  //   const fd = await request.formData();
-  //   // @ts-ignore
-  //   await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
-  //   return redirect(new URL(`/dashboard/${match[1]}`, WORKER_DOMAIN));
-  // }
   if (match = pathname.match(/\/new-dashboard\/?/)) {
     if (method !== 'GET') return notFound();
 
@@ -117,56 +78,54 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     });
 
     return redirect(new URL(`/dashboard/${shortenId(id)}`, WORKER_DOMAIN));
-    // return redirect(urlWithParams('/', { 'dashboard_id': shortenId(id) }, DASHBOARD_ORIGIN));
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?/)) {
     if (!headers.get('accept').includes('text/html')) return badRequest();
 
-    const id = match[1];
-    const uuid = elongateId(id);
-    const dashboard = await dao.getDashboard(uuid.buffer);
+    let id = match[1];
+    let uuid = elongateId(id);
+    let dashboard = await dao.getDashboard(uuid.buffer);
+    let error = false;
 
-    if (pathname.match(/\/domain\/?$/)) {
-      let newDashboard;
-      let error = false;
+    if (pathname.match(/\/setup\/?$/)) {
       if (method === 'POST') {
         const fd = await request.formData();
-        try {
-          // @ts-ignore
-          newDashboard = await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
-        } catch (err) { 
-          if (err instanceof Response && err.status === 400) {
-            error = true;
-            newDashboard = dashboard;
-          } else throw err;
+        switch (fd.get('method')) {
+          case 'domain': {
+            try {
+              // @ts-ignore
+              dashboard = await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
+            } catch (err) {
+              if (err instanceof Response && err.status === 400) {
+                error = true;
+              } else throw err;
+            }
+            break;
+          }
+          case 'relocate': {
+            const oldUUID = elongateId(match[1]);
+            const newUUID = UUID.v4();
+            const { subscription } = await dao.relocateDashboard(oldUUID.buffer, newUUID.buffer);
+            const newId = shortenId(newUUID);
+            await stripeAPI(`/v1/subscriptions/${subscription}`, {
+              method: 'POST',
+              data: { 'metadata[dashboard_id]': shortenId(newUUID) },
+            });
+            return redirect(new URL(`/dashboard/${newId}/key`, WORKER_DOMAIN));
+          }
+          default: return badRequest();
         }
-      } else if (method === 'GET') {
-        newDashboard = dashboard;
-      }
+      } else if (method === 'GET') { } else return badRequest();
       return page({ id })(`
         <h3>Domain</h3>
-        <p>You current domain is: <strong>${newDashboard.hostname}</strong></p>
+        <p>You current domain is: <strong>${dashboard.hostname}</strong></p>
         <form method="POST" action="/dashboard/${id}/domain">
           <input type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
+          <input type="hidden" name="method" value="domain"/>
           <button type="submit">Set domain</button>
           ${error ? `<div>Someone is already using that domain!</div>` : ''}
         </form>
-      `);
-    }
-    else if (pathname.match(/\/key\/?$/)) {
-      if (method === 'POST') {
-        const oldUUID = elongateId(match[1]);
-        const newUUID = UUID.v4();
-        const { subscription } = await dao.relocateDashboard(oldUUID.buffer, newUUID.buffer);
-        const newId = shortenId(newUUID);
-        await stripeAPI(`/v1/subscriptions/${subscription}`, {
-          method: 'POST',
-          data: { 'metadata[dashboard_id]': shortenId(newUUID) },
-        });
-        return redirect(new URL(`/dashboard/${newId}/key`, WORKER_DOMAIN));
-      } else if (method === 'GET') {} else return badRequest();
 
-      return page({ id })(`
         <h3>Key</h3>
         <p>You current dashboard key is: <strong><code>${id}</code></strong></p>
         <form method="POST" action="/dashboard/${id}/key">
@@ -176,6 +135,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             <input type="checkbox" id="okay" name="okay" required>
             <label for="okay">I understand that the old URL will be inaccessible after relocate this dashboard</label>
           </p>
+          <input type="hidden" name="method" value="relocate"/>
         </form>
       `);
     }
@@ -287,7 +247,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         </table>
       `);
     } else {
-      return redirect(new URL(`/dashboard/${id}/domain`, WORKER_DOMAIN));
+      return redirect(new URL(`/dashboard/${id}/setup`, WORKER_DOMAIN));
     }
   }
 }
