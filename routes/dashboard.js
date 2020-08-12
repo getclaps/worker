@@ -128,10 +128,18 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
     if (pathname.match(/\/domain\/?$/)) {
       let newDashboard;
+      let error = false;
       if (method === 'POST') {
         const fd = await request.formData();
-        // @ts-ignore
-        newDashboard = await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
+        try {
+          // @ts-ignore
+          newDashboard = await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
+        } catch (err) { 
+          if (err instanceof Response && err.status === 400) {
+            error = true;
+            newDashboard = dashboard;
+          } else throw err;
+        }
       } else if (method === 'GET') {
         newDashboard = dashboard;
       }
@@ -140,8 +148,8 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         <p>You current domain is: <strong>${newDashboard.hostname}</strong></p>
         <form method="POST" action="/dashboard/${id}/domain">
           <input type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
-          <input type="hidden" method="set"/>
           <button type="submit">Set domain</button>
+          ${error ? `<div>Someone is already using that domain!</div>` : ''}
         </form>
       `);
     }
@@ -163,7 +171,6 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         <p>You current dashboard key is: <strong><code>${id}</code></strong></p>
         <form method="POST" action="/dashboard/${id}/key">
           <p><small>If you've accidentally published your dashboard key, you can invalidate it by <em>relocating</em> this dashboard to a new URL:</small></p>
-          <input type="hidden" method="relocate"/>
           <button type="submit">Relocate Dashboard</button>
           <p>
             <input type="checkbox" id="okay" name="okay" required>
@@ -280,7 +287,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         </table>
       `);
     } else {
-      return page({ id })('');
+      return redirect(new URL(`/dashboard/${id}/domain`, WORKER_DOMAIN));
     }
   }
 }
