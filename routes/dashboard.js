@@ -5,7 +5,7 @@ import { elongateId, shortenId } from '../short-id';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 import { stripeAPI } from './stripe.js';
 
-const ORIGIN = 'http://localhost:8787';
+const WORKER_DOMAIN = 'http://localhost:8787';
 const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 export const styles = `
@@ -40,7 +40,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       method: 'POST',
       data: { 'metadata[dashboard_id]': shortenId(newUUID) },
     })
-    return redirect(new URL(`/dashboard/${shortenId(newUUID)}`, ORIGIN));
+    return redirect(new URL(`/dashboard/${shortenId(newUUID)}`, WORKER_DOMAIN));
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/cancel\/?/)) {
     if (method !== 'POST') return notFound();
@@ -54,7 +54,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       data: { 'cancel_at_period_end': fd.get('undo') ? 'false' : 'true' },
     });
 
-    return redirect(new URL(`/dashboard/${match[1]}`, ORIGIN));
+    return redirect(new URL(`/dashboard/${match[1]}`, WORKER_DOMAIN));
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/domain\/?/)) {
     if (method !== 'POST') return notFound();
@@ -64,7 +64,34 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     const fd = await request.formData();
     // @ts-ignore
     await new FaunaDAO().updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
-    return redirect(new URL(`/dashboard/${match[1]}`, ORIGIN));
+    return redirect(new URL(`/dashboard/${match[1]}`, WORKER_DOMAIN));
+  }
+  else if (match = pathname.match(/\/new-dashboard\/?/)) {
+    if (method !== 'GET') return notFound();
+
+    const sessionId = requestURL.searchParams.get('session_id');
+    if (!sessionId) return notFound();
+
+    const { customer, subscription } = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
+
+    if (!subscription || !customer) return badRequest();
+
+    const id = await UUID.v5(sessionId, NAMESPACE);
+
+    await stripeAPI(`/v1/subscriptions/${subscription}`, {
+      method: 'POST',
+      data: { 'metadata[dashboard_id]': shortenId(id) },
+    });
+
+    await new FaunaDAO().upsertDashboard({
+      id: id.buffer,
+      customer,
+      subscription,
+      active: true,
+    });
+
+    return redirect(new URL(`/dashboard/${shortenId(id)}`, WORKER_DOMAIN));
+    // return redirect(urlWithParams('/', { 'dashboard_id': shortenId(id) }, DASHBOARD_ORIGIN));
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?/)) {
     if (method !== 'GET') return notFound();
@@ -162,32 +189,5 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
   </body>
 </html>
       `, { headers: { 'Content-Type': 'text/html;charset=UTF-8' } });
-  }
-  else if (match = pathname.match(/\/dashboard\/?/)) {
-    if (method !== 'GET') return notFound();
-
-    const sessionId = requestURL.searchParams.get('session_id');
-    if (!sessionId) return notFound();
-
-    const { customer, subscription } = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
-
-    if (!subscription || !customer) return badRequest();
-
-    const id = await UUID.v5(sessionId, NAMESPACE);
-
-    await stripeAPI(`/v1/subscriptions/${subscription}`, {
-      method: 'POST',
-      data: { 'metadata[dashboard_id]': shortenId(id) },
-    });
-
-    await new FaunaDAO().upsertDashboard({
-      id: id.buffer,
-      customer,
-      subscription,
-      active: true,
-    });
-
-    return redirect(new URL(`/dashboard/${shortenId(id)}`, ORIGIN));
-    // return redirect(urlWithParams('/', { 'dashboard_id': shortenId(id) }, DASHBOARD_ORIGIN));
   }
 }
