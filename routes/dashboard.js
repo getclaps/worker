@@ -8,6 +8,15 @@ import { stripeAPI } from './stripe.js';
 const ORIGIN = 'http://localhost:8787';
 const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
+export const styles = `
+  html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
+  main { max-width: 768px; margin: auto; }
+  a { color: rgb(79,177,186) }
+  @media screen and (prefers-color-scheme: dark) {
+    html { color: #ccc; background: #282f31; }
+  }
+`;
+
 /**
  * @param {{
  * request: Request,
