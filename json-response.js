@@ -18,22 +18,30 @@ export {
 /** @typedef {BodyInit | object} JSONBodyInit */
 /** @typedef {Omit<RequestInit, 'body'> & { body?: JSONBodyInit | null }} JSONRequestInit */
 
-function isPOJO(arg) {
-  if (arg == null || typeof arg !== 'object') {
-    return false;
-  }
-  const proto = Object.getPrototypeOf(arg);
-  if (proto == null) {
-    return true; // `Object.create(null)`
-  }
-  return proto === Object.prototype;
-}
+// function isPOJO(arg) {
+//   if (arg == null || typeof arg !== 'object') {
+//     return false;
+//   }
+//   const proto = Object.getPrototypeOf(arg);
+//   if (proto == null) {
+//     return true; // `Object.create(null)`
+//   }
+//   return proto === Object.prototype;
+// }
 
 /**
  * @param {JSONBodyInit} b 
  */
 function isBodyInit(b) {
-  return !isPOJO(b);
+  return (
+    b == null || 
+    typeof b === 'string' ||
+    (typeof Blob !== 'undefined' && b instanceof Blob) ||
+    (typeof ArrayBuffer !== 'undefined' && (b instanceof ArrayBuffer || ArrayBuffer.isView(b))) ||
+    (typeof FormData !== 'undefined' && b instanceof FormData) ||
+    (typeof URLSearchParams !== 'undefined' && b instanceof URLSearchParams) ||
+    (typeof ReadableStream !== 'undefined' && b instanceof ReadableStream)
+  );
 }
 
 export class JSONRequest extends Request {
