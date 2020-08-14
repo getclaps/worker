@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "faunadb": "^2.14.2",
+    "sanitize-html": "^1.27.3",
     "uuid-class": "^0.2.0"
   }
 }
