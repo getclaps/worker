@@ -18,9 +18,11 @@ export const styles = `
 
 const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content) => new Response(`
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
+    <meta charset="utf-8">
     <title>${title}</title>
+    <meta name="robots" content="noindex">
     <link href="https://unpkg.com//normalize.css/normalize.css" rel="stylesheet"/>
     <link href="https://unpkg.com/@blueprintjs/icons/lib/css/blueprint-icons.css" rel="stylesheet" />
     <link href="https://unpkg.com/@blueprintjs/core/lib/css/blueprint.css" rel="stylesheet"/>
@@ -47,7 +49,13 @@ const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content
       ${content}
     </main>
   </body>
-</html>`, { headers: { ...headers, 'Content-Type': 'text/html;charset=UTF-8' } })
+</html>`, { 
+  headers: { 
+    ...headers, 
+    'Content-Type': 'text/html;charset=UTF-8', 
+    'X-Robots-Tag': 'noindex',
+  } 
+});
 
 /**
  * @param {{
@@ -95,7 +103,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     let id = match[1];
     let uuid = elongateId(id);
     let dashboard = await dao.getDashboard(uuid.buffer);
-    let error = false;
+    let setError = false;
 
     if (pathname.match(/\/subscription\/?$/)) {
       let subscription;
@@ -118,7 +126,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const time = (ts) => `<time datetime="${new Date(ts * 1000).toISOString()}">${new Intl.DateTimeFormat(locale).format(new Date(ts * 1000))}</time>`;
 
       return page({ id })(`
-        <h3>Subscription</h3>
+        <h2>Subscription</h2>
         <p>
           <small class="bp3-tag">${subscription.status.toUpperCase()}</small>
           ${subscription.cancel_at_period_end
@@ -145,7 +153,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             </form>`
         }
 
-        <h3>Invoices</h3>
+        <h2>Invoices</h2>
         <table class="bp3-html-table bp3-html-table-striped">
           <thead>
             <tr>
@@ -174,7 +182,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const [value, unit] = timeFrame.split('-');
       const { stats, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
       return page({ id })(`
-        <h3>Stats</h3>
+        <h2>Stats</h2>
         <form method="GET" action="/dashboard/${id}/stats">
           <div class="bp3-select">
             <select name="time" onchange="this.form.submit()">
@@ -218,8 +226,10 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               // @ts-ignore
               dashboard = await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
             } catch (err) {
-              if (err instanceof Response && err.status === 400) {
-                error = true;
+              if (err instanceof Response) {
+                if (err.status === 409) {
+                  setError = true;
+                }
               } else throw err;
             }
             break;
@@ -251,7 +261,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <strong><code style="font-size:1rem">${id}</code></strong>
         </details>
         ${!isBookmarked ? `
-          <div id="bookmark-warning" class="bp3-callout bp3-intent-warning" style="margin-bottom:1rem;">
+          <div id="bookmark-warning" class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
             <h4 class="bp3-heading">Please bookmark this page!</h4>
             Please bookmark this page by pressing <strong>${isMac ? '⌘': 'Ctrl'}+D</strong> on your keyboard.
             Your key is your primary access credential to this dashboard.
@@ -285,7 +295,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <strong>${sanetize(dashboard.hostname)}</strong>
         </details>
         ${dashboard.hostname == null ? `
-          <div id="bookmark-warning" class="bp3-callout bp3-intent-warning" style="margin-bottom:1rem;">
+          <div class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
             <h4 class="bp3-heading">Please set a domain</h4>
             Once you've set a domain, Clap Button will show and persist claps on all pages within that domain.
           </div>
@@ -294,7 +304,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <input type="hidden" name="method" value="domain"/>
           <input class="bp3-input" type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
           <button class="bp3-button bp3-intent-primary" type="submit">Set domain</button>
-          ${error ? `<div>Someone is already using that domain!</div>` : ''}
+          ${setError ? `<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` : ''}
         </form>
 
       `);
