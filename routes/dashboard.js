@@ -1,4 +1,4 @@
-import { UUID } from 'uuid-class/mjs';
+import { UUID } from 'uuid-class';
 import sanetize from 'sanitize-html';
 
 import { FaunaDAO } from '../fauna-dao.js';

@@ -1,4 +1,4 @@
-import { UUID } from 'uuid-class/mjs';
+import { UUID } from 'uuid-class';
 import { Base64Encoder, Base64Decoder } from 'base64-encoding/mjs';
 
 /** @param {UUID} uuid */

@@ -1,4 +1,4 @@
-import { UUID } from 'uuid-class/mjs';
+import { UUID } from 'uuid-class';
 
 import { checkProofOfClap } from '../util.js';
 import { FaunaDAO } from '../fauna-dao.js';
