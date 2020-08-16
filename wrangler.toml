@@ -1,6 +1,14 @@
-name = "applause-worker"
+name = "clap-worker-dev"
 type = "webpack"
 account_id = "efb289061241436254219b424fcea4cf"
 workers_dev = true
 route = ""
 zone_id = ""
+
+[env.staging]
+name = "clap-worker-stage"
+route = "*.getclaps.dev/*"
+
+[env.production]
+name = "clap-worker"
+route = "*.getclaps.net/*"
