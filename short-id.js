@@ -1,5 +1,5 @@
 import { UUID } from 'uuid-class';
-import { Base64Encoder, Base64Decoder } from 'base64-encoding/mjs';
+import { Base64Encoder, Base64Decoder } from 'base64-encoding';
 
 /** @param {UUID} uuid */
 export const shortenId = (uuid) => new Base64Encoder({ urlFriendly: true }).encode(uuid.buffer);
