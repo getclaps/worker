@@ -28,7 +28,7 @@ export const validateURL = (url) => {
     targetURL.search = ''
     return targetURL;
   } catch {
-    throw badRequest('Invalid URL. Needs to be fully qualified, e.g. https://hydejack.com');
+    throw badRequest('Invalid URL. Needs to be fully qualified, e.g. https://getclaps.dev');
   }
 }
 
