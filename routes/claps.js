@@ -4,6 +4,17 @@ import { checkProofOfClap } from '../util.js';
 import { FaunaDAO } from '../fauna-dao.js';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
+export const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
+
+/**
+ * @param {Headers} headers 
+ */
+export async function extractData(headers) {
+  const country = headers.get('cf-ipcountry');
+  const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', IP_NAMESPACE);
+  return { country, visitor };
+}
+
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
 /**
@@ -55,10 +66,10 @@ export async function handleClaps({ request, requestURL, method, path, headers }
         return badRequest('Invalid nonce');
       }
 
-      const country = headers.get('cf-ipcountry');
+      const { country, visitor } = await extractData(headers);
 
       return dao.updateClaps({
-        claps, nonce, country,
+        claps, nonce, country, visitor,
         id: new UUID(id),
         hostname: originURL.hostname,
         href: url.href,

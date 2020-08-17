@@ -1,7 +1,17 @@
 import { FaunaDAO } from '../fauna-dao.js';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
-import { validateURL } from './claps';
+import { validateURL, extractData } from './claps';
+
+/**
+ * @param {string|null} referrerRaw 
+ * @returns {string|null}
+ */
+function getReferrer(referrerRaw) {
+  if (referrerRaw != null) {
+    try { return validateURL(referrerRaw).href } catch {}
+  }
+}
 
 /**
  * @param {{
@@ -26,11 +36,14 @@ export async function handleViews({ requestURL, method, path, headers }) {
     return badRequest("Origin doesn't match");
   }
 
-  const country = headers.get('cf-ipcountry');
+  const referrer = getReferrer(requestURL.searchParams.get('referrer'));
+  const { country, visitor } = await extractData(headers);
 
   return await dao.getClapsAndUpdateViews({
     hostname: originURL.hostname,
     href: url.href,
+    referrer,
     country,
+    visitor,
   });
 }
