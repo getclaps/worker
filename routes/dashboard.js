@@ -89,7 +89,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     });
 
     await dao.upsertDashboard({
-      id: id.buffer,
+      id,
       customer,
       subscription,
       active: true,
@@ -102,14 +102,14 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
     let id = match[1];
     let uuid = elongateId(id);
-    let dashboard = await dao.getDashboard(uuid.buffer);
+    let dashboard = await dao.getDashboard(uuid);
     let setError = false;
 
     if (pathname.match(/\/subscription\/?$/)) {
       let subscription;
       if (method === 'POST') {
         const uuid = elongateId(match[1]);
-        const dashboard = await dao.getDashboard(uuid.buffer);
+        const dashboard = await dao.getDashboard(uuid);
         const fd = await request.formData();
 
         subscription = await stripeAPI(`/v1/subscriptions/${dashboard.subscription}`, {
@@ -237,7 +237,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           case 'relocate': {
             const oldUUID = elongateId(match[1]);
             const newUUID = UUID.v4();
-            const { subscription } = await dao.relocateDashboard(oldUUID.buffer, newUUID.buffer);
+            const { subscription } = await dao.relocateDashboard(oldUUID, newUUID);
             const newId = shortenId(newUUID);
             await stripeAPI(`/v1/subscriptions/${subscription}`, {
               method: 'POST',

@@ -59,7 +59,7 @@ export async function handleClaps({ request, requestURL, method, path, headers }
 
       return dao.updateClaps({
         claps, nonce, country,
-        id: new UUID(id).buffer,
+        id: new UUID(id),
         hostname: originURL.hostname,
         href: url.href,
         hash: url.hash,
