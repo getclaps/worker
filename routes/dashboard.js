@@ -199,6 +199,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             <tr>
               <th></th>
               <th>Views</th>
+              <th>Clappers</th>
               <th>Claps</th>
             </tr>
           </thead>
@@ -207,6 +208,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               <tr>
                 <td>${sanetize(new URL(stat.href).pathname)}</td>
                 <td>${stat.views}</td>
+                <td>${stat.clapRequests}</td>
                 <td>${stat.claps}</td>
               </tr>`).join('')}
           </tbody>
