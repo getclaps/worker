@@ -98,7 +98,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     return redirect(new URL(`/dashboard/${shortenId(id)}`, WORKER_DOMAIN));
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?/)) {
-    if (!headers.get('accept').includes('text/html')) return badRequest();
+    if (!(headers.get('accept') || '').includes('text/html')) return badRequest();
 
     let id = match[1];
     let uuid = elongateId(id);
@@ -215,7 +215,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     }
     else if (pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?$/)) {
       const isMac = (headers.get('user-agent') || '').match(/mac/i);
-      let isBookmarked = (headers.get('cookie' || '').includes(`bookmarked=${id}`));
+      let isBookmarked = (headers.get('cookie') || '').includes(`bookmarked=${id}`);
       let setHeaders;
 
       if (method === 'POST') {
