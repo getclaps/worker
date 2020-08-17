@@ -4,7 +4,7 @@ import { handleDashboard } from './routes/dashboard.js';
 import { handleClaps } from './routes/claps.js';
 import { handleViews } from './routes/views.js';
 
-const DEBUG = true;
+const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
 
 /**
  * @param {string} pathname 

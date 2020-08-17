@@ -6,7 +6,7 @@ import { elongateId, shortenId } from '../short-id';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 import { stripeAPI } from './stripe.js';
 
-const WORKER_DOMAIN = 'http://localhost:8787';
+const WORKER_DOMAIN = Reflect.get(self, 'WORKER_DOMAIN');
 const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 export const styles = `
