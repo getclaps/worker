@@ -14,7 +14,7 @@ const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
  */
 function getReferrer(referrerRaw) {
   if (referrerRaw != null) {
-    if (!referrerRaw.match(RE_PROTOCOL)) referrerRaw = `http://${referrerRaw}`;
+    if (!referrerRaw.match(RE_PROTOCOL)) referrerRaw = `https://${referrerRaw}`;
     try { return validateURL(referrerRaw).href } catch {}
   }
 }
