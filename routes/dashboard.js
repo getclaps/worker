@@ -233,7 +233,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <tbody>
             ${referrals.map((stat) => `
               <tr>
-                <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).origin)}</td>
+                <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).href)}</td>
                 <td>${stat.referrals}</td>
               </tr>`).join('')}
           </tbody>
