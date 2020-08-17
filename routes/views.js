@@ -3,12 +3,18 @@ import { ok, badRequest, forbidden, notFound, redirect } from '../response-types
 
 import { validateURL, extractData } from './claps';
 
+// A non-empty scheme component followed by a colon (:),
+// consisting of a sequence of characters beginning with a letter and 
+// followed by any combination of letters, digits, plus (+), period (.), or hyphen (-).
+const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
+
 /**
  * @param {string|null} referrerRaw 
  * @returns {string|null}
  */
 function getReferrer(referrerRaw) {
   if (referrerRaw != null) {
+    if (!referrerRaw.match(RE_PROTOCOL)) referrerRaw = `http://${referrerRaw}`;
     try { return validateURL(referrerRaw).href } catch {}
   }
 }

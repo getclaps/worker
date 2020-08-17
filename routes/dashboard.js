@@ -182,7 +182,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     else if (pathname.match(/\/stats\/?$/)) {
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
-      const { visitors, stats, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
+      const { visitors, stats, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
       return page({ id })(`
       <div class="bp3-running-text">
         <h2>Stats</h2>
@@ -201,6 +201,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <dt>Total page views</dt><dd><strong>${totalViews}</strong></dd>
           <dt>Total claps</dt><dd><strong>${totalClaps}</strong></dd>
         </dl>
+        <h3>Top pages</h3>
         <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
           <thead>
             <tr>
@@ -217,6 +218,23 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 <td>${stat.views}</td>
                 <td>${stat.clapRequests}</td>
                 <td>${stat.claps}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <h3>Top referrers</h3>
+        <p>If the <a href="https://en.wikipedia.org/wiki/HTTP_referer" target="_blank"><code>Referrer</code></a> of a page view is known, it will be shown here. Direct traffic and unknown referrers are omitted.</p>
+        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+          <thead>
+            <tr>
+              <th>Referrer</th>
+              <th>Referrals</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${referrals.map((stat) => `
+              <tr>
+                <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).origin)}</td>
+                <td>${stat.referrals}</td>
               </tr>`).join('')}
           </tbody>
         </table>
