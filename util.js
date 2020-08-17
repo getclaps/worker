@@ -30,7 +30,7 @@ const digest = (message) => sha256(new TextEncoder().encode(message));
 
 /**
  * @param {{
- *   url: URL,
+ *   url: URL|string,
  *   id: UUID|string,
  *   claps: number,
  *   nonce: number,
@@ -38,7 +38,7 @@ const digest = (message) => sha256(new TextEncoder().encode(message));
  */
 async function makeKey({ url, id, claps, nonce }) {
   return concatArrayBuffers(
-    await digest(url.href),
+    await digest(url.toString()),
     new UUID(id.toString()).buffer,
     new Uint32Array([claps]).buffer,
     new Uint32Array([nonce]).buffer,
@@ -68,7 +68,7 @@ const calcDifficulty = claps => BASE_DIFFICULTY + Math.round(Math.log2(BASE_CLAP
 
 /**
  * @param {{
- *   url: URL,
+ *   url: URL|string,
  *   id: UUID|string,
  *   claps: number,
  * }} param0 
@@ -92,7 +92,7 @@ export async function proofOfClap({ url, claps, id }) {
 
 /**
  * @param {{
- *   url: URL,
+ *   url: URL|string,
  *   claps: number,
  *   id: UUID|string,
  *   nonce: number,
