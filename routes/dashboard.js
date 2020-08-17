@@ -32,7 +32,7 @@ const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content
     <nav class="bp3-navbar">
       <div>
         <div class="bp3-navbar-group bp3-align-left">
-          <div class="bp3-navbar-heading" style="font-weight:bold"><a href="/dashboard/${id}">Clap Button Dashboard</a></div>
+          <div class="bp3-navbar-heading" style="font-weight:bold"><a href="/dashboard/${id}" style="text-decoration:none"><h1 style="font-size:1rem">Clap Button Dashboard</h1></a></div>
         </div>
         <div class="bp3-navbar-group">
           <a class="bp3-button bp3-minimal" href="/dashboard/${id}/stats">Stats</a>
@@ -126,6 +126,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const time = (ts) => `<time datetime="${new Date(ts * 1000).toISOString()}">${new Intl.DateTimeFormat(locale).format(new Date(ts * 1000))}</time>`;
 
       return page({ id })(`
+      <div class="bp3-running-text">
         <h2>Subscription</h2>
         <p>
           <small class="bp3-tag">${subscription.status.toUpperCase()}</small>
@@ -175,13 +176,15 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             </tr>`).join('')}
           </tbody>
         </table>
+      </div>
       `);
     }
     else if (pathname.match(/\/stats\/?$/)) {
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
-      const { stats, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
+      const { visitors, stats, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
       return page({ id })(`
+      <div class="bp3-running-text">
         <h2>Stats</h2>
         <form method="GET" action="/dashboard/${id}/stats">
           <div class="bp3-select">
@@ -193,11 +196,15 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           </div>
         </form>
         <br/>
-        <p>Total views: <strong>${totalViews}</strong>, Total claps: <strong>${totalClaps}</strong></p>
-        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed">
+        <dl>
+          <dt>Unique visitors</dt><dd><strong>${visitors}</strong></dd>
+          <dt>Total page views</dt><dd><strong>${totalViews}</strong></dd>
+          <dt>Total claps</dt><dd><strong>${totalClaps}</strong></dd>
+        </dl>
+        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
           <thead>
             <tr>
-              <th></th>
+              <th>Page</th>
               <th>Views</th>
               <th>Clappers</th>
               <th>Claps</th>
@@ -206,13 +213,14 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <tbody>
             ${stats.map(stat => `
               <tr>
-                <td>${sanetize(new URL(stat.href).pathname)}</td>
+                <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
                 <td>${stat.views}</td>
                 <td>${stat.clapRequests}</td>
                 <td>${stat.claps}</td>
               </tr>`).join('')}
           </tbody>
         </table>
+      </div>
       `);
     }
     else if (pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?$/)) {
@@ -257,6 +265,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       } else if (method !== 'GET') return badRequest();
 
       return page({ id, headers: setHeaders })(`
+      <div class="bp3-running-text">
         <h2>Key</h2>
         <details style="margin-bottom:1rem">
           <summary>You current dashboard key is: (Click to open)</summary>
@@ -305,10 +314,10 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         <form method="POST" action="/dashboard/${id}">
           <input type="hidden" name="method" value="domain"/>
           <input class="bp3-input" type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
-          <button class="bp3-button bp3-intent-primary" type="submit">Set domain</button>
+          <button class="bp3-button" type="submit">Set domain</button>
           ${setError ? `<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` : ''}
         </form>
-
+      </div>
       `);
     }
     else {
