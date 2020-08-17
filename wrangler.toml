@@ -9,6 +9,10 @@ zone_id = ""
 name = "clap-worker-stage"
 # route = "*.getclaps.dev/*"
 
+[env.staging.vars]
+STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
+STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+
 [env.production]
 name = "clap-worker"
 # route = "*.getclaps.net/*"
