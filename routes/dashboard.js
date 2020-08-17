@@ -13,7 +13,9 @@ export const styles = `
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
   body.bp3-dark { color: #ccc; background: #282f31; }
-  table { min-width: 100%; }
+  table { width: 100% }
+  table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table tr > td:first-child { width: 60% }
 `;
 
 const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content) => new Response(`
@@ -182,7 +184,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     else if (pathname.match(/\/stats\/?$/)) {
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
-      const { visitors, stats, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
+      const { visitors, stats, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
       return page({ id })(`
       <div class="bp3-running-text">
         <h2>Stats</h2>
@@ -218,6 +220,22 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 <td>${stat.views}</td>
                 <td>${stat.clapRequests}</td>
                 <td>${stat.claps}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+        <h3>Top countries</h3>
+        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+          <thead>
+            <tr>
+              <th>Country</th>
+              <th>Views</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${countries.map((stat) => `
+              <tr>
+                <td>${stat.country}</td>
+                <td>${stat.views}</td>
               </tr>`).join('')}
           </tbody>
         </table>
