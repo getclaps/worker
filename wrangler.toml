@@ -7,8 +7,8 @@ zone_id = ""
 
 [env.staging]
 name = "clap-worker-stage"
-route = "*.getclaps.dev/*"
+# route = "*.getclaps.dev/*"
 
 [env.production]
 name = "clap-worker"
-route = "*.getclaps.net/*"
+# route = "*.getclaps.net/*"
