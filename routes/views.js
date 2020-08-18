@@ -35,7 +35,7 @@ export async function handleViews({ requestURL, method, path, headers }) {
 
   const dao = new FaunaDAO();
 
-  const originURL = validateURL(headers.get('Origin'));
+  const originURL = validateURL(headers.get('origin'));
   const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
 
   if (![url.hostname, 'localhost'].includes(originURL.hostname)) {
@@ -45,11 +45,15 @@ export async function handleViews({ requestURL, method, path, headers }) {
   const referrer = getReferrer(requestURL.searchParams.get('referrer'));
   const { country, visitor } = await extractData(headers);
 
-  return await dao.getClapsAndUpdateViews({
+  const arg = {
     hostname: originURL.hostname,
     href: url.href,
     referrer,
     country,
     visitor,
-  });
+  };
+
+  return (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(url.hostname)}`)
+    ? dao.getClaps(arg)
+    : dao.getClapsAndUpdateViews(arg);
 }

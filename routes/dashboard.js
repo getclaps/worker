@@ -12,6 +12,7 @@ const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 export const styles = `
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
+  main { padding: 0 1rem; }
   body.bp3-dark { color: #ccc; background: #282f31; }
   table { width: 100% }
   table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -51,12 +52,12 @@ const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content
       ${content}
     </main>
   </body>
-</html>`, { 
-  headers: { 
-    ...headers, 
-    'Content-Type': 'text/html;charset=UTF-8', 
+</html>`, {
+  headers: {
+    ...headers,
+    'Content-Type': 'text/html;charset=UTF-8',
     'X-Robots-Tag': 'noindex',
-  } 
+  }
 });
 
 /**
@@ -148,7 +149,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           : `
             <form method="POST" action="/dashboard/${id}/subscription">
               <button class="bp3-button" type="submit">Cancel Subscription</button>
-              <label class="bp3-control bp3-checkbox">
+              <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
                 <input type="checkbox" name="okay" required />
                 <span class="bp3-control-indicator"></span>
                 I understand that all embedded clap buttons will stop working at the end of the current billing period.
@@ -262,6 +263,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     else if (pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?$/)) {
       const isMac = (headers.get('user-agent') || '').match(/mac/i);
       let isBookmarked = (headers.get('cookie') || '').includes(`bookmarked=${id}`);
+      let isDNT = (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(dashboard.hostname)}`);
       let setHeaders;
 
       if (method === 'POST') {
@@ -296,6 +298,15 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             setHeaders = { 'Set-Cookie': `bookmarked=${id}` };
             break;
           }
+          case 'dnt': {
+            isDNT = fd.get('dnt') === 'on'
+            setHeaders = {
+              'Set-Cookie': isDNT
+                ? `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString()}`
+                : `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
+            };
+            break;
+          }
           default: return badRequest();
         }
       } else if (method !== 'GET') return badRequest();
@@ -310,7 +321,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         ${!isBookmarked ? `
           <div id="bookmark-warning" class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
             <h4 class="bp3-heading">Please bookmark this page!</h4>
-            Please bookmark this page by pressing <strong>${isMac ? '⌘': 'Ctrl'}+D</strong> on your keyboard.
+            Please bookmark this page by pressing <strong>${isMac ? '⌘' : 'Ctrl'}+D</strong> on your keyboard.
             Your key is your primary access credential to this dashboard.
             If you lose your key we'll have to manually restore access to your dashboard. 
             <script>document.addEventListener('keydown', function(e) { 
@@ -329,7 +340,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <input type="hidden" name="method" value="relocate"/>
           <p><small>If you've accidentally published your dashboard key, you can invalidate it by <em>relocating</em> this dashboard to a new URL:</small></p>
           <button class="bp3-button" type="submit">Relocate Dashboard</button>
-          <label class="bp3-control bp3-checkbox">
+          <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
             <input type="checkbox" name="okay" required />
             <span class="bp3-control-indicator"></span>
             I understand that the current dashboard URL will be inaccessible after relocating
@@ -352,6 +363,22 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <input class="bp3-input" type="url" name="hostname" placeholder="https://example.com" value="https://" required/>
           <button class="bp3-button" type="submit">Set domain</button>
           ${setError ? `<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` : ''}
+        </form>
+        <form method="POST" action="/dashboard/${id}">
+          <input type="hidden" name="method" value="dnt"/>
+          <label class="bp3-control bp3-switch bp3-large" style="margin-top:.5rem;">
+            <input type="checkbox" name="dnt" ${isDNT ? 'checked' : ''}/>
+            <span class="bp3-control-indicator"></span>
+            Don't track this browser
+          </label>
+          <script>
+            document.querySelector('input[name="dnt"]').addEventListener('change', function(e) {
+              document.cookie = e.target.checked
+                ? 'dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString()}'
+                : 'dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; 
+            });
+          </script>
+          <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </form>
       </div>
       `);
