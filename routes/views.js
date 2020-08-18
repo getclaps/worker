@@ -55,5 +55,5 @@ export async function handleViews({ requestURL, method, path, headers }) {
 
   return (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(url.hostname)}`)
     ? dao.getClaps(arg)
-    : dao.getClapsAndUpdateViews(arg);
+    : dao.getClapsAndUpdateViews(arg, headers.get('cf-connecting-ip'));
 }

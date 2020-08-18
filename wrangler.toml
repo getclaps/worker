@@ -24,7 +24,7 @@ name = "clap-worker"
 # route = "*.getclaps.net/*"
 
 [env.production.vars]
-DEBUG = ''
+DEBUG = 'false'
 WORKER_DOMAIN = 'https://getclaps.net'
 # STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
 # STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"

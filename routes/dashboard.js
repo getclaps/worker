@@ -12,7 +12,6 @@ const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 export const styles = `
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
-  main { padding: 0 1rem; }
   body.bp3-dark { color: #ccc; background: #282f31; }
   table { width: 100% }
   table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -44,6 +43,7 @@ const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content
         </div>
       </div>
     </nav>
+    <div style="padding:0 1rem">
     <main>
       <script>
         document.body.classList.toggle('bp3-dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -51,6 +51,7 @@ const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content
       </script>
       ${content}
     </main>
+    </div>
   </body>
 </html>`, {
   headers: {
@@ -108,11 +109,14 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     let dashboard = await dao.getDashboard(uuid);
     let setError = false;
 
+    const ip = headers.get('cf-connecting-ip');
+    if (ip != null && dashboard.ip !== ip) {
+      await dao.upsertDashboard({ id: uuid, ip });
+    }
+
     if (pathname.match(/\/subscription\/?$/)) {
       let subscription;
       if (method === 'POST') {
-        const uuid = elongateId(match[1]);
-        const dashboard = await dao.getDashboard(uuid);
         const fd = await request.formData();
 
         subscription = await stripeAPI(`/v1/subscriptions/${dashboard.subscription}`, {
@@ -241,7 +245,14 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           </tbody>
         </table>
         <h3>Top referrers</h3>
-        <p>If the <a href="https://en.wikipedia.org/wiki/HTTP_referer" target="_blank"><code>Referrer</code></a> of a page view is known, it will be shown here. Direct traffic and unknown referrers are omitted.</p>
+        <p>
+          If the <a href="https://en.wikipedia.org/wiki/HTTP_referer" target="_blank"><code>Referrer</code></a> of a page view is known, it will be shown here. Direct traffic and empty referrers are omitted.<br/>
+          <small style="display:inline-block;margin-top:.5rem">
+            Note that many popular sites will remove the referrer when linking to your site, 
+            but you can add it back by adding a <code>referrer</code> search parameter to your link, e.g.:
+            <span style="white-space:nowrap;text-decoration:underline">https://${dashboard.hostname || 'your-site.com'}/linked-page/?referrer=popularsite.com</span>
+          </small>
+        </p>
         <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
           <thead>
             <tr>
@@ -263,8 +274,20 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     else if (pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?$/)) {
       const isMac = (headers.get('user-agent') || '').match(/mac/i);
       let isBookmarked = (headers.get('cookie') || '').includes(`bookmarked=${id}`);
-      let isDNT = (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(dashboard.hostname)}`);
+      let cookieDNT = (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(dashboard.hostname)}`);
       let setHeaders;
+
+      /** @param {boolean} dnt */
+      const mkCookie = (dnt) => {
+        return dnt
+          ? `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=None; Secure; Expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString()}`
+          : `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=None; Secure; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
+      }
+
+      if (dashboard.dnt !== cookieDNT) {
+        setHeaders = { 'Set-Cookie': mkCookie(dashboard.dnt) };
+        cookieDNT = dashboard.dnt;
+      }
 
       if (method === 'POST') {
         const fd = await request.formData();
@@ -299,12 +322,9 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             break;
           }
           case 'dnt': {
-            isDNT = fd.get('dnt') === 'on'
-            setHeaders = {
-              'Set-Cookie': isDNT
-                ? `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString()}`
-                : `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
-            };
+            cookieDNT = fd.get('dnt') === 'on'
+            setHeaders = { 'Set-Cookie': mkCookie(cookieDNT) };
+            await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
             break;
           }
           default: return badRequest();
@@ -338,7 +358,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         `: ''}
         <form method="POST" action="/dashboard/${id}">
           <input type="hidden" name="method" value="relocate"/>
-          <p><small>If you've accidentally published your dashboard key, you can invalidate it by <em>relocating</em> this dashboard to a new URL:</small></p>
+          <p>If you've accidentally published your dashboard key, you can invalidate it by <em>relocating</em> this dashboard to a new URL:</p>
           <button class="bp3-button" type="submit">Relocate Dashboard</button>
           <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
             <input type="checkbox" name="okay" required />
@@ -364,20 +384,23 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <button class="bp3-button" type="submit">Set domain</button>
           ${setError ? `<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` : ''}
         </form>
+
+        <h2>Settings</h2>
         <form method="POST" action="/dashboard/${id}">
           <input type="hidden" name="method" value="dnt"/>
           <label class="bp3-control bp3-switch bp3-large" style="margin-top:.5rem;">
-            <input type="checkbox" name="dnt" ${isDNT ? 'checked' : ''}/>
+            <input type="checkbox" name="dnt" ${cookieDNT ? 'checked' : ''}/>
             <span class="bp3-control-indicator"></span>
-            Don't track this browser
+            Don't track myself
           </label>
-          <script>
-            document.querySelector('input[name="dnt"]').addEventListener('change', function(e) {
-              document.cookie = e.target.checked
-                ? 'dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString()}'
-                : 'dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=none; Secure; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'; 
-            });
-          </script>
+          <p>
+            Use this option to prevent browsing your own site from distorting statistics.<br/>
+            <small style="display:inline-block;margin-top:.5rem;">
+              This option will set a cookie in this browser as well as every other browser that opens this dashboard.<br/>
+              It will also cause all views from the last IP address that accessed this dashboard to be ignored.
+            </small>
+          </p>
+          <script>document.querySelector('input[name="dnt"]').addEventListener('change', function(e) { setTimeout(function () { e.target.form.submit() }, 500) })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </form>
       </div>
