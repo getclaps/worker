@@ -10,12 +10,15 @@ const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
 
 /**
  * @param {string|null} referrerRaw 
- * @returns {string|null}
+ * @param {string} hostname 
+ * @returns {string|undefined}
  */
-function getReferrer(referrerRaw) {
+function getReferrer(referrerRaw, hostname) {
   if (referrerRaw != null) {
-    if (!referrerRaw.match(RE_PROTOCOL)) referrerRaw = `https://${referrerRaw}`;
-    try { return validateURL(referrerRaw).href } catch {}
+    try {
+      const refURL = validateURL(referrerRaw.match(RE_PROTOCOL) ? referrerRaw : `https://${referrerRaw}`);
+      if (refURL.hostname !== hostname) return refURL.href;
+    } catch { }
   }
 }
 
@@ -42,7 +45,7 @@ export async function handleViews({ requestURL, method, path, headers }) {
     return badRequest("Origin doesn't match");
   }
 
-  const referrer = getReferrer(requestURL.searchParams.get('referrer'));
+  const referrer = getReferrer(requestURL.searchParams.get('referrer'), url.hostname);
   const { country, visitor } = await extractData(headers);
 
   const arg = {
