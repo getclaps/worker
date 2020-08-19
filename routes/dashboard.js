@@ -5,9 +5,27 @@ import { FaunaDAO } from '../fauna-dao.js';
 import { elongateId, shortenId } from '../short-id';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 import { stripeAPI } from './stripe.js';
+import { Base64Encoder } from 'base64-encoding';
 
 const WORKER_DOMAIN = Reflect.get(self, 'WORKER_DOMAIN');
 const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
+
+const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
+
+/** @param {boolean} dnt */
+const mkDNTCookie = (dnt, hostname) => {
+  return dnt
+    ? `dnt=${encodeURIComponent(hostname)}; Path=/; SameSite=None; Secure; HttpOnly; Expires=${oneYearFromNow().toUTCString()}`
+    : `dnt=${encodeURIComponent(hostname)}; Path=/; SameSite=None; Secure; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
+}
+
+/** @param {string} id */
+const mkBookmarkedCookie = async (id) => {
+  return `bookmarked=${await hash(id)}; Path=/dashboard; Expires=${oneYearFromNow().toUTCString()}`;
+}
+
+/** @param {string} text */
+const hash = async (text) => new Base64Encoder({ urlFriendly: true }).encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)));
 
 export const styles = `
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
@@ -273,19 +291,12 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     }
     else if (pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?$/)) {
       const isMac = (headers.get('user-agent') || '').match(/mac/i);
-      let isBookmarked = (headers.get('cookie') || '').includes(`bookmarked=${id}`);
+      let isBookmarked = (headers.get('cookie') || '').includes(`bookmarked=${await hash(id)}`);
       let cookieDNT = (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(dashboard.hostname)}`);
       let setHeaders;
 
-      /** @param {boolean} dnt */
-      const mkCookie = (dnt) => {
-        return dnt
-          ? `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=None; Secure; Expires=${new Date(Date.now() + 1000 * 60 * 60 * 24 * 365).toUTCString()}`
-          : `dnt=${encodeURIComponent(dashboard.hostname)}; Path=/; SameSite=None; Secure; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
-      }
-
       if (dashboard.dnt !== cookieDNT) {
-        setHeaders = { 'Set-Cookie': mkCookie(dashboard.dnt) };
+        setHeaders = { 'Set-Cookie': mkDNTCookie(dashboard.dnt, dashboard.hostname) };
         cookieDNT = dashboard.dnt;
       }
 
@@ -318,12 +329,12 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           }
           case 'cookie': {
             isBookmarked = true;
-            setHeaders = { 'Set-Cookie': `bookmarked=${id}` };
+            setHeaders = { 'Set-Cookie': await mkBookmarkedCookie(id) }
             break;
           }
           case 'dnt': {
             cookieDNT = fd.get('dnt') === 'on'
-            setHeaders = { 'Set-Cookie': mkCookie(cookieDNT) };
+            setHeaders = { 'Set-Cookie': mkDNTCookie(cookieDNT, dashboard.hostname) };
             await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
             break;
           }
@@ -346,7 +357,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             If you lose your key we'll have to manually restore access to your dashboard. 
             <script>document.addEventListener('keydown', function(e) { 
               if (e.metaKey === true && e.code === 'KeyD') { 
-                document.cookie = \`bookmarked=${id}\`; 
+                document.cookie = '${await mkBookmarkedCookie(id)}'; 
                 document.getElementById('bookmark-warning').style.display = 'none'; 
               } 
             })</script>
@@ -396,8 +407,8 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <p>
             Use this option to prevent browsing your own site from distorting statistics.<br/>
             <small style="display:inline-block;margin-top:.5rem;">
-              This option will set a cookie in this browser as well as every other browser that opens this dashboard.<br/>
-              It will also cause all views from the last IP address that accessed this dashboard to be ignored.
+              Setting this option will set a cookie that will cause all page views from this browser to be ignored,
+              as well as all page views from the last IP address that accessed this dashboard.
             </small>
           </p>
           <script>document.querySelector('input[name="dnt"]').addEventListener('change', function(e) { setTimeout(function () { e.target.form.submit() }, 500) })</script>
