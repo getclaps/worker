@@ -49,6 +49,7 @@ const page = ({ id, title = 'Clap Button Dashboard', hostname = '', headers = {}
 <html lang="en">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>${title}</title>
     <meta name="robots" content="noindex">
     <link href="https://unpkg.com//normalize.css/normalize.css" rel="stylesheet"/>
@@ -226,6 +227,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         <form method="GET" action="/dashboard/${id}/stats">
           <div class="bp3-select">
             <select name="time" onchange="this.form.submit()">
+              <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
               <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
               <option ${timeFrame === '7-days' ? 'selected' : ''} value="7-days">7 days</option>
               <option ${timeFrame === '30-days' ? 'selected' : ''} value="30-days">30 days</option>
