@@ -11,7 +11,8 @@ WORKER_DOMAIN = 'http://localhost:8787'
 
 [env.staging]
 name = "clap-worker-stage"
-# route = "*.getclaps.dev/*"
+route = "https://worker.getclaps.dev/*"
+zone_id = "a0f647422a7f0fba9b734898e8a7883f"
 
 [env.staging.vars]
 DEBUG = 'true'
@@ -21,7 +22,6 @@ STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.production]
 name = "clap-worker"
-# route = "*.getclaps.net/*"
 
 [env.production.vars]
 DEBUG = 'false'
