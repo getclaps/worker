@@ -7,6 +7,10 @@ import { ok, badRequest, forbidden, notFound, redirect } from '../response-types
 import { stripeAPI } from './stripe.js';
 import { Base64Encoder } from 'base64-encoding';
 
+import { countries } from '../countries.js';
+
+const countriesByCode = Object.fromEntries(countries.map(x => [x.code, x]));
+
 const WORKER_DOMAIN = Reflect.get(self, 'WORKER_DOMAIN');
 const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
@@ -33,10 +37,14 @@ export const styles = `
   body.bp3-dark { color: #ccc; background: #282f31; }
   table { width: 100% }
   table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  table tr > td:first-child { width: 60% }
+  table tr > td:first-child { width: 75% }
+  @media screen and (min-width: 768px) {
+    .row { display:flex; margin:0 -.5rem; }
+    .col { flex:1; margin:0 .5rem; }
+  }
 `;
 
-const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content) => new Response(`
+const page = ({ id, title = 'Clap Button Dashboard', hostname = '', headers = {} }) => (content) => new Response(`
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -52,7 +60,11 @@ const page = ({ id, title = 'Clap Button Dashboard', headers = {} }) => (content
     <nav class="bp3-navbar">
       <div>
         <div class="bp3-navbar-group bp3-align-left">
-          <div class="bp3-navbar-heading" style="font-weight:bold"><a href="/dashboard/${id}" style="text-decoration:none"><h1 style="font-size:1rem">Clap Button Dashboard</h1></a></div>
+          <div class="bp3-navbar-heading" style="font-weight:bold">
+            <a href="/dashboard/${id}" style="text-decoration:none">
+              <h1 style="font-size:1rem">${hostname || title}</h1>
+            </a>
+          </div>
         </div>
         <div class="bp3-navbar-group">
           <a class="bp3-button bp3-minimal" href="/dashboard/${id}/stats">Stats</a>
@@ -150,7 +162,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
       const time = (ts) => `<time datetime="${new Date(ts * 1000).toISOString()}">${new Intl.DateTimeFormat(locale).format(new Date(ts * 1000))}</time>`;
 
-      return page({ id })(`
+      return page({ id, hostname: dashboard.hostname })(`
       <div class="bp3-running-text">
         <h2>Subscription</h2>
         <p>
@@ -208,7 +220,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
       const { visitors, stats, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
-      return page({ id })(`
+      return page({ id, hostname: dashboard.hostname })(`
       <div class="bp3-running-text">
         <h2>Stats</h2>
         <form method="GET" action="/dashboard/${id}/stats">
@@ -226,66 +238,92 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           <dt>Total page views</dt><dd><strong>${totalViews}</strong></dd>
           <dt>Total claps</dt><dd><strong>${totalClaps}</strong></dd>
         </dl>
-        <h3>Top pages</h3>
-        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
-          <thead>
-            <tr>
-              <th>Page</th>
-              <th>Views</th>
-              <th>Clappers</th>
-              <th>Claps</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${stats.map(stat => `
-              <tr>
-                <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
-                <td>${stat.views}</td>
-                <td>${stat.clapRequests}</td>
-                <td>${stat.claps}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-        <h3>Top countries</h3>
-        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
-          <thead>
-            <tr>
-              <th>Country</th>
-              <th>Views</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${countries.map((stat) => `
-              <tr>
-                <td>${stat.country}</td>
-                <td>${stat.views}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
-        <h3>Top referrers</h3>
-        <p>
-          If the <a href="https://en.wikipedia.org/wiki/HTTP_referer" target="_blank"><code>Referrer</code></a> of a page view is known, it will be shown here. Direct traffic and empty referrers are omitted.<br/>
-          <small style="display:inline-block;margin-top:.5rem">
-            Note that many popular sites will remove the referrer when linking to your site, 
-            but you can add it back by adding a <code>referrer</code> search parameter to your link, e.g.:
-            <span style="white-space:nowrap;text-decoration:underline">https://${dashboard.hostname || 'your-site.com'}/linked-page/?referrer=popularsite.com</span>
-          </small>
-        </p>
-        <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
-          <thead>
-            <tr>
-              <th>Referrer</th>
-              <th>Referrals</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${referrals.map((stat) => `
-              <tr>
-                <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).href)}</td>
-                <td>${stat.referrals}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>
+        <div class="row">
+          <div class="col">
+            <h3>Top pages <small>by views</small></h3>
+            <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${stats.map(stat => `
+                  <tr>
+                    <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
+                    <td>${stat.views}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="col">
+            <h3>Top pages <small>by claps</small></h3>
+            <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+              <thead>
+                <tr>
+                  <th>Page</th>
+                  <th>Claps</th>
+                  <th>Clappers</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${stats.filter(x => x.claps > 0).sort((a, b) => b.claps - a.claps).map(stat => `
+                  <tr>
+                    <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
+                    <td>${stat.claps}</td>
+                    <td>${stat.clappers}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <h3>Top countries</h3>
+            <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+              <thead>
+                <tr>
+                  <th>Country</th>
+                  <th>Views</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${countries.map((stat) => `
+                  <tr>
+                    <td>${(countriesByCode[stat.country] || {}).emoji || ''} ${(countriesByCode[stat.country] || {}).name || stat.country}</td>
+                    <td>${stat.views}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="col">
+            <h3>Top referrers</h3>
+            <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+              <thead>
+                <tr>
+                  <th>Referrer</th>
+                  <th>Referrals</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${referrals.map((stat) => `
+                  <tr>
+                    <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).href)}</td>
+                    <td>${stat.referrals}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+            <p>
+              If the <a href="https://en.wikipedia.org/wiki/HTTP_referer" target="_blank"><code>Referrer</code></a> of a page view is known, it will be shown here. Direct traffic and empty referrers are omitted.<br/>
+              <small style="display:inline-block;margin-top:.5rem">
+                Note that many popular sites will remove the referrer when linking to your site, 
+                but you can add it back by adding a <code>referrer</code> search parameter to your link, e.g.:
+                <span style="white-space:nowrap;text-decoration:underline">https://${dashboard.hostname || 'your-site.com'}/linked-page/?referrer=popularsite.com</span>
+              </small>
+            </p>
+          </div>
+        </div>
       </div>
       `);
     }
@@ -342,7 +380,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         }
       } else if (method !== 'GET') return badRequest();
 
-      return page({ id, headers: setHeaders })(`
+      return page({ id, hostname: dashboard.hostname, headers: setHeaders })(`
       <div class="bp3-running-text">
         <h2>Key</h2>
         <details style="margin-bottom:1rem">
