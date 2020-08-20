@@ -48,7 +48,7 @@ export async function handleClaps({ request, requestURL, method, path, headers }
   const dao = new FaunaDAO();
 
   const originURL = validateURL(headers.get('Origin'));
-  const url = validateURL(requestURL.searchParams.get('url')); // TODO: rename to href?
+  const url = validateURL(requestURL.searchParams.get('href') || requestURL.searchParams.get('url'));
   if (![url.hostname, 'localhost'].includes(originURL.hostname)) {
     return badRequest("Origin doesn't match");
   }
