@@ -128,6 +128,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       customer,
       subscription,
       active: true,
+      dnt: false,
     });
 
     return redirect(new URL(`/dashboard/${shortenId(id)}`, WORKER_DOMAIN));
@@ -351,7 +352,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               if (err instanceof Response) {
                 if (err.status === 409) {
                   setError = true;
-                }
+                } else throw err;
               } else throw err;
             }
             break;
