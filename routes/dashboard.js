@@ -365,7 +365,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               method: 'POST',
               data: { 'metadata[dashboard_id]': shortenId(newUUID) },
             });
-            return redirect(new URL(`/dashboard/${newId}/key`, WORKER_DOMAIN));
+            return redirect(new URL(`/dashboard/${newId}`, WORKER_DOMAIN));
           }
           case 'cookie': {
             isBookmarked = true;
