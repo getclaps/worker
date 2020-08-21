@@ -16,7 +16,7 @@ zone_id = "a0f647422a7f0fba9b734898e8a7883f"
 
 [env.staging.vars]
 DEBUG = 'true'
-WORKER_DOMAIN = 'https://getclaps.dev'
+WORKER_DOMAIN = 'https://worker.getclaps.dev'
 STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
 STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
@@ -25,6 +25,6 @@ name = "clap-worker"
 
 [env.production.vars]
 DEBUG = 'false'
-WORKER_DOMAIN = 'https://getclaps.net'
+WORKER_DOMAIN = 'https://worker.getclaps.net'
 # STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
 # STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
