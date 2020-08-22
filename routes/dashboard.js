@@ -34,14 +34,35 @@ const mkBookmarkedCookie = async (id) => {
 export const styles = `
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
-  body.bp3-dark { color: #ccc; background: #282f31; }
+  body { padding: 3rem 0; overflow-x: hidden; }
+  body.bp3-dark { color: #ccc; background: #293742; }
   table { width: 100% }
   table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   table tr > td:first-child { width: 75% }
   @media screen and (min-width: 768px) {
     .row { display:flex; margin:0 -.5rem; }
-    .col { flex:1; margin:0 .5rem; }
-  }
+    .col { flex:1; margin:0 .5rem; } }
+  div.stats-card {
+    margin: 0 -1rem;
+    max-width: 640px; }
+  dl.stats {
+    display: grid;
+    grid-gap: 0 1rem;
+    grid-template-columns: repeat(3, 33%);
+    grid-template-rows: auto auto;
+    grid-template-areas:
+        "a1 b1 c1"
+        "a2 b2 c2";
+    font-size: larger; }
+  dl.stats > dd { 
+    margin-left: 0;
+    font-size: 2rem; }
+  dl.stats > dt:nth-of-type(1) { grid-area: a1 }
+  dl.stats > dt:nth-of-type(2) { grid-area: b1 }
+  dl.stats > dt:nth-of-type(3) { grid-area: c1 }
+  dl.stats > dd:nth-of-type(1) { grid-area: a2 }
+  dl.stats > dd:nth-of-type(2) { grid-area: b2 }
+  dl.stats > dd:nth-of-type(3) { grid-area: c2 }
 `;
 
 const page = ({ id, title = 'Clap Button Dashboard', hostname = '', headers = {} }) => (content) => new Response(`
@@ -58,7 +79,7 @@ const page = ({ id, title = 'Clap Button Dashboard', hostname = '', headers = {}
     <style>${styles}</style>
   </head>
   <body>
-    <nav class="bp3-navbar">
+    <nav class="bp3-navbar" style="position:fixed; top:0;">
       <div>
         <div class="bp3-navbar-group bp3-align-left">
           <div class="bp3-navbar-heading" style="font-weight:bold">
@@ -104,6 +125,8 @@ const page = ({ id, title = 'Clap Button Dashboard', hostname = '', headers = {}
  */
 export async function handleDashboard({ request, requestURL, method, pathname, headers }) {
   const dao = new FaunaDAO();
+
+  const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
 
   let match;
   if (match = pathname.match(/\/dashboard\/new\/?/)) {
@@ -161,7 +184,6 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
       const { data: invoices } = await stripeAPI(`/v1/invoices`, { data: { subscription: dashboard.subscription } })
 
-      const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
       const time = (ts) => `<time datetime="${new Date(ts * 1000).toISOString()}">${new Intl.DateTimeFormat(locale).format(new Date(ts * 1000))}</time>`;
 
       return page({ id, hostname: dashboard.hostname })(`
@@ -226,21 +248,27 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       <div class="bp3-running-text">
         <h2>Stats</h2>
         <form method="GET" action="/dashboard/${id}/stats">
-          <div class="bp3-select">
-            <select name="time" onchange="this.form.submit()">
-              <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
-              <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
-              <option ${timeFrame === '7-days' ? 'selected' : ''} value="7-days">7 days</option>
-              <option ${timeFrame === '30-days' ? 'selected' : ''} value="30-days">30 days</option>
-            </select>
-          </div>
+          <label class="bp3-label bp3-inline">
+            Show data for the last
+            <div class="bp3-select">
+              <select name="time">
+                <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
+                <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
+                <option ${timeFrame === '7-days' ? 'selected' : ''} value="7-days">7 days</option>
+                <option ${timeFrame === '30-days' ? 'selected' : ''} value="30-days">30 days</option>
+              </select>
+            </div>
+            <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
+            <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
+          </label>
         </form>
-        <br/>
-        <dl>
-          <dt>Unique visitors</dt><dd><strong>${visitors}</strong></dd>
-          <dt>Total page views</dt><dd><strong>${totalViews}</strong></dd>
-          <dt>Total claps</dt><dd><strong>${totalClaps}</strong></dd>
-        </dl>
+        <div class="stats-card bp3-card bp3-elevation-2">
+          <dl class="stats">
+            <dt>Unique visitors</dt><dd><strong>${visitors.toLocaleString(locale)}</strong></dd>
+            <dt>Total page views</dt><dd><strong>${totalViews.toLocaleString(locale)}</strong></dd>
+            <dt>Total claps</dt><dd><strong>${totalClaps.toLocaleString(locale)}</strong></dd>
+          </dl>
+        </div>
         <div class="row">
           <div class="col">
             <h3>Top pages <small>by views</small></h3>
@@ -385,6 +413,8 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
       return page({ id, hostname: dashboard.hostname, headers: setHeaders })(`
       <div class="bp3-running-text">
+        <div class="row">
+          <div class="col">
         <h2>Key</h2>
         <details style="margin-bottom:1rem">
           <summary>You current dashboard key is: (Click to open)</summary>
@@ -418,7 +448,8 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             I understand that the current dashboard URL will be inaccessible after relocating
           </label>
         </form>
-
+          </div>
+          <div class="col">
         <h2>Domain</h2>
         <details style="margin-bottom:1rem" open>
           <summary>Your current domain is:</summary>
@@ -437,25 +468,28 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           ${setError ? `<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` : ''}
         </form>
 
-        <h2>Settings</h2>
-        <form method="POST" action="/dashboard/${id}">
-          <input type="hidden" name="method" value="dnt"/>
-          <label class="bp3-control bp3-switch bp3-large" style="margin-top:.5rem;">
-            <input type="checkbox" name="dnt" ${cookieDNT ? 'checked' : ''}/>
-            <span class="bp3-control-indicator"></span>
-            Don't track myself
-          </label>
-          <p>
-            Use this option to prevent browsing your own site from distorting statistics.<br/>
-            <small style="display:inline-block;margin-top:.5rem;">
-              Setting this option will set a cookie that will cause all page views from this browser to be ignored,
-              as well as all page views from the last IP address that accessed this dashboard.
-            </small>
-          </p>
-          <script>document.querySelector('input[name="dnt"]').addEventListener('change', function(e) { setTimeout(function () { e.target.form.submit() }, 500) })</script>
-          <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
-        </form>
-      </div>
+        ${dashboard.hostname ? `
+          <h3>Settings</h3>
+          <form method="POST" action="/dashboard/${id}">
+            <input type="hidden" name="method" value="dnt"/>
+            <label class="bp3-control bp3-switch bp3-large" style="margin-top:.5rem;">
+              <input type="checkbox" name="dnt" ${cookieDNT ? 'checked' : ''}/>
+              <span class="bp3-control-indicator"></span>
+              Don't track myself
+            </label>
+            <p>
+              Use this option to prevent browsing your own site from distorting statistics.<br/>
+              <small style="display:inline-block;margin-top:.5rem;">
+                Setting this option will set a cookie that will cause all page views from this browser to be ignored,
+                as well as all page views from the last IP address that accessed this dashboard.
+              </small>
+            </p>
+            <script>document.querySelector('input[name="dnt"]').addEventListener('change', function(e) { setTimeout(function () { e.target.form.submit() }, 500) })</script>
+            <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
+          </form>
+        </div>` : ''}
+          </div>
+          </div>
       `);
     }
     else {
