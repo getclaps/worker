@@ -243,7 +243,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     else if (pathname.match(/\/stats\/?$/)) {
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
-      const { visitors, stats, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
+      const { visitors, views, claps, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
       return page({ id, hostname: dashboard.hostname })(`
       <div class="bp3-running-text">
         <h2>Stats</h2>
@@ -280,7 +280,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${stats.map(stat => `
+                ${views.slice(0, 16).map(stat => `
                   <tr>
                     <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
                     <td>${stat.views}</td>
@@ -299,7 +299,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${stats.filter(x => x.claps > 0).sort((a, b) => b.claps - a.claps).map(stat => `
+                ${claps.slice(0, 16).map(stat => `
                   <tr>
                     <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
                     <td>${stat.claps}</td>
@@ -320,7 +320,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${countries.map((stat) => `
+                ${countries.slice(0, 16).map((stat) => `
                   <tr>
                     <td>${(countriesByCode[stat.country] || {}).emoji || ''} ${(countriesByCode[stat.country] || {}).name || stat.country}</td>
                     <td>${stat.views}</td>
@@ -338,7 +338,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${referrals.map((stat) => `
+                ${referrals.slice(0, 16).map((stat) => `
                   <tr>
                     <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).href)}</td>
                     <td>${stat.referrals}</td>
