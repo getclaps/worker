@@ -1,11 +1,11 @@
 import { UUID } from 'uuid-class';
-import sanetize from 'sanitize-html';
 
 import { FaunaDAO } from '../fauna-dao.js';
 import { elongateId, shortenId } from '../short-id';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 import { stripeAPI } from './stripe.js';
-import { Base64Encoder } from 'base64-encoding';
+import { html, css, unsafeHTML, HTML } from '../html';
+// import { Base64Encoder } from 'base64-encoding';
 
 import { countries } from '../countries.js';
 
@@ -49,7 +49,7 @@ const parseCookie = (cookie) => new Map(cookie.split(/;\s*/)
   .filter(([k]) => !!k)
 );
 
-export const styles = `
+export const styles = css`
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
   body { padding: 3rem 0; overflow-x: hidden; }
@@ -85,8 +85,9 @@ export const styles = `
 
 /**
  * @param {{ title?: string, hostname?: string, headers?: Headers }} [param0]
+ * @returns {(content: string|HTML) => Response}
  */
-const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new Headers() } = {}) => (content) => new Response(`
+const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new Headers() } = {}) => (content) => new Response(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -109,7 +110,7 @@ const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new 
             </a>
           </div>
         </div>
-        ${hostname == null ? '' : `<div class="bp3-navbar-group">
+        ${hostname == null ? '' : html`<div class="bp3-navbar-group">
           <a class="bp3-button bp3-minimal" href="/dashboard/stats">Stats</a>
           <span class="bp3-navbar-divider"></span>
           <a class="bp3-button bp3-minimal" href="/dashboard/subscription">Subscription</a>
@@ -135,7 +136,7 @@ const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new 
     </main>
     </div>
   </body>
-</html>`, {
+</html>`.toString(), {
   headers: [
     // @ts-ignore
     ...new Headers(headers),
@@ -245,28 +246,28 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
       const time = (ts) => {
         const d = new Date(ts * 1000);
-        return `<time datetime="${d.toISOString()}">${new Intl.DateTimeFormat(locale).format(d)}</time>`;
+        return html`<time datetime="${d.toISOString()}">${new Intl.DateTimeFormat(locale).format(d)}</time>`;
       }
 
-      return page({ hostname: dashboard.hostname })(`
+      return page({ hostname: dashboard.hostname })(html`
       <div class="bp3-running-text">
         <h2>Subscription</h2>
         <p>
           <small class="bp3-tag">${subscription.status.toUpperCase()}</small>
           ${subscription.cancel_at_period_end
-          ? `<small>(Will be cancelled on ${time(subscription.current_period_end)})</small>`
-          : `<small>(Next billing period starts on ${time(subscription.current_period_end)})</small>)`
+          ? html`<small>(Will be cancelled on ${time(subscription.current_period_end)})</small>`
+          : html`<small>(Next billing period starts on ${time(subscription.current_period_end)})</small>)`
         }
         </p>
         ${subscription.cancel_at_period_end
           ? subscription.status === 'active'
-            ? `
+            ? html`
                 <form method="POST" action="/dashboard/subscription">
                   <button class="bp3-button" type="submit">Instant Renew Subscription</button>
                   <input type="hidden" name="undo" value="true">
                 </form>`
-            : `<p>TODO: Implement renew subscription</p>`
-          : `
+            : html`<p>TODO: Implement renew subscription</p>`
+          : html`
             <form method="POST" action="/dashboard/subscription">
               <button class="bp3-button" type="submit">Cancel Subscription</button>
               <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
@@ -288,7 +289,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
             </tr>
           </thead>
           <tbody>
-            ${invoices.map(invoice => `<tr>
+            ${invoices.map(invoice => html`<tr>
               <td>#${Number(invoice.number.split('-')[1])}</td>
               <td>${time(invoice.created)}</td>
               <td><span class="bp3-tag bp3-tag-round">${invoice.status.toUpperCase()}</span></td>
@@ -296,7 +297,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 <a class="bp3-button bp3-small" href="${invoice.hosted_invoice_url}">HTML</a>
                 <a class="bp3-button bp3-small" href="${invoice.invoice_pdf}">PDF</a>
               </td>
-            </tr>`).join('')}
+            </tr>`)}
           </tbody>
         </table>
       </div>
@@ -306,7 +307,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
       const { visitors, views, claps, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
-      return page({ hostname: dashboard.hostname })(`
+      return page({ hostname: dashboard.hostname })(html`
       <div class="bp3-running-text">
         <h2>Stats</h2>
         <form method="GET" action="/dashboard/stats">
@@ -342,11 +343,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${views.slice(0, 16).map(stat => `
+                ${views.slice(0, 16).map(stat => html`
                   <tr>
-                    <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
+                    <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                     <td>${stat.views}</td>
-                  </tr>`).join('')}
+                  </tr>`)}
               </tbody>
             </table>
           </div>
@@ -361,12 +362,12 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${claps.slice(0, 16).map(stat => `
+                ${claps.slice(0, 16).map(stat => html`
                   <tr>
-                    <td title="${sanetize(new URL(stat.href).href)}">${sanetize(new URL(stat.href).pathname)}</td>
+                    <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                     <td>${stat.claps}</td>
                     <td>${stat.clappers}</td>
-                  </tr>`).join('')}
+                  </tr>`)}
               </tbody>
             </table>
           </div>
@@ -382,11 +383,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${countries.slice(0, 16).map((stat) => `
+                ${countries.slice(0, 16).map((stat) => html`
                   <tr>
                     <td>${(countriesByCode[stat.country] || {}).emoji || ''} ${(countriesByCode[stat.country] || {}).name || stat.country}</td>
                     <td>${stat.views}</td>
-                  </tr>`).join('')}
+                  </tr>`)}
               </tbody>
             </table>
           </div>
@@ -400,11 +401,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 </tr>
               </thead>
               <tbody>
-                ${referrals.slice(0, 16).map((stat) => `
+                ${referrals.slice(0, 16).map((stat) => html`
                   <tr>
-                    <td title="${sanetize(new URL(stat.referrer).href)}">${sanetize(new URL(stat.referrer).href)}</td>
+                    <td title="${new URL(stat.referrer).href}">${new URL(stat.referrer).href}</td>
                     <td>${stat.referrals}</td>
-                  </tr>`).join('')}
+                  </tr>`)}
               </tbody>
             </table>
             <p>
@@ -478,9 +479,9 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         }
       } else if (method !== 'GET') return badRequest();
 
-      return page({ hostname: dashboard.hostname, headers: setHeaders })(`
+      return page({ hostname: dashboard.hostname, headers: setHeaders })(html`
       <div class="bp3-running-text">
-        ${dashboard.hostname == null ? '' : `<h2>Key</h2>
+        ${dashboard.hostname == null ? '' : html`<h2>Key</h2>
         <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
           <input type="text" class="bp3-input" name="id" value="${dashboard.hostname || 'x-getclaps-key'}" hidden readonly autocomplete="username email" />
           <div class="bp3-input-group" style="display:inline-block; width:16rem">
@@ -530,9 +531,9 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         <h2>Domain</h2>
         <details style="margin-bottom:1rem" open>
           <summary>Your current domain is:</summary>
-          <strong>${sanetize(dashboard.hostname)}</strong>
+          <strong>${dashboard.hostname}</strong>
         </details>
-        ${dashboard.hostname != null ? '' : `
+        ${dashboard.hostname != null ? '' : html`
           <div class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
             <h4 class="bp3-heading">Please set a domain</h4>
             You can change this later. 
@@ -546,7 +547,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
           ${showError ? `<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` : ''}
         </form>
 
-        ${dashboard.hostname == null ? '' : `
+        ${dashboard.hostname == null ? '' : html`
           <h3>Settings</h3>
           <form method="POST" action="/dashboard">
             <input type="hidden" name="method" value="dnt"/>
@@ -578,7 +579,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
 function loginPage() {
   // const response = fetch('/dashboard/login', { method: 'POST', redirect });b
-  return page()(`
+  return page()(html`
     <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
       <input type="hidden" name="method" value="login" />
       <input type="text" class="bp3-input" name="id" hidden autocomplete="username email" />
