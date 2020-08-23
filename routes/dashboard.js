@@ -26,10 +26,24 @@ const mkDNTCookie = (dnt, hostname) => {
 /** @param {string} text */
 const shortHash = async (text) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
 
+const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
+
 /** @param {string} id */
 const mkBookmarkedCookie = async (id) => {
-  return `bookmarked_${await shortHash(id)}=; Path=/dashboard; Expires=${oneYearFromNow().toUTCString()}`;
+  return `bookmarked_${await shortHash(id)}=; Path=/dashboard; SameSite=Strict; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
 }
+
+/** @param {string} id */
+const mkLoginCookie = (id) => {
+  return `did=${id}; Path=/dashboard; SameSite=Strict; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
+}
+
+/** @param {string} cookie @returns {Map<string, string>} */
+const parseCookie = (cookie) => new Map(cookie.split(/;\s*/)
+  .map(x => x.split('='))
+  .map(/** @returns {[string, string]} */ ([k, v]) => [k, v])
+  .filter(([k]) => !!k)
+);
 
 export const styles = `
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
@@ -154,10 +168,14 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       dnt: false,
     });
 
-    return redirect(new URL(`/dashboard/${shortenId(id)}`, WORKER_DOMAIN));
+    return redirect(
+      new URL(`/dashboard/${shortenId(id)}`, WORKER_DOMAIN),
+      { headers: { 'Set-Cookie': mkLoginCookie(shortenId(id)) } },
+    );
   }
   else if (match = pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?/)) {
     if (!(headers.get('accept') || '').includes('text/html')) return badRequest();
+    const cookies = parseCookie(headers.get('cookie') || '');
 
     let id = match[1];
     let uuid = elongateId(id);
@@ -360,8 +378,8 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     }
     else if (pathname.match(/\/dashboard\/([0-9A-Za-z-_]{22})\/?$/)) {
       const isMac = (headers.get('user-agent') || '').match(/mac/i);
-      let isBookmarked = (headers.get('cookie') || '').includes(`bookmarked_${await shortHash(id)}`);
-      let cookieDNT = (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(dashboard.hostname)}`);
+      let isBookmarked = cookies.has(`bookmarked_${await shortHash(id)}`);
+      let cookieDNT = cookies.has(`dnt=${encodeURIComponent(dashboard.hostname)}`);
       let setHeaders;
 
       if (dashboard.dnt !== cookieDNT) {
@@ -394,7 +412,10 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               method: 'POST',
               data: { 'metadata[dashboard_id]': shortenId(newUUID) },
             });
-            return redirect(new URL(`/dashboard/${newId}`, WORKER_DOMAIN));
+            return redirect(
+              new URL(`/dashboard/${newId}`, WORKER_DOMAIN),
+              { headers: { 'Set-Cookie': mkLoginCookie(newId) } },
+            );
           }
           case 'cookie': {
             isBookmarked = true;
