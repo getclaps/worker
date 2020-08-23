@@ -45,6 +45,8 @@ export const validateURL = (url) => {
 export async function handleClaps({ request, requestURL, method, path, headers }) {
   if (path.length > 1) return notFound();
 
+  if (method === 'OPTIONS') return ok();
+
   const dao = new FaunaDAO();
 
   const originURL = validateURL(headers.get('Origin'));

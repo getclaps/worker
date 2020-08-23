@@ -26,16 +26,15 @@ const addCORSHeaders = (request) => (response) => {
   return response;
 }
 
+/** @param {any} err */
+const handleError = (err) => {
+  if (err instanceof Response) return err;
+  else if (DEBUG) throw err;
+  else return internalServerError();
+}
+
 self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
-  event.respondWith(
-    handleRequest(event.request, new URL(event.request.url))
-      .catch(err => {
-        if (err instanceof Response) return err;
-        else if (DEBUG) throw err;
-        else return internalServerError();
-      })
-      .then(addCORSHeaders(event.request))
-  );
+  event.respondWith(handleRequest(event.request, new URL(event.request.url)));
 });
 
 /**
@@ -47,24 +46,24 @@ async function handleRequest(request, requestURL) {
   const { method, headers } = request;
   const { pathname } = requestURL;
 
-  if (method === 'OPTIONS') return new Response();
-
   const path = getPath(pathname);
+
+  const args = { request, requestURL, method, pathname, path, headers };
 
   switch (path[0]) {
     case '__init': {
       const dao = new FaunaDAO();
       if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
-      return dao.init()
+      return dao.init().catch(handleError);
     }
     case 'claps': {
-      return handleClaps({ request, requestURL, method, pathname, path, headers });
+      return handleClaps(args).catch(handleError).then(addCORSHeaders(request));
     }
     case 'views': {
-      return handleViews({ request, requestURL, method, pathname, path, headers });
+      return handleViews(args).catch(handleError).then(addCORSHeaders(request));
     }
     case 'dashboard': {
-      return handleDashboard({ request, requestURL, method, pathname, path, headers })
+      return handleDashboard(args).catch(handleError);
     }
     default: {
       return notFound();

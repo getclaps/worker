@@ -34,6 +34,7 @@ function getReferrer(referrerRaw, hostname) {
  */
 export async function handleViews({ requestURL, method, path, headers }) {
   if (path.length > 1) return notFound();
+  if (method === 'OPTIONS') return ok();
   if (method !== 'POST') return notFound();
 
   const dao = new FaunaDAO();
