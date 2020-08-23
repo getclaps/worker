@@ -1,12 +1,13 @@
 export class SearchParamsURL extends URL {
   /**
    * @param {string | URL} url 
-   * @param {{ [name: string]: string }} [params] 
+   * @param {URLSearchParams|string[][]|Record<string, string>} [params] 
    * @param {string | URL} [base] 
    */
   constructor(url, params = {}, base) {
     super(url.toString(), base);
-    for (const [k, v] of Object.entries(params)) this.searchParams.append(k, v);
+    const iterable = Array.isArray(params) || params instanceof URLSearchParams ? params : Object.entries(params);
+    for (const [k, v] of iterable) this.searchParams.append(k, v);
   }
 }
 

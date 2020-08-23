@@ -7,5 +7,9 @@
     "allowJs": true,
     "checkJs": true,
     "noEmit": true,
-  }
+  },
+  "include": [
+    "typings/**/*.ts",
+    "./index.js",
+  ],
 }

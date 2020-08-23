@@ -11,8 +11,7 @@ export const redirect = (location, { headers = [], ...options } = {}) => new Res
   ...options, 
   status: 303, 
   headers: [
-    ['Location', location],
-    // @ts-ignore
+    ['Location', location.toString()],
     ...new Headers(headers),
   ], 
 }); 

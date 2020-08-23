@@ -138,7 +138,6 @@ const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new 
   </body>
 </html>`.toString(), {
   headers: [
-    // @ts-ignore
     ...new Headers(headers),
     ['Content-Type', 'text/html;charset=UTF-8'],
     ['X-Robots-Tag', 'noindex'],
@@ -439,8 +438,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         switch (fd.get('method')) {
           case 'domain': {
             try {
-              // @ts-ignore
-              dashboard = await dao.updateDomain(uuid.buffer, new URL(fd.get('hostname')).hostname);
+              dashboard = await dao.updateDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
             } catch (err) {
               if (err instanceof Response) {
                 if (err.status === 409) {
