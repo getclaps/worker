@@ -16,21 +16,21 @@ const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
-/** @param {boolean} dnt */
-const mkDNTCookie = (dnt, hostname) => {
-  return dnt
-    ? `dnt=${encodeURIComponent(hostname)}; Path=/; SameSite=None; Secure; HttpOnly; Expires=${oneYearFromNow().toUTCString()}`
-    : `dnt=${encodeURIComponent(hostname)}; Path=/; SameSite=None; Secure; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
-}
-
 // /** @param {string} text */
 // const shortHash = async (text) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
 
 const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
 
-/** @param {string} hostname */
-const mkBookmarkedCookie = (hostname) => {
-  return `bookmarked_${hostname}=; Path=/dashboard; SameSite=Strict; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
+/** @param {string} hostname */ const mkDNTCookieKey = hostname => `dnt_${encodeURIComponent(hostname)}`;
+/** @param {string} hostname @param {boolean} dnt */ const mkDNTCookie = (dnt, hostname) => {
+  return dnt
+    ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; HttpOnly; Expires=${oneYearFromNow().toUTCString()}`
+    : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
+}
+
+/** @param {string} hostname */ const mkBookmarkedCookieKey = hostname => `bkd_${encodeURIComponent(hostname)}`;
+/** @param {string} hostname */ const mkBookmarkedCookie = hostname => {
+  return `${mkBookmarkedCookieKey(hostname)}=; Path=/dashboard; SameSite=Strict; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
 }
 
 /** @param {string} id */
@@ -61,7 +61,6 @@ export const styles = css`
     .row { display:flex; margin:0 -.5rem; }
     .col { flex:1; margin:0 .5rem; } }
   div.stats-card {
-    margin: 0 -1rem;
     max-width: 640px; }
   dl.stats {
     display: grid;
@@ -81,13 +80,14 @@ export const styles = css`
   dl.stats > dd:nth-of-type(1) { grid-area: a2 }
   dl.stats > dd:nth-of-type(2) { grid-area: b2 }
   dl.stats > dd:nth-of-type(3) { grid-area: c2 }
+  input[name=password] { font-family: system-ui-monospace, "Liberation Mono", "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "DejaVu Sans Mono", "Fira Code", "Droid Sans Mono", "Menlo", "Consolas", "Monaco", monospace; }
 `;
 
 /**
- * @param {{ title?: string, hostname?: string, headers?: Headers }} [param0]
+ * @param {{ title?: string, hostname?: string, isBookmarked?: boolean, headers?: HeadersInit }} [param0]
  * @returns {(content: string|HTML) => Response}
  */
-const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new Headers() } = {}) => (content) => new Response(html`
+const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookmarked = false, headers = [] } = {}) => (content) => new Response(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -110,7 +110,7 @@ const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new 
             </a>
           </div>
         </div>
-        ${hostname == null ? '' : html`<div class="bp3-navbar-group">
+        <div id="unlock" class="bp3-navbar-group" style="visibility: ${hostname == null || !isBookmarked ? 'hidden' : 'visible'}">
           <a class="bp3-button bp3-minimal" href="/dashboard/stats">Stats</a>
           <span class="bp3-navbar-divider"></span>
           <a class="bp3-button bp3-minimal" href="/dashboard/subscription">Subscription</a>
@@ -123,7 +123,7 @@ const page = ({ title = 'Clap Button Dashboard', hostname = null, headers = new 
               }));
             })();
           </script>
-        </div>`}
+        </div>
       </div>
     </nav>
     <div style="padding:0 1rem">
@@ -185,17 +185,15 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       dnt: false,
     });
 
-    return redirect(
-      new URL(`/dashboard`, WORKER_DOMAIN),
-      { headers: [['Set-Cookie', mkLoginCookie(shortenId(id))]] },
-    );
+    return redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+      headers: [['Set-Cookie', mkLoginCookie(shortenId(id))]],
+    });
   }
 
   if (match = pathname.match(/\/dashboard\/logout\/?/)) {
-    return redirect(
-      new URL(`/dashboard`, WORKER_DOMAIN),
-      { headers: [['Set-Cookie', mkLogoutCookie()]] },
-    );
+    return redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+      headers: [['Set-Cookie', mkLogoutCookie()]]
+    });
   }
 
   if (match = pathname.match(/\/dashboard\/login\/?/)) {
@@ -203,10 +201,12 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const formData = await request.formData()
       const id = formData.get('password').toString();
       const hostname = formData.get('id').toString();
-      return redirect(
-        new URL(`/dashboard`, WORKER_DOMAIN),
-        { headers: [['Set-Cookie', mkLoginCookie(id)], ['Set-Cookie', mkBookmarkedCookie(hostname)]] },
-      );
+      return redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+        headers: [
+          ['Set-Cookie', mkLoginCookie(id)],
+          ['Set-Cookie', mkBookmarkedCookie(hostname)]
+        ],
+      });
     }
     return notFound();
   }
@@ -222,6 +222,8 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
 
     let dashboard = await dao.getDashboard(uuid);
     let showError = false;
+
+    let isBookmarked = cookies.has(mkBookmarkedCookieKey(dashboard.hostname));
 
     const ip = headers.get('cf-connecting-ip');
     if (ip != null && dashboard.ip !== ip) {
@@ -248,7 +250,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         return html`<time datetime="${d.toISOString()}">${new Intl.DateTimeFormat(locale).format(d)}</time>`;
       }
 
-      return page({ hostname: dashboard.hostname })(html`
+      return page({ hostname: dashboard.hostname, isBookmarked })(html`
       <div class="bp3-running-text">
         <h2>Subscription</h2>
         <p>
@@ -306,7 +308,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
       const timeFrame = requestURL.searchParams.get('time') || '24-hours';
       const [value, unit] = timeFrame.split('-');
       const { visitors, views, claps, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
-      return page({ hostname: dashboard.hostname })(html`
+      return page({ hostname: dashboard.hostname, isBookmarked })(html`
       <div class="bp3-running-text">
         <h2>Stats</h2>
         <form method="GET" action="/dashboard/stats">
@@ -422,8 +424,7 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
     }
     else if (pathname.match(/\/dashboard\/?$/)) {
       // const isMac = (headers.get('user-agent') || '').match(/mac/i);
-      // let isBookmarked = cookies.has(`bookmarked_${await shortHash(id)}`);
-      let cookieDNT = cookies.has(`dnt=${encodeURIComponent(dashboard.hostname)}`);
+      let cookieDNT = cookies.has(mkDNTCookieKey(dashboard.hostname));
       let setHeaders = new Headers();
 
       // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)
@@ -457,10 +458,9 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               method: 'POST',
               data: { 'metadata[dashboard_id]': shortenId(newUUID) },
             });
-            return redirect(
-              new URL(`/dashboard`, WORKER_DOMAIN),
-              { headers: { 'Set-Cookie': mkLoginCookie(newId) } },
-            );
+            return redirect( new URL(`/dashboard`, WORKER_DOMAIN), { 
+              headers: [['Set-Cookie', mkLoginCookie(newId)]], 
+            });
           }
           // case 'cookie': {
           //   isBookmarked = true;
@@ -477,11 +477,11 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
         }
       } else if (method !== 'GET') return badRequest();
 
-      return page({ hostname: dashboard.hostname, headers: setHeaders })(html`
+      return page({ hostname: dashboard.hostname, isBookmarked, headers: setHeaders })(html`
       <div class="bp3-running-text">
         ${dashboard.hostname == null ? '' : html`<h2>Key</h2>
         <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
-          <input type="text" class="bp3-input" name="id" value="${dashboard.hostname || 'x-getclaps-key'}" hidden readonly autocomplete="username email" />
+          <input type="text" class="bp3-input" name="id" value="${dashboard.hostname}" hidden readonly autocomplete="username" />
           <div class="bp3-input-group" style="display:inline-block; width:16rem">
             <input type="password" class="bp3-input" name="password" value="${id}" readonly autocomplete="current-password" />
             <button class="bp3-button bp3-minimal bp3-icon-eye-open"></button>
@@ -497,21 +497,22 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
               el.previousElementSibling.type = show ? 'text' : 'password';
             });
           </script>
+          ${isBookmarked ? '' : html`<div id="bookmark-warning" class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
+            <h4 class="bp3-heading">Please store your credentials!</h4>
+            Please use your browser's password manager to store the credentials.<br/>
+            Use the <button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button> button to trigger the Store Password dialog.
+          </div>`}
         </form>
-        <div id="bookmark-warning" class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
-          <h4 class="bp3-heading">Please store your credentials!</h4>
-          Please use your browser's password manager to store the following credentials.
-          Use the 'Store Password' button to trigger the Store Password dialog.
-        </div>
         <script type="module">
          if ('PasswordCredential' in window) {
-            document.querySelector('form#login button[type=submit]').addEventListener('click', async (e) => {
+            document.querySelectorAll('form#login button[type=submit]').forEach(el => el.addEventListener('click', async (e) => {
               e.preventDefault();
               const cred = new PasswordCredential(document.querySelector('form#login'));
-              const x = await navigator.credentials.store(cred);
-              console.log('stored', x);
-              // document.querySelector('#bookmark-warning').remove();
-            });
+              await navigator.credentials.store(cred);
+              document.cookie = '${mkBookmarkedCookie(dashboard.hostname)}';
+              document.querySelector('#bookmark-warning').remove();
+              document.querySelector('#unlock').style.visibility = 'visible';
+            }));
           }
         </script>
         ${/*<form method="POST" action="/dashboard">
@@ -561,6 +562,9 @@ export async function handleDashboard({ request, requestURL, method, pathname, h
                 as well as all page views from the last IP address that accessed this dashboard.
               </small>
             </p>
+            <p>
+              <small>Last login from: <span>${dashboard.ip}</span></small>
+            </p>
             <script>document.querySelector('input[name="dnt"]').addEventListener('change', function(e) { setTimeout(function () { e.target.form.submit() }, 500) })</script>
             <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
           </form>
@@ -579,8 +583,7 @@ function loginPage() {
   // const response = fetch('/dashboard/login', { method: 'POST', redirect });b
   return page()(html`
     <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
-      <input type="hidden" name="method" value="login" />
-      <input type="text" class="bp3-input" name="id" hidden autocomplete="username email" />
+      <input type="text" class="bp3-input" name="id" autocomplete="username email" />
       <div class="bp3-input-group" style="display:inline-block; width:16rem">
         <input type="password" class="bp3-input" name="password" autocomplete="current-password" />
       </div>
