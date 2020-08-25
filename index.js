@@ -1,8 +1,6 @@
+import * as r from './response-types';
+import * as routes from './routes/index.js';
 import { FaunaDAO } from './fauna-dao.js';
-import { ok, badRequest, forbidden, notFound, redirect, internalServerError } from './response-types';
-import { handleDashboard } from './routes/dashboard.js';
-import { handleClaps } from './routes/claps.js';
-import { handleViews } from './routes/views.js';
 
 export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
 
@@ -30,12 +28,24 @@ const addCORSHeaders = (request) => (response) => {
 const handleError = (err) => {
   if (err instanceof Response) return err;
   else if (DEBUG) throw err;
-  else return internalServerError();
+  else return r.internalServerError();
 }
 
 self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
   event.respondWith(handleRequest(event.request, new URL(event.request.url)));
 });
+
+/**
+ * @public
+ * @typedef {{
+ *   request: Request,
+ *   requestURL: URL,
+ *   headers: Headers,
+ *   method: string,
+ *   pathname: string,
+ *   path: string[],
+ * }} RouteParams 
+ */
 
 /**
  * @param {Request} request
@@ -48,25 +58,26 @@ async function handleRequest(request, requestURL) {
 
   const path = getPath(pathname);
 
+  /** @type {RouteParams} */
   const args = { request, requestURL, method, pathname, path, headers };
 
   switch (path[0]) {
     case '__init': {
       const dao = new FaunaDAO();
-      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
+      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return r.forbidden();
       return dao.init().catch(handleError);
     }
     case 'claps': {
-      return handleClaps(args).catch(handleError).then(addCORSHeaders(request));
+      return routes.handleClaps(args).catch(handleError).then(addCORSHeaders(request));
     }
     case 'views': {
-      return handleViews(args).catch(handleError).then(addCORSHeaders(request));
+      return routes.handleViews(args).catch(handleError).then(addCORSHeaders(request));
     }
     case 'dashboard': {
-      return handleDashboard(args).catch(handleError);
+      return routes.handleDashboard(args).catch(handleError);
     }
     default: {
-      return notFound();
+      return r.notFound();
     }
   }
 }
