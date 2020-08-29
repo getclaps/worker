@@ -5,7 +5,7 @@ export function loginPage() {
   // const response = fetch('/dashboard/login', { method: 'POST', redirect });b
   return page()(html`
     <div class="flex-center" style="margin-top:3rem">
-      <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
+      <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
         <div class="bp3-form-group">
           <label class="bp3-label" for="form-group-input">
             Key
@@ -40,7 +40,7 @@ export function loginPage() {
         if (cred) {
           const { id, password } = cred;
           const body = new URLSearchParams(Object.entries({ method: 'login', id, password }));
-          const response = await fetch('/dashboard/login', { method: 'POST', body, redirect: 'manual' });
+          const response = await fetch('/login', { method: 'POST', body, redirect: 'manual' });
           // cookie set, reload page
           window.location.reload();
         }

@@ -76,8 +76,9 @@ async function handleRequest(request, requestURL) {
     case 'dashboard': {
       return routes.handleDashboard(args).catch(handleError);
     }
-    default: {
-      return r.notFound();
+   default: {
+      args.path = ['dashboard', ...path];
+      return routes.handleDashboard(args).catch(handleError);
     }
   }
 }

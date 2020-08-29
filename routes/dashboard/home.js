@@ -55,7 +55,7 @@ export async function homePage({ method, request, isBookmarked, dashboard, cooki
   return page({ hostname: dashboard.hostname, id, isBookmarked, headers: setHeaders })(html`
     <div class="bp3-running-text">
       ${dashboard.hostname == null ? '' : html`<h2>Key</h2>
-      <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
+      <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
         <input type="text" class="bp3-input" name="id" value="${dashboard.hostname}" hidden readonly autocomplete="username" />
         <div class="bp3-input-group" style="display:inline-block; width:16rem">
           <span class="bp3-icon bp3-icon-key"></span>
@@ -121,7 +121,7 @@ export async function homePage({ method, request, isBookmarked, dashboard, cooki
           Once you've set a domain, Clap Button will show and persist claps on all pages within that domain.
         </div>
       `}
-      <form method="POST" action="/dashboard">
+      <form method="POST" action="/">
         <input type="hidden" name="method" value="domain"/>
         <div class="bp3-input-group" style="display:inline-block; width:16rem">
           <span class="bp3-icon bp3-icon-globe-network"></span>

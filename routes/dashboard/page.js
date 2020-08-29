@@ -23,20 +23,20 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
       <div>
         <div class="bp3-navbar-group bp3-align-left">
           <div class="bp3-navbar-heading" style="font-weight:bold">
-            <a href="/dashboard" style="text-decoration:none">
+            <a href="/" style="text-decoration:none">
               <h1 style="font-size:1rem">${hostname || title}</h1>
             </a>
           </div>
         </div>
         <div id="unlock" class="bp3-navbar-group" style="visibility: ${hostname == null || !isBookmarked ? 'hidden' : 'visible'}">
-          <a class="bp3-button bp3-minimal" href="/dashboard/stats">Stats</a>
+          <a class="bp3-button bp3-minimal" href="/stats">Stats</a>
+          <a class="bp3-button bp3-minimal" href="/subscription">Subscription</a>
+          <a class="bp3-button bp3-minimal" href="/settings">Settings</a>
           <span class="bp3-navbar-divider"></span>
-          <a class="bp3-button bp3-minimal" href="/dashboard/subscription">Subscription</a>
-          <a class="bp3-button bp3-minimal" href="/dashboard/settings">Settings</a>
-          <a class="bp3-button bp3-minimal" href="/dashboard/logout">Logout</a>
+          <a class="bp3-button bp3-minimal" href="/logout">Logout</a>
           <script type="module">
             if ('PasswordCredential' in window) (() => {
-              document.querySelectorAll('a[href="/dashboard/logout"]').forEach(el => el.addEventListener('click', () => {
+              document.querySelectorAll('a[href="/logout"]').forEach(el => el.addEventListener('click', () => {
                 navigator.credentials.preventSilentAccess()
               }));
             })();

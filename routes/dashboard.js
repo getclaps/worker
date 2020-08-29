@@ -27,16 +27,16 @@ const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
 
 /** @param {string} hostname */ export const mkBookmarkedCookieKey = hostname => `bkd_${encodeURIComponent(hostname)}`;
 /** @param {string} hostname */ export const mkBookmarkedCookie = hostname => {
-  return `${mkBookmarkedCookieKey(hostname)}=; Path=/dashboard; SameSite=Strict; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
+  return `${mkBookmarkedCookieKey(hostname)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
 }
 
 /** @param {string} id */
 const mkLoginCookie = (id) => {
-  return `did=${id}; Path=/dashboard; SameSite=Strict; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
+  return `did=${id}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
 }
 
 const mkLogoutCookie = () => {
-  return `did=; Path=/dashboard; SameSite=Strict; ${Secure} HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+  return `did=; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }
 
 /** @param {string} cookie @returns {Map<string, string>} */
@@ -94,13 +94,13 @@ export async function handleDashboard(params) {
       dnt: false,
     });
 
-    return r.redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+    return r.redirect(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLoginCookie(shortenId(id))]],
     });
   }
 
   else if (dir === 'logout') {
-    return r.redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+    return r.redirect(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLogoutCookie()]]
     });
   }
@@ -116,10 +116,10 @@ export async function handleDashboard(params) {
         const d = await dao.getDashboard(uuid);
         if (!d) throw Error();
       } catch {
-        return r.redirect(new URL(`/dashboard`, WORKER_DOMAIN))
+        return r.redirect(new URL(`/`, WORKER_DOMAIN))
       }
 
-      return r.redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+      return r.redirect(new URL(`/`, WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
           ['Set-Cookie', mkBookmarkedCookie(hostname)]
@@ -132,7 +132,7 @@ export async function handleDashboard(params) {
 
   else if (/([A-Za-z0-9-_]{22})/.test(dir)) {
     const [, id] = dir.match(/([A-Za-z0-9-_]{22})/);
-    return r.redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+    return r.redirect(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLoginCookie(id)]],
     });
   }

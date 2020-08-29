@@ -13,7 +13,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
   return page({ hostname: dashboard.hostname, isBookmarked })(html`
     <div class="bp3-running-text">
       <h2>Stats</h2>
-      <form method="GET" action="/dashboard/stats">
+      <form method="GET" action="/stats">
         <label class="bp3-label bp3-inline">
           Show data for the last
           <div class="bp3-select">

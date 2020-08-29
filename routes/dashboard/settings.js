@@ -25,7 +25,7 @@ export async function settingsPage({ method, uuid, dashboard, cookies, request, 
   return page({ hostname: dashboard.hostname, isBookmarked })(html`
       <div class="bp3-running-text">
         <h2>Settings</h2>
-        <form method="POST" action="/dashboard/settings">
+        <form method="POST" action="/settings">
           <input type="hidden" name="method" value="dnt"/>
           <label class="bp3-control bp3-switch bp3-large" style="margin-top:.5rem;">
             <input type="checkbox" name="dnt" ${cookieDNT ? 'checked' : ''}/>
