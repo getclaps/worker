@@ -154,17 +154,20 @@ export async function handleDashboard(params) {
       await dao.upsertDashboard({ id: uuid, ip });
     }
 
+    /** @type {Response} */ let res;
     if (dir === 'settings') {
-      return pages.settingsPage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
+      res = await pages.settingsPage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
     }
     else if (dir === 'stats') {
-      return pages.statsPage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
+      res = await pages.statsPage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
     }
     else if (!dir) {
-      return pages.homePage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
+      res = await pages.homePage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
     }
     else {
-      return r.notFound();
+      res = r.notFound();
     }
+    res.headers.append('Set-Cookie', mkLoginCookie(id));
+    return res;
   }
 }
