@@ -33,7 +33,6 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
           <span class="bp3-navbar-divider"></span>
           <a class="bp3-button bp3-minimal" href="/dashboard/subscription">Subscription</a>
           <a class="bp3-button bp3-minimal" href="/dashboard/settings">Settings</a>
-          <span class="bp3-navbar-divider"></span>
           <a class="bp3-button bp3-minimal" href="/dashboard/logout">Logout</a>
           <script type="module">
             if ('PasswordCredential' in window) (() => {
