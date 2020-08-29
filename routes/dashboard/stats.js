@@ -49,7 +49,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
               ${views.slice(0, 16).map(stat => html`
                 <tr>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
-                  <td>${stat.views}</td>
+                  <td>${stat.views.toLocaleString(locale)}</td>
                 </tr>`)}
             </tbody>
           </table>
@@ -68,8 +68,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
               ${claps.slice(0, 16).map(stat => html`
                 <tr>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
-                  <td>${stat.claps}</td>
-                  <td>${stat.clappers}</td>
+                  <td>${stat.claps.toLocaleString(locale)}</td>
+                  <td>${stat.clappers.toLocaleString(locale)}</td>
                 </tr>`)}
             </tbody>
           </table>
@@ -89,7 +89,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
               ${countries.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${(countriesByCode[stat.country] || {}).emoji || ''} ${(countriesByCode[stat.country] || {}).name || stat.country}</td>
-                  <td>${stat.views}</td>
+                  <td>${stat.views.toLocaleString(locale)}</td>
                 </tr>`)}
             </tbody>
           </table>
@@ -107,7 +107,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
               ${referrals.slice(0, 16).map((stat) => html`
                 <tr>
                   <td title="${new URL(stat.referrer).href}">${new URL(stat.referrer).href}</td>
-                  <td>${stat.referrals}</td>
+                  <td>${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`)}
             </tbody>
           </table>
