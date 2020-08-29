@@ -50,7 +50,9 @@ export async function homePage({ method, request, isBookmarked, dashboard, cooki
     }
   } else if (method !== 'GET') return r.badRequest();
 
-  return page({ hostname: dashboard.hostname, isBookmarked, headers: setHeaders })(html`
+  const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
+
+  return page({ hostname: dashboard.hostname, id, isBookmarked, headers: setHeaders })(html`
     <div class="bp3-running-text">
       ${dashboard.hostname == null ? '' : html`<h2>Key</h2>
       <form id="login" method="POST" action="/dashboard/login" class="bp3-inline" autocomplete="on">
@@ -71,11 +73,16 @@ export async function homePage({ method, request, isBookmarked, dashboard, cooki
             el.previousElementSibling.type = show ? 'text' : 'password';
           });
         </script>
-        ${isBookmarked ? '' : html`<div id="bookmark-warning" class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
+        ${isBookmarked 
+            ? html`<p style="margin-top:.5rem">
+           Clicking the ${storePassword} button will trigger your browser's password manager. 
+           Use it to store the key to this dashboard. 
+           If you've already stored the key, clicking the button will have no effect.
+          </p>` 
+            : html`<div id="bookmark-warning" class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
           <h4 class="bp3-heading">Please store your credentials!</h4>
           Please use your browser's password manager to store the credentials.<br/>
-          Use the <button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button> 
-          button to trigger your browsers store password dialog.
+          Use the ${storePassword} button to trigger your browsers store password dialog.
         </div>`}
       </form>
       <script type="module">
