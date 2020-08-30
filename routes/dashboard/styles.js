@@ -1,6 +1,7 @@
 import { css } from '../../html';
 
 export const styles = css`
+  [hidden] { display: none!important }
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
   body { padding: 3rem 0; overflow-x: hidden; }

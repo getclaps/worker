@@ -52,14 +52,14 @@ export async function homePage({ method, request, isBookmarked, dashboard, cooki
 
   const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
-  return page({ hostname: dashboard.hostname, id, isBookmarked, headers: setHeaders })(html`
+  return page({ hostname: dashboard.hostname, isBookmarked, headers: setHeaders })(html`
     <div class="bp3-running-text">
       ${dashboard.hostname == null ? '' : html`<h2>Key</h2>
       <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
         <input type="text" class="bp3-input" name="id" value="${dashboard.hostname}" hidden readonly autocomplete="username" />
         <div class="bp3-input-group" style="display:inline-block; width:16rem">
           <span class="bp3-icon bp3-icon-key"></span>
-          <input type="password" class="bp3-input" name="password" value="${id}" readonly autocomplete="current-password" />
+          <input type="password" class="bp3-input" name="password" value="${id}" readonly autocomplete="new-password" />
           <button class="bp3-button bp3-minimal bp3-icon-eye-open"></button>
         </div>
         <button class="bp3-button" type="submit">Store Password</button>
