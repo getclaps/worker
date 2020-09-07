@@ -11,7 +11,7 @@ export const styles = css`
   table.bp3-html-table-condensed tr > td:first-child { width: 75% }
   @media screen and (min-width: 768px) {
     .row { display:flex; margin:0 -.5rem; }
-    .col { flex:1; margin:0 .5rem; } }
+    .row > * { flex:1; margin:0 .5rem; } }
   div.stats-card {
     max-width: 640px; }
   dl.stats {
@@ -36,4 +36,5 @@ export const styles = css`
   .flex-center {
     display: flex;
     justify-content: center; }
+  .unlock.hidden { display: none }
 `;

@@ -28,7 +28,7 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
             </a>
           </div>
         </div>
-        <div id="unlock" class="bp3-navbar-group" style="visibility: ${hostname == null || !isBookmarked ? 'hidden' : 'visible'}">
+        <div class="bp3-navbar-group unlock ${hostname == null || !isBookmarked ? 'hidden' : ''}">
           <a class="bp3-button bp3-minimal" href="/stats">Stats</a>
           <a class="bp3-button bp3-minimal" href="/subscription">Subscription</a>
           <a class="bp3-button bp3-minimal" href="/settings">Settings</a>

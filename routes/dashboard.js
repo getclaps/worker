@@ -110,16 +110,17 @@ export async function handleDashboard(params) {
       const formData = await request.formData()
       const id = formData.get('password').toString();
       const hostname = formData.get('id').toString();
+      const referrer = formData.get('referrer') || '/';
 
       try {
         const uuid = elongateId(id);
         const d = await dao.getDashboard(uuid);
         if (!d) throw Error();
       } catch {
-        return r.redirect(new URL(`/`, WORKER_DOMAIN))
+        return r.redirect(new URL(referrer.toString(), WORKER_DOMAIN))
       }
 
-      return r.redirect(new URL(`/`, WORKER_DOMAIN), {
+      return r.redirect(new URL(referrer.toString(), WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
           ['Set-Cookie', mkBookmarkedCookie(hostname)]
@@ -154,20 +155,28 @@ export async function handleDashboard(params) {
       await dao.upsertDashboard({ id: uuid, ip });
     }
 
+    const snowball = { ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale };
+
     /** @type {Response} */ let res;
     if (dir === 'settings') {
-      res = await pages.settingsPage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
+      res = await pages.settingsPage(snowball);
     }
     else if (dir === 'stats') {
-      res = await pages.statsPage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
+      res = await pages.statsPage(snowball);
     }
     else if (!dir) {
-      res = await pages.homePage({ ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale });
+      if (isBookmarked) {
+        res = r.redirect(new URL('/stats', WORKER_DOMAIN));
+      } else {
+        res = r.redirect(new URL('/settings', WORKER_DOMAIN));
+      }
     }
     else {
       res = r.notFound();
     }
+
     res.headers.append('Set-Cookie', mkLoginCookie(id));
+
     return res;
   }
 }
