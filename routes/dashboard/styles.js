@@ -8,7 +8,9 @@ export const styles = css`
   body.bp3-dark { color: #ccc; background: #293742; }
   table { width: 100% }
   table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  table.bp3-html-table-condensed tr > td:first-child { width: 75% }
+  table.bp3-html-table-condensed tr > td:nth-child(2) { width: 60% }
+  table.bp3-html-table-condensed tr > td:first-child { width: 30px }
+  .opener { color:#bfccd6 }
   @media screen and (min-width: 768px) {
     .row { display:flex; margin:0 -.5rem; }
     .row > * { flex:1; margin:0 .5rem; } }

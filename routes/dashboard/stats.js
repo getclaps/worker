@@ -5,6 +5,12 @@ import { countries } from '../../countries.js';
 
 const countriesByCode = Object.fromEntries(countries.map(x => [x.code, x]));
 
+const noOpener = href => {
+  let url;
+  try { url = new URL(href) } catch { return '' }
+  return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener"><span class="bp3-icon bp3-icon-share"></span></a></td>`;
+}
+
 /** @param {import('../dashboard').Snowball} param0 */
 export async function statsPage({ requestURL, dao, isBookmarked, dashboard, locale }) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
@@ -41,6 +47,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
+                <th></th>
                 <th>Page</th>
                 <th>Views</th>
               </tr>
@@ -48,6 +55,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
             <tbody>
               ${views.slice(0, 16).map(stat => html`
                 <tr>
+                  <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
                 </tr>`)}
@@ -59,6 +67,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
+                <th></th>
                 <th>Page</th>
                 <th>Claps</th>
                 <th>Clappers</th>
@@ -67,6 +76,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
             <tbody>
               ${claps.slice(0, 16).map(stat => html`
                 <tr>
+                  <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                   <td>${stat.claps.toLocaleString(locale)}</td>
                   <td>${stat.clappers.toLocaleString(locale)}</td>
@@ -81,6 +91,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
+                <th></th>
                 <th>Country</th>
                 <th>Views</th>
               </tr>
@@ -88,7 +99,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
             <tbody>
               ${countries.slice(0, 16).map((stat) => html`
                 <tr>
-                  <td>${(countriesByCode[stat.country] || {}).emoji || ''} ${(countriesByCode[stat.country] || {}).name || stat.country}</td>
+                  <td>${(countriesByCode[stat.country] || {}).emoji || ''}</td>
+                  <td>${(countriesByCode[stat.country] || {}).name || stat.country}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
                 </tr>`)}
             </tbody>
@@ -99,6 +111,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
+                <th></th>
                 <th>Referrer</th>
                 <th>Referrals</th>
               </tr>
@@ -106,6 +119,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, dashboard, loca
             <tbody>
               ${referrals.slice(0, 16).map((stat) => html`
                 <tr>
+                  <td>${noOpener(stat.referrer)}</td>
                   <td title="${new URL(stat.referrer).href}">${new URL(stat.referrer).href}</td>
                   <td>${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`)}
