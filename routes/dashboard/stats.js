@@ -12,10 +12,23 @@ const noOpener = href => {
 }
 
 /** @param {import('../dashboard').Snowball} param0 */
-export async function statsPage({ requestURL, dao, isBookmarked, dashboard, locale }) {
+export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-');
-  const { visitors, views, claps, countries, referrals, totalClaps, totalViews } = await dao.getStats(dashboard.hostname, [Number(value), unit]);
+
+  console.time('getStats');
+  const {
+    dashboard,
+    visitors,
+    views,
+    claps,
+    countries,
+    referrals,
+    totalClaps,
+    totalViews,
+  } = await dao.getStats(uuid, [Number(value), unit]);
+  console.timeEnd('getStats');
+
   return page({ hostname: dashboard.hostname, isBookmarked })(html`
     <div class="bp3-running-text">
       <h2>Stats</h2>

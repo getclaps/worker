@@ -32,7 +32,7 @@ const handleError = (err) => {
 }
 
 self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
-  event.respondWith(handleRequest(event.request, new URL(event.request.url)));
+  event.respondWith(handleRequest(event.request, new URL(event.request.url), event));
 });
 
 /**
@@ -40,6 +40,7 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
  * @typedef {{
  *   request: Request,
  *   requestURL: URL,
+ *   event: FetchEvent,
  *   headers: Headers,
  *   method: string,
  *   pathname: string,
@@ -50,16 +51,17 @@ self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
 /**
  * @param {Request} request
  * @param {URL} requestURL
+ * @param {FetchEvent} event
  * @returns {Promise<Response>}
  */
-async function handleRequest(request, requestURL) {
+async function handleRequest(request, requestURL, event) {
   const { method, headers } = request;
   const { pathname } = requestURL;
 
   const path = getPath(pathname);
 
   /** @type {RouteParams} */
-  const args = { request, requestURL, method, pathname, path, headers };
+  const args = { request, requestURL, event, method, pathname, path, headers };
 
   switch (path[0]) {
     case '__init': {

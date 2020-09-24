@@ -25,9 +25,9 @@ const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
     : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
 }
 
-/** @param {string} hostname */ export const mkBookmarkedCookieKey = hostname => `bkd_${encodeURIComponent(hostname)}`;
-/** @param {string} hostname */ export const mkBookmarkedCookie = hostname => {
-  return `${mkBookmarkedCookieKey(hostname)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
+/** @param {string} id */ export const mkBookmarkedCookieKey = id => `bkd_${id}`;
+/** @param {string} id */ export const mkBookmarkedCookie = id => {
+  return `${mkBookmarkedCookieKey(id)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
 }
 
 /** @param {string} id */
@@ -51,7 +51,6 @@ const parseCookie = (cookie) => new Map(cookie.split(/;\s*/)
  * @typedef {import('../index').RouteParams & { 
  *   id: string,
  *   uuid: UUID, 
- *   dashboard: any, 
  *   cookies: Map<string, string>, 
  *   dao: FaunaDAO, 
  *   isBookmarked: boolean, 
@@ -63,7 +62,7 @@ const parseCookie = (cookie) => new Map(cookie.split(/;\s*/)
  * @param {import('../index').RouteParams} params 
  */
 export async function handleDashboard(params) {
-  const { request, requestURL, headers, method, path: [, dir] } = params;
+  const { request, requestURL, event, headers, method, path: [, dir] } = params;
 
   const dao = new FaunaDAO();
 
@@ -123,7 +122,7 @@ export async function handleDashboard(params) {
       return r.redirect(new URL(referrer.toString(), WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
-          ['Set-Cookie', mkBookmarkedCookie(hostname)]
+          ['Set-Cookie', mkBookmarkedCookie(id)]
         ],
       });
     }
@@ -146,16 +145,17 @@ export async function handleDashboard(params) {
     if (!id) return pages.loginPage();
 
     const uuid = elongateId(id);
-    const dashboard = await dao.getDashboard(uuid);
 
-    const isBookmarked = cookies.has(mkBookmarkedCookieKey(dashboard.hostname));
+    const isBookmarked = cookies.has(mkBookmarkedCookieKey(id));
 
-    const ip = headers.get('cf-connecting-ip');
-    if (ip != null && dashboard.ip !== ip) {
-      await dao.upsertDashboard({ id: uuid, ip });
-    }
+    event.waitUntil((async () => {
+      const ip = headers.get('cf-connecting-ip');
+      if (ip != null) {
+        await dao.upsertDashboard({ id: uuid, ip });
+      }
+    })());
 
-    const snowball = { ...params, id, uuid, dashboard, cookies, dao, isBookmarked, locale };
+    const snowball = { ...params, id, uuid, cookies, dao, isBookmarked, locale };
 
     /** @type {Response} */ let res;
     if (dir === 'settings') {

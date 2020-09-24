@@ -5,7 +5,9 @@ import { page } from './page';
 import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie } from '../dashboard';
 
 /** @param {import('../dashboard').Snowball} param0 */
-export async function settingsPage({ method, uuid, id, dashboard, cookies, request, dao, isBookmarked }) {
+export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }) {
+  let dashboard = await dao.getDashboard(uuid);
+
   // const isMac = (headers.get('user-agent') || '').match(/mac/i);
   let cookieDNT = cookies.has(mkDNTCookieKey(dashboard.hostname));
   let setHeaders = new Headers();
@@ -122,7 +124,7 @@ export async function settingsPage({ method, uuid, id, dashboard, cookies, reque
             e.preventDefault();
             const cred = new PasswordCredential(document.querySelector('form#login'));
             await navigator.credentials.store(cred);
-            document.cookie = '${mkBookmarkedCookie(dashboard.hostname)}';
+            document.cookie = '${mkBookmarkedCookie(id)}';
             if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
             document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
           }));
