@@ -31,7 +31,9 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
 
   return page({ hostname: dashboard.hostname, isBookmarked })(html`
     <div class="bp3-running-text">
-      <h2>Stats</h2>
+      <br/>
+      <br/>
+      <!-- <h2>Stats</h2> -->
       <form method="GET" action="/stats">
         <label class="bp3-label bp3-inline">
           Show data for the last
@@ -56,7 +58,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
       </div>
       <div class="row">
         <div class="col">
-          <h3>Top pages <small>by views</small></h3>
+          <h3>Views <small>by page</small></h3>
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
@@ -76,7 +78,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
           </table>
         </div>
         <div class="col">
-          <h3>Top pages <small>by claps</small></h3>
+          <h3>Claps <small>by page</small></h3>
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
