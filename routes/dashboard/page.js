@@ -3,7 +3,7 @@ import { styles } from './styles';
 
 /**
  * @param {{ title?: string, hostname?: string, isBookmarked?: boolean, headers?: HeadersInit }} [param0]
- * @returns {(content: string|HTML) => Response}
+ * @returns {(content: any) => Response}
  */
 export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookmarked = false, headers = [] } = {}) => (content) => new Response(html`
 <!DOCTYPE html>
@@ -54,7 +54,7 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
     </main>
     </div>
   </body>
-</html>`.toString(), {
+</html>`, {
   headers: [
     ...new Headers(headers),
     ['Content-Type', 'text/html;charset=UTF-8'],

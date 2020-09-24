@@ -1,9 +1,9 @@
 import { html } from '../../html';
 import { page } from './page';
 
-import { countries } from '../../countries.js';
+import { countries as countriesE } from '../../countries.js';
 
-const countriesByCode = Object.fromEntries(countries.map(x => [x.code, x]));
+const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x]));
 
 const noOpener = href => {
   let url;
@@ -16,20 +16,19 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-');
 
-  console.time('getStats');
-  const {
-    dashboard,
-    visitors,
-    views,
-    claps,
-    countries,
-    referrals,
-    totalClaps,
-    totalViews,
-  } = await dao.getStats(uuid, [Number(value), unit]);
-  console.timeEnd('getStats');
+  const x = dao.getStats(uuid, [Number(value), unit]);
+  // const {
+  //   dashboard,
+  //   visitors,
+  //   views,
+  //   claps,
+  //   countries,
+  //   referrals,
+  //   totalClaps,
+  //   totalViews,
+  // } = await dao.getStats(uuid, [Number(value), unit]);
 
-  return page({ hostname: dashboard.hostname, isBookmarked })(html`
+  return page({ hostname: 'foobar', isBookmarked })(html`
     <div class="bp3-running-text">
       <br/>
       <br/>
@@ -51,9 +50,9 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
       </form>
       <div class="stats-card bp3-card bp3-elevation-2">
         <dl class="stats">
-          <dt>Unique visitors</dt><dd><strong>${visitors.toLocaleString(locale)}</strong></dd>
-          <dt>Total page views</dt><dd><strong>${totalViews.toLocaleString(locale)}</strong></dd>
-          <dt>Total claps</dt><dd><strong>${totalClaps.toLocaleString(locale)}</strong></dd>
+          <dt>Unique visitors</dt><dd><strong>${x.then(x => x.visitors.toLocaleString(locale))}</strong></dd>
+          <dt>Total page views</dt><dd><strong>${x.then(x => x.totalViews.toLocaleString(locale))}</strong></dd>
+          <dt>Total claps</dt><dd><strong>${x.then(x => x.totalClaps.toLocaleString(locale))}</strong></dd>
         </dl>
       </div>
       <div class="row">
@@ -68,12 +67,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
               </tr>
             </thead>
             <tbody>
-              ${views.slice(0, 16).map(stat => html`
+              ${x.then(x => x.views.slice(0, 16).map(stat => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
-                </tr>`)}
+                </tr>`))}
             </tbody>
           </table>
         </div>
@@ -89,13 +88,13 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
               </tr>
             </thead>
             <tbody>
-              ${claps.slice(0, 16).map(stat => html`
+              ${x.then(x => x.claps.slice(0, 16).map(stat => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                   <td>${stat.claps.toLocaleString(locale)}</td>
                   <td>${stat.clappers.toLocaleString(locale)}</td>
-                </tr>`)}
+                </tr>`))}
             </tbody>
           </table>
         </div>
@@ -112,12 +111,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
               </tr>
             </thead>
             <tbody>
-              ${countries.slice(0, 16).map((stat) => html`
+              ${x.then(x => x.countries.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${(countriesByCode[stat.country] || {}).emoji || ''}</td>
                   <td>${(countriesByCode[stat.country] || {}).name || stat.country}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
-                </tr>`)}
+                </tr>`))}
             </tbody>
           </table>
         </div>
@@ -132,12 +131,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
               </tr>
             </thead>
             <tbody>
-              ${referrals.slice(0, 16).map((stat) => html`
+              ${x.then(x => x.referrals.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
                   <td title="${new URL(stat.referrer).href}">${new URL(stat.referrer).href}</td>
                   <td>${stat.referrals.toLocaleString(locale)}</td>
-                </tr>`)}
+                </tr>`))}
             </tbody>
           </table>
           <p>
@@ -145,7 +144,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
             <small style="display:inline-block;margin-top:.5rem">
               Note that many popular sites will remove the referrer when linking to your site, 
               but you can add it back by adding a <code>referrer</code> search parameter to your link, e.g.:
-              <span style="white-space:nowrap;text-decoration:underline">https://${dashboard.hostname || 'your-site.com'}/linked-page/?referrer=popularsite.com</span>
+              <span style="white-space:nowrap;text-decoration:underline">https://${x.then(x => x.dashboard.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>
             </small>
           </p>
         </div>

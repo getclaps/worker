@@ -20,6 +20,16 @@ function* interleave(xs, ys) {
   }
 }
 
+// /**
+//  * @template A
+//  * @template B
+//  * @param {(a: A) => B} f 
+//  * @param {Iterable<A>|AsyncIterable<A>} forAwaitable 
+//  */
+// async function* map(f, forAwaitable) {
+//   for await (const x of forAwaitable) yield f(x);
+// }
+
 /** @param {Iterable<String>} xs */
 const join = (xs) => [...xs].join('');
 
@@ -47,8 +57,76 @@ function helper(x) {
  * @param {TemplateStringsArray} strings 
  * @param {...any} args 
  */
-export function html(strings, ...args) {
-  return new HTML(join(interleave(strings, args.map(helper))))
+export function css(strings, ...args) {
+  return new HTML(join(interleave(strings, args.map(helper))));
 }
 
-export { html as css };
+/**
+ * @template T
+ * @param {ReadableStream<T>} stream 
+ * @returns {AsyncIterable<T>} 
+ */
+async function* stream2AsyncIterator(stream) {
+  const reader = stream.getReader();
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) return;
+      yield value;
+    }
+  } finally { reader.releaseLock() }
+}
+
+/** 
+ * @template T 
+ * @param {AsyncIterable<T>} asyncIterable 
+ * @returns {ReadableStream<T>} 
+ */
+function asyncIterator2Stream(asyncIterable) {
+  const { readable, writable } = new TransformStream();
+  (async () => {
+    const writer = writable.getWriter();
+    try {
+      for await (const x of asyncIterable) writer.write(x);
+    } finally { writer.close() }
+  })();
+  return readable;
+}
+
+/**
+ * @param {string|HTML|ReadableStream<Uint8Array>|(string|ReadableStream<Uint8Array>)[]|
+ * Promise<string|HTML|ReadableStream<Uint8Array>|(string|ReadableStream<Uint8Array>)[]>} arg 
+ * @param {TextEncoder} te 
+ */
+async function* aHelper(arg, te) {
+  const x = await arg;
+  if (!x) yield new Uint8Array([]);
+  else if (Array.isArray(x)) for (const xx of x) yield* aHelper(xx, te);
+  else if (x instanceof ReadableStream) yield* stream2AsyncIterator(x);
+  else if (x instanceof HTML) yield te.encode(x.value);
+  else yield te.encode(sanetize(x));
+}
+
+/**
+ * @param {TemplateStringsArray} strings 
+ * @param {...any} args 
+ * @returns {ReadableStream<Uint8Array>}
+ */
+export function html(strings, ...args) {
+  const te = new TextEncoder();
+  return asyncIterator2Stream(async function* () {
+    const stringsIt = strings[Symbol.iterator]()
+    const argsIt = args[Symbol.iterator]()
+    while (true) {
+      const { done: stringDone, value: string } = stringsIt.next();
+      if (stringDone) break;
+      else yield te.encode(string);
+
+      const { done: argDone, value: arg } = argsIt.next();
+      if (argDone) break;
+      else yield* aHelper(arg, te);
+    }
+  }());
+}
+
+// export { html as css };
