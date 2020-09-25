@@ -1,4 +1,4 @@
-import sanetize from 'sanitize-html';
+import sanitize from 'sanitize-html';
 
 /**
  * @template X
@@ -45,12 +45,12 @@ export function unsafeHTML(safeHTML) {
   return new HTML(safeHTML)
 }
 
-/** @param {any} x * @return {string} */
+/** @param {any} x @return {string} */
 function helper(x) {
   if (!x) return '';
   if (Array.isArray(x)) return x.map(helper).join('');
   if (x instanceof HTML) return x.value;
-  return sanetize(x);
+  return sanitize(x);
 }
 
 /**
@@ -104,7 +104,7 @@ async function* aHelper(arg, te) {
   else if (Array.isArray(x)) for (const xx of x) yield* aHelper(xx, te);
   else if (x instanceof ReadableStream) yield* stream2AsyncIterator(x);
   else if (x instanceof HTML) yield te.encode(x.value);
-  else yield te.encode(sanetize(x));
+  else yield te.encode(sanitize(x));
 }
 
 /**
