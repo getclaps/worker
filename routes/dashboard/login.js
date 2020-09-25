@@ -38,6 +38,7 @@ export function loginPage() {
         if (cred) {
           const { id, password } = cred;
           const body = new URLSearchParams(Object.entries({ method: 'login', id, password }));
+          document.getElementById('login').querySelectorAll('input, button').forEach(el => { el.disabled = true });
           const response = await fetch('/login', { method: 'POST', body, redirect: 'manual' });
           // cookie set, reload page
           window.location.reload();
