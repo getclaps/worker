@@ -21,8 +21,8 @@ const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
 /** @param {string} hostname */ export const mkDNTCookieKey = hostname => `dnt_${encodeURIComponent(hostname)}`;
 /** @param {string} hostname @param {boolean} dnt */ export const mkDNTCookie = (dnt, hostname) => {
   return dnt
-    ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; HttpOnly; Expires=${oneYearFromNow().toUTCString()}`
-    : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
+    ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; Expires=${oneYearFromNow().toUTCString()}`
+    : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
 }
 
 /** @param {string} id */ export const mkBookmarkedCookieKey = id => `bkd_${id}`;
@@ -108,7 +108,7 @@ export async function handleDashboard(params) {
     if (method === 'POST') {
       const formData = await request.formData()
       const id = formData.get('password').toString();
-      const hostname = formData.get('id').toString();
+      // const hostname = formData.get('id').toString();
       const referrer = formData.get('referrer') || '/';
 
       try {

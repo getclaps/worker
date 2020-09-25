@@ -4,12 +4,11 @@ export const styles = css`
   [hidden] { display: none!important }
   html { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif }
   main, nav > div { max-width: 1024px; margin: auto; }
-  body { padding: 3rem 0; overflow-x: hidden; }
+  body { padding: 3rem 0; overflow-x: hidden; overflow-y: scroll; }
   body.bp3-dark { color: #ccc; background: #293742; }
   table { width: 100% }
-  table td { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  table.bp3-html-table-condensed tr > td:nth-child(2) { width: 60% }
-  table.bp3-html-table-condensed tr > td:first-child { width: 30px }
+  table.bp3-html-table-condensed tr > td:first-child { width: 25px }
+  table.bp3-html-table-condensed tr > td:nth-child(2) { width: 60%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .opener { color:#bfccd6 }
   @media screen and (min-width: 768px) {
     .row { display:flex; margin:0 -.5rem; }

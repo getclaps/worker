@@ -28,7 +28,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
   //   totalViews,
   // } = await dao.getStats(uuid, [Number(value), unit]);
 
-  return page({ hostname: 'foobar', isBookmarked })(html`
+  return page({ hostname: 'foobar', isBookmarked })(async () => html`
     <div class="bp3-running-text">
       <br/>
       <br/>

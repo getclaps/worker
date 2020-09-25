@@ -3,7 +3,7 @@ import { styles } from './styles';
 
 /**
  * @param {{ title?: string, hostname?: string, isBookmarked?: boolean, headers?: HeadersInit }} [param0]
- * @returns {(content: any) => Response}
+ * @returns {(content: () => any) => Response}
  */
 export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookmarked = false, headers = [] } = {}) => (content) => new Response(html`
 <!DOCTYPE html>
@@ -50,7 +50,7 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
         document.body.classList.toggle('bp3-dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
         window.matchMedia('(prefers-color-scheme: dark)').addListener(function(e) { document.body.classList.toggle('bp3-dark', e.matches); });
       </script>
-      ${content}
+      ${content()}
     </main>
     </div>
   </body>
@@ -59,5 +59,5 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
     ...new Headers(headers),
     ['Content-Type', 'text/html;charset=UTF-8'],
     ['X-Robots-Tag', 'noindex'],
-  ]
+  ],
 });
