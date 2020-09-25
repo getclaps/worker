@@ -5,7 +5,7 @@ import { styles } from './styles';
  * @param {{ title?: string, hostname?: string, isBookmarked?: boolean, headers?: HeadersInit }} [param0]
  * @returns {(content: () => any) => Response}
  */
-export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookmarked = false, headers = [] } = {}) => (content) => new Response(html`
+export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = false, headers = [] } = {}) => (content) => new Response(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -24,7 +24,7 @@ export const page = ({ title = 'Clap Button Dashboard', hostname = null, isBookm
         <div class="bp3-navbar-group bp3-align-left">
           <div class="bp3-navbar-heading" style="font-weight:bold">
             <a href="/" style="text-decoration:none">
-              <h1 style="font-size:1rem">${hostname || title}</h1>
+              <h1 style="font-size:1rem">${title}</h1>
             </a>
           </div>
         </div>

@@ -16,6 +16,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-');
 
+  const d = dao.getDashboard(uuid);
   const x = dao.getStats(uuid, [Number(value), unit]);
   // const {
   //   dashboard,
@@ -34,7 +35,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
       <br/>
       <!-- <h2>Stats</h2> -->
       <form method="GET" action="/stats">
-        <label class="bp3-label bp3-inline">
+        <label class="bp3-label bp3-inline" style="display:inline-block; margin-right:5px">
           Show data for the last
           <div class="bp3-select">
             <select name="time">
@@ -47,6 +48,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale })
           <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
+        <span> on </span>
+        <strong>${d.then(d => d.hostname || 'your-site.com')}</strong>
       </form>
       <div class="stats-card bp3-card bp3-elevation-2">
         <dl class="stats">
