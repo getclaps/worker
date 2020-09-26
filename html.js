@@ -104,8 +104,7 @@ export function asyncIterable2Stream(asyncIterable) {
  */
 async function* aHelper(arg, encoder) {
   const x = await arg;
-  if (!x) yield new Uint8Array([]);
-  else if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi, encoder);
+  if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi, encoder);
   else if (x instanceof HTML) yield* x;
   else if (x instanceof UnsafeHTML) yield encoder.encode(x.value);
   else yield encoder.encode(sanitize(x));
