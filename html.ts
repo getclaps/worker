@@ -1,40 +1,32 @@
 import sanitize from 'sanitize-html';
 import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
+type Repeatable<T> = T|T[];
+type Awaitable<T> = T|Promise<T>;
+
 export class UnsafeHTML {
-  /** @param {string} value */
-  constructor(value) { this.value = value }
+  value: string;
+  constructor(value: string) { this.value = value }
   toString() { return this.value }
   toJSON() { return this.value }
 }
 
-/** @param {string} safeHTML */
-export function unsafeHTML(safeHTML) {
+export function unsafeHTML(safeHTML: string) {
   return new UnsafeHTML(safeHTML)
 }
 
-/** @param {any} x @return {string} */
-function helper(x) {
+function helper(x: any) {
   if (!x) return '';
   if (Array.isArray(x)) return x.map(helper).join('');
   if (x instanceof UnsafeHTML) return x.value;
   return sanitize(x);
 }
 
-/**
- * @param {TemplateStringsArray} strings 
- * @param {...any} args 
- */
-export function css(strings, ...args) {
+export function css(strings: TemplateStringsArray, ...args: any[]) {
   return new UnsafeHTML(join(interleave(strings, args.map(helper))));
 }
 
-/**
- * @template T
- * @param {ReadableStream<T>} stream 
- * @returns {AsyncIterable<T>} 
- */
-export async function* stream2AsyncIterable(stream) {
+export async function* stream2AsyncIterable<T>(stream: ReadableStream<T>): AsyncIterable<T> {
   const reader = stream.getReader();
   try {
     while (true) {
@@ -45,12 +37,7 @@ export async function* stream2AsyncIterable(stream) {
   } finally { reader.releaseLock() }
 }
 
-/** 
- * @template T 
- * @param {AsyncIterable<T>} asyncIterable 
- * @returns {ReadableStream<T>} 
- */
-export function asyncIterable2Stream(asyncIterable) {
+export function asyncIterable2Stream<T>(asyncIterable: AsyncIterable<T>): ReadableStream<T> {
   const { readable, writable } = new TransformStream();
   (async () => {
     const writer = writable.getWriter();
@@ -61,16 +48,10 @@ export function asyncIterable2Stream(asyncIterable) {
   return readable;
 }
 
-/**
- * @typedef {string|UnsafeHTML|HTML|(string|UnsafeHTML|HTML)[]|
- *   Promise<string|UnsafeHTML|HTML|(string|UnsafeHTML|HTML)[]>} Arg
- */
+type BaseArg = undefined|null|string|number|boolean|UnsafeHTML|HTML;
+export type Arg = Awaitable<Repeatable<BaseArg>>;
 
-/**
- * @param {Arg} arg 
- * @returns {AsyncIterableIterator<string>}
- */
-async function* aHelper(arg) {
+async function* aHelper(arg: Arg): AsyncIterableIterator<string> {
   const x = await arg;
   if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi);
   else if (x instanceof HTML) yield* x;
@@ -79,16 +60,15 @@ async function* aHelper(arg) {
 }
 
 export class HTML {
-  /**
-   * @param {TemplateStringsArray} strings 
-   * @param {Arg[]} args 
-   */
-  constructor(strings, args) { 
+  strings: TemplateStringsArray;
+  args: Arg[];
+
+  constructor(strings: TemplateStringsArray, args: Arg[]) { 
     this.strings = strings;
     this.args = args;
   }
 
-  async *[Symbol.asyncIterator]() {
+  async *[Symbol.asyncIterator](): AsyncIterableIterator<string> {
     const stringsIt = this.strings[Symbol.iterator]();
     const argsIt = this.args[Symbol.iterator]();
     while (true) {
@@ -107,23 +87,14 @@ export class HTML {
   // }
 }
 
-/**
- * @param {TemplateStringsArray} strings 
- * @param {...Arg} args 
- * @returns {HTML}
- */
-export function html(strings, ...args) {
+export function html(strings: TemplateStringsArray, ...args: Arg[]) {
   return new HTML(strings, args);
 }
 
 export class HTMLResponse extends Response {
-  /**
-   * @param {HTML} body 
-   * @param {ResponseInit} [init] 
-   */
-  constructor(body, init) {
+  constructor(body: HTML, init?: ResponseInit) {
     const encoder = new TextEncoder();
-    const encodeFn = aMap(str => encoder.encode(str));
+    const encodeFn = aMap((str: string) => encoder.encode(str));
     super(asyncIterable2Stream(encodeFn(body)), init);
     this.headers.set('Content-Type', 'text/html;charset=UTF-8');
   }

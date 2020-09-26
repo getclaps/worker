@@ -1,15 +1,12 @@
 import { UUID } from 'uuid-class';
 
 import { checkProofOfClap } from '../util.js';
-import { FaunaDAO } from '../fauna-dao.js';
+import { FaunaDAO } from '../fauna-dao';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
 export const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
 
-/**
- * @param {Headers} headers 
- */
-export async function extractData(headers) {
+export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');
   const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', IP_NAMESPACE);
   return { country, visitor };
@@ -17,10 +14,7 @@ export async function extractData(headers) {
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
-/**
- * @param {string} url 
- */
-export const validateURL = (url) => {
+export const validateURL = (url: string) => {
   try {
     if (!url) throw badRequest('No url provided')
     if (url.length > 4096) throw badRequest('URL too long. 4096 characters max.');
@@ -32,17 +26,14 @@ export const validateURL = (url) => {
   }
 }
 
-/**
- * @param {{
- * request: Request,
- * requestURL: URL,
- * headers: Headers,
- * method: string,
- * pathname: string,
- * path: string[],
- * }} param0 
- */
-export async function handleClaps({ request, requestURL, method, path, headers }) {
+export async function handleClaps({ request, requestURL, method, path, headers }: {
+  request: Request,
+  requestURL: URL,
+  headers: Headers,
+  method: string,
+  pathname: string,
+  path: string[],
+}) {
   if (path.length > 1) return notFound();
 
   if (method === 'OPTIONS') return ok();

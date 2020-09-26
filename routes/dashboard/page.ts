@@ -1,11 +1,12 @@
-import { html, HTMLResponse } from '../../html';
+import { html, HTMLResponse, Arg } from '../../html';
 import { styles } from './styles';
 
-/**
- * @param {{ title?: string, hostname?: string, isBookmarked?: boolean, headers?: HeadersInit }} [param0]
- * @returns {(contentFn: () => any) => Response}
- */
-export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = false, headers = [] } = {}) => (contentFn) => new HTMLResponse(html`
+export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = false, headers = [] }: {
+  title?: string,
+  hostname?: string,
+  isBookmarked?: boolean,
+  headers?: HeadersInit,
+} = {}) => (contentFn: () => Arg) => new HTMLResponse(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>

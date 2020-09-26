@@ -6,5 +6,6 @@ bin/
 pkg/
 wasm-pack.log
 worker/
+temp/
 node_modules/
 .cargo-ok

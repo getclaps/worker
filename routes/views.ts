@@ -1,4 +1,4 @@
-import { FaunaDAO } from '../fauna-dao.js';
+import { FaunaDAO } from '../fauna-dao';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
 import { validateURL, extractData } from './claps';
@@ -8,12 +8,7 @@ import { validateURL, extractData } from './claps';
 // followed by any combination of letters, digits, plus (+), period (.), or hyphen (-).
 const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
 
-/**
- * @param {string|null} referrerRaw 
- * @param {string} hostname 
- * @returns {string|undefined}
- */
-function getReferrer(referrerRaw, hostname) {
+function getReferrer(referrerRaw: string|null, hostname: string): string|undefined {
   if (referrerRaw != null) {
     try {
       const refURL = validateURL(referrerRaw.match(RE_PROTOCOL) ? referrerRaw : `https://${referrerRaw}`);
@@ -22,17 +17,14 @@ function getReferrer(referrerRaw, hostname) {
   }
 }
 
-/**
- * @param {{
- * request: Request,
- * requestURL: URL,
- * headers: Headers,
- * method: string,
- * pathname: string,
- * path: string[],
- * }} param0 
- */
-export async function handleViews({ requestURL, method, path, headers }) {
+export async function handleViews({ requestURL, method, path, headers }: {
+  request: Request,
+  requestURL: URL,
+  headers: Headers,
+  method: string,
+  pathname: string,
+  path: string[],
+}) {
   if (path.length > 1) return notFound();
   if (method === 'OPTIONS') return ok();
   if (method !== 'POST') return notFound();

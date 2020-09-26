@@ -1,22 +1,15 @@
 import * as r from './response-types';
-import * as routes from './routes/index.js';
-import { FaunaDAO } from './fauna-dao.js';
+import * as routes from './routes/index';
+import { FaunaDAO } from './fauna-dao';
 
 export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
 
-/**
- * @param {string} pathname 
- */
-const getPath = (pathname) => {
+const getPath = (pathname: string) => {
   const x = `/${pathname}/`.replace(/\/+/g, '/');
   return x.substr(1, x.length - 2).split('/');
 }
 
-/**
- * @param {Request} request 
- * @returns {(response: Response) => Response} 
- */
-const addCORSHeaders = (request) => (response) => {
+const addCORSHeaders = (request: Request) => (response: Response) => {
   response.headers.set('access-control-allow-origin', request.headers.get('origin'));
   if (request.headers.has('access-control-request-method')) response.headers.set('access-control-allow-methods', request.headers.get('access-control-request-method'));
   if (request.headers.has('access-control-request-headers')) response.headers.set('access-control-allow-headers', request.headers.get('access-control-request-headers'));
@@ -24,44 +17,33 @@ const addCORSHeaders = (request) => (response) => {
   return response;
 }
 
-/** @param {any} err */
-const handleError = (err) => {
+const handleError = (err: any) => {
   if (err instanceof Response) return err;
   else if (DEBUG) throw err;
   else return r.internalServerError();
 }
 
-self.addEventListener('fetch', /** @param {FetchEvent} event */ event => {
+self.addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(handleRequest(event.request, new URL(event.request.url), event));
 });
 
-/**
- * @public
- * @typedef {{
- *   request: Request,
- *   requestURL: URL,
- *   event: FetchEvent,
- *   headers: Headers,
- *   method: string,
- *   pathname: string,
- *   path: string[],
- * }} RouteParams 
- */
+export interface RouteParams {
+  request: Request;
+  requestURL: URL;
+  event: FetchEvent;
+  headers: Headers;
+  method: string;
+  pathname: string;
+  path: string[];
+}
 
-/**
- * @param {Request} request
- * @param {URL} requestURL
- * @param {FetchEvent} event
- * @returns {Promise<Response>}
- */
-async function handleRequest(request, requestURL, event) {
+async function handleRequest(request: Request, requestURL: URL, event: FetchEvent) {
   const { method, headers } = request;
   const { pathname } = requestURL;
 
   const path = getPath(pathname);
 
-  /** @type {RouteParams} */
-  const args = { request, requestURL, event, method, pathname, path, headers };
+  const args: RouteParams = { request, requestURL, event, method, pathname, path, headers };
 
   switch (path[0]) {
     case '__init': {

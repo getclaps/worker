@@ -1,8 +1,8 @@
 import { UUID } from 'uuid-class';
 
-import { FaunaDAO } from '../fauna-dao.js';
+import { FaunaDAO } from '../fauna-dao';
 import { elongateId, shortenId } from '../short-id';
-import { stripeAPI } from './stripe.js';
+import { stripeAPI } from './stripe';
 import * as r from '../response-types';
 import * as pages from './dashboard/index';
 
@@ -13,25 +13,23 @@ const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
-// /** @param {string} text */
-// const shortHash = async (text) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
+// const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
 
 const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
 
-/** @param {string} hostname */ export const mkDNTCookieKey = hostname => `dnt_${encodeURIComponent(hostname)}`;
-/** @param {string} hostname @param {boolean} dnt */ export const mkDNTCookie = (dnt, hostname) => {
+export const mkDNTCookieKey = (hostname: string) => `dnt_${encodeURIComponent(hostname)}`;
+export const mkDNTCookie = (dnt: boolean, hostname: string) => {
   return dnt
     ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; Expires=${oneYearFromNow().toUTCString()}`
     : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
 }
 
-/** @param {string} id */ export const mkBookmarkedCookieKey = id => `bkd_${id}`;
-/** @param {string} id */ export const mkBookmarkedCookie = id => {
+export const mkBookmarkedCookieKey = (id: string) => `bkd_${id}`;
+export const mkBookmarkedCookie = (id: string) => {
   return `${mkBookmarkedCookieKey(id)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
 }
 
-/** @param {string} id */
-const mkLoginCookie = (id) => {
+const mkLoginCookie = (id: string) => {
   return `did=${id}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
 }
 
@@ -39,29 +37,23 @@ const mkLogoutCookie = () => {
   return `did=; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }
 
-/** @param {string} cookie @returns {Map<string, string>} */
-const parseCookie = (cookie) => new Map(cookie.split(/;\s*/)
+const parseCookie = (cookie: string) => new Map<string, string>(cookie.split(/;\s*/)
   .map(x => x.split('='))
-  .map(/** @returns {[string, string]} */([k, v]) => [k, v])
+  .map(([k, v]) => [k, v] as [string, string])
   .filter(([k]) => !!k)
 );
 
-/**
- * @public
- * @typedef {import('../index').RouteParams & { 
- *   id: string,
- *   uuid: UUID, 
- *   cookies: Map<string, string>, 
- *   dao: FaunaDAO, 
- *   isBookmarked: boolean, 
- *   locale: string 
- * }} Snowball 
- */
+import { RouteParams } from '../index';
+export interface Snowball extends RouteParams {
+  id: string;
+  uuid: UUID;
+  cookies: Map<string, string>;
+  dao: FaunaDAO;
+  isBookmarked: boolean;
+  locale: string;
+}
 
-/** 
- * @param {import('../index').RouteParams} params 
- */
-export async function handleDashboard(params) {
+export async function handleDashboard(params: RouteParams) {
   const { request, requestURL, event, headers, method, path: [, dir] } = params;
 
   const dao = new FaunaDAO();

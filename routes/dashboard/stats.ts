@@ -2,17 +2,17 @@ import { html } from '../../html';
 import { page } from './page';
 
 import { countries as countriesE } from '../../countries.js';
+import { Snowball } from '../dashboard';
 
-const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x]));
+const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
 
-const noOpener = href => {
-  let url;
+const noOpener = (href: string) => {
+  let url: URL;
   try { url = new URL(href) } catch { return '' }
   return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener"><span class="bp3-icon bp3-icon-share"></span></a></td>`;
 }
 
-/** @param {import('../dashboard').Snowball} param0 */
-export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }) {
+export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: Snowball) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-');
 

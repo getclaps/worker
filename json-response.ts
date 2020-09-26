@@ -1,10 +1,9 @@
 export class SearchParamsURL extends URL {
-  /**
-   * @param {string | URL} url 
-   * @param {URLSearchParams|string[][]|Record<string, string>} [params] 
-   * @param {string | URL} [base] 
-   */
-  constructor(url, params = {}, base) {
+  constructor(
+    url: string | URL,
+    params: URLSearchParams | string[][] | Record<string, string> = {},
+    base: string | URL
+  ) {
     super(url.toString(), base);
     const iterable = Array.isArray(params) || params instanceof URLSearchParams ? params : Object.entries(params);
     for (const [k, v] of iterable) this.searchParams.append(k, v);
@@ -16,8 +15,8 @@ export {
   SearchParamsURL as ParamsURL,
 }
 
-/** @typedef {BodyInit | object} JSONBodyInit */
-/** @typedef {Omit<RequestInit, 'body'> & { body?: JSONBodyInit | null }} JSONRequestInit */
+type JSONBodyInit = BodyInit | object;
+type JSONRequestInit = Omit<RequestInit, 'body'> & { body?: JSONBodyInit | null };
 
 // function isPOJO(arg) {
 //   if (arg == null || typeof arg !== 'object') {
@@ -30,12 +29,9 @@ export {
 //   return proto === Object.prototype;
 // }
 
-/**
- * @param {JSONBodyInit} b 
- */
-function isBodyInit(b) {
+function isBodyInit(b: JSONBodyInit) {
   return (
-    b == null || 
+    b == null ||
     typeof b === 'string' ||
     (typeof Blob !== 'undefined' && b instanceof Blob) ||
     (typeof ArrayBuffer !== 'undefined' && (b instanceof ArrayBuffer || ArrayBuffer.isView(b))) ||
@@ -46,17 +42,19 @@ function isBodyInit(b) {
 }
 
 export class JSONRequest extends Request {
-  /**
-   * @param {RequestInfo | URL} input 
-   * @param {JSONRequestInit} [init]
-   * @param {(this: any, key: string, value: any) => any} [replacer] 
-   * @param {string | number} [space] 
-   */
-  constructor(input, init, replacer, space) {
+  static contentType = 'application/json;charset=UTF-8';
+  static accept = 'application/json, text/plain, */*';
+
+  constructor(
+    input: RequestInfo | URL,
+    init?: JSONRequestInit,
+    replacer?: (this: any, key: string, value: any) => any,
+    space?: string | number,
+  ) {
     const { headers: h, body: b, ...i } = init || {};
 
     const bi = isBodyInit(b);
-    const body = bi ? b : JSON.stringify(b, replacer, space);
+    const body = bi ? b as BodyInit : JSON.stringify(b, replacer, space);
 
     const headers = new Headers(h);
     if (!headers.has('Content-Type') && !bi) headers.set('Content-Type', JSONRequest.contentType);
@@ -65,22 +63,20 @@ export class JSONRequest extends Request {
     super(input instanceof URL ? input.toString() : input, { headers, body, ...i });
   }
 }
-JSONRequest.contentType = 'application/json;charset=UTF-8';
-JSONRequest.accept = 'application/json, text/plain, */*';
-
 
 export class JSONResponse extends Response {
-  /**
-   * @param {JSONBodyInit | null} body 
-   * @param {ResponseInit} [init] 
-   * @param {(this: any, key: string, value: any) => any} [replacer] 
-   * @param {string | number} [space] 
-   */
-  constructor(body, init, replacer, space) {
+  static contentType = 'application/json;charset=UTF-8';
+
+  constructor(
+    body: JSONBodyInit | null,
+    init?: ResponseInit,
+    replacer?: (this: any, key: string, value: any) => any,
+    space?: string | number,
+  ) {
     const { headers: h, ...i } = init || {};
 
     const bi = isBodyInit(body)
-    const b = bi ? body : JSON.stringify(body, replacer, space);
+    const b = bi ? body as BodyInit : JSON.stringify(body, replacer, space);
 
     const headers = new Headers(h);
     if (!headers.has('Content-Type') && !bi) headers.set('Content-Type', JSONResponse.contentType);
@@ -88,24 +84,21 @@ export class JSONResponse extends Response {
     super(b, { headers, ...i });
   }
 }
-JSONResponse.contentType = 'application/json;charset=UTF-8';
 
-/**
- * @param {string|URL} url 
- * @param {{ [name: string]: string }} [params] 
- * @param {string | URL} [base] 
- * @deprecated Use {@link SearchParamsURL} instead
- */
-export const urlWithParams = (url, params, base) => {
+/** @deprecated Use SearchParamsURL instead */
+export const urlWithParams = (
+  url: string | URL,
+  params: { [name: string]: string },
+  base: string | URL
+) => {
   return new SearchParamsURL(url, params, base).href;
 }
 
-/**
- * @param {JSONRequest | string | URL} input 
- * @param {JSONRequestInit} [init]
- * @param {(this: any, key: string, value: any) => any} [replacer] 
- * @param {string | number} [space] 
- */
-export function jsonFetch(input, init, replacer, space) {
+export function jsonFetch(
+  input: RequestInfo | URL,
+  init?: JSONRequestInit,
+  replacer?: (this: any, key: string, value: any) => any,
+  space?: string | number,
+) {
   return fetch(new JSONRequest(input, init, replacer, space));
 }

@@ -1,15 +1,27 @@
 {
   "compilerOptions": {
-    "lib": ["ES2019", "WebWorker"],
+    "outDir": "./dist",
+    "module": "ESNext",
     "target": "ES2019",
+    "lib": ["ES2020", "WebWorker", "ESNext.AsyncIterable"],
+    "preserveConstEnums": true,
     "moduleResolution": "node",
-    "module": "esnext",
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "types": ["@cloudflare/workers-types"]
   },
   "include": [
-    "typings/**/*.ts",
-    "./index.js",
+    "./*.ts",
+    "./src/*.ts",
+    "./src/**/*.ts",
   ],
+  "exclude": [
+    "node_modules/",
+    "dist/",
+    "**/dist/",
+    "**/node_modules/",
+    "**/worker/",
+    "_*",
+    "**/_*"
+  ]
 }

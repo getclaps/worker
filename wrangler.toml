@@ -2,6 +2,7 @@ name = "clap-worker-dev"
 type = "webpack"
 account_id = "efb289061241436254219b424fcea4cf"
 workers_dev = true
+webpack_config = "webpack.config.js"
 # route = ""
 # zone_id = ""
 
