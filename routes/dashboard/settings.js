@@ -50,7 +50,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
     }
   } else if (method !== 'GET') return r.badRequest();
 
-  const storePassword = () => html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
+  const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
   return page({ hostname: 'foobar', isBookmarked, headers: setHeaders })(async () => {
     const dashboard = postDashboard || await dao.getDashboard(uuid);
@@ -114,7 +114,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
               });
             </script>
             <p style="margin-top:.5rem" class="unlock ${dashboard.hostname == null || !isBookmarked ? 'hidden' : ''}">
-              Clicking the ${storePassword()} button will trigger your browser's password manager.
+              Clicking the ${storePassword} button will trigger your browser's password manager.
               Use it to store the key to this dashboard.
               <br /><small style="display:inline-block;margin-top:.5rem;">If you've already stored the key, clicking the
                 button will have no effect.</small>
@@ -125,7 +125,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
                   style="margin-bottom:1rem;">
                   <h4 class="bp3-heading">Please store your credentials!</h4>
                   Please use your browser's password manager to store the credentials.<br />
-                  Use the ${storePassword()} button to trigger your browsers store password dialog.
+                  Use the ${storePassword} button to trigger your browsers store password dialog.
                 </div>`
                : ''}
           </form>

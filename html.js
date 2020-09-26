@@ -33,7 +33,7 @@ function* interleave(xs, ys) {
 /** @param {Iterable<String>} xs */
 const join = (xs) => [...xs].join('');
 
-export class HTML {
+export class UnsafeHTML {
   /** @param {string} value */
   constructor(value) { this.value = value }
   toString() { return this.value }
@@ -42,14 +42,14 @@ export class HTML {
 
 /** @param {string} safeHTML */
 export function unsafeHTML(safeHTML) {
-  return new HTML(safeHTML)
+  return new UnsafeHTML(safeHTML)
 }
 
 /** @param {any} x @return {string} */
 function helper(x) {
   if (!x) return '';
   if (Array.isArray(x)) return x.map(helper).join('');
-  if (x instanceof HTML) return x.value;
+  if (x instanceof UnsafeHTML) return x.value;
   return sanitize(x);
 }
 
@@ -58,7 +58,7 @@ function helper(x) {
  * @param {...any} args 
  */
 export function css(strings, ...args) {
-  return new HTML(join(interleave(strings, args.map(helper))));
+  return new UnsafeHTML(join(interleave(strings, args.map(helper))));
 }
 
 /**
@@ -66,7 +66,7 @@ export function css(strings, ...args) {
  * @param {ReadableStream<T>} stream 
  * @returns {AsyncIterable<T>} 
  */
-async function* stream2AsyncIterator(stream) {
+export async function* stream2AsyncIterable(stream) {
   const reader = stream.getReader();
   try {
     while (true) {
@@ -82,7 +82,7 @@ async function* stream2AsyncIterator(stream) {
  * @param {AsyncIterable<T>} asyncIterable 
  * @returns {ReadableStream<T>} 
  */
-function asyncIterator2Stream(asyncIterable) {
+export function asyncIterable2Stream(asyncIterable) {
   const { readable, writable } = new TransformStream();
   (async () => {
     const writer = writable.getWriter();
@@ -94,39 +94,65 @@ function asyncIterator2Stream(asyncIterable) {
 }
 
 /**
- * @param {string|HTML|ReadableStream<Uint8Array>|(string|ReadableStream<Uint8Array>)[]|
- * Promise<string|HTML|ReadableStream<Uint8Array>|(string|ReadableStream<Uint8Array>)[]>} arg 
- * @param {TextEncoder} te 
+ * @typedef {string|UnsafeHTML|HTML|(string|UnsafeHTML|HTML)[]|
+ *   Promise<string|UnsafeHTML|HTML|(string|UnsafeHTML|HTML)[]>} Arg
  */
-async function* aHelper(arg, te) {
+
+/**
+ * @param {Arg} arg 
+ * @param {TextEncoder} encoder 
+ */
+async function* aHelper(arg, encoder) {
   const x = await arg;
   if (!x) yield new Uint8Array([]);
-  else if (Array.isArray(x)) for (const xx of x) yield* aHelper(xx, te);
-  else if (x instanceof ReadableStream) yield* stream2AsyncIterator(x);
-  else if (x instanceof HTML) yield te.encode(x.value);
-  else yield te.encode(sanitize(x));
+  else if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi, encoder);
+  else if (x instanceof HTML) yield* x;
+  else if (x instanceof UnsafeHTML) yield encoder.encode(x.value);
+  else yield encoder.encode(sanitize(x));
+}
+
+export class HTML {
+  /**
+   * @param {TemplateStringsArray} strings 
+   * @param {Arg[]} args 
+   */
+  constructor(strings, args) { 
+    this.encoder = new TextEncoder();
+    this.strings = strings;
+    this.args = args;
+  }
+
+  async *[Symbol.asyncIterator]() {
+    const stringsIt = this.strings[Symbol.iterator]()
+    const argsIt = this.args[Symbol.iterator]()
+    while (true) {
+      const { done: stringDone, value: string } = stringsIt.next();
+      if (stringDone) break;
+      else yield this.encoder.encode(string);
+
+      const { done: argDone, value: arg } = argsIt.next();
+      if (argDone) break;
+      else yield* aHelper(arg, this.encoder);
+    }
+  }
 }
 
 /**
  * @param {TemplateStringsArray} strings 
- * @param {...any} args 
- * @returns {ReadableStream<Uint8Array>}
+ * @param {...Arg} args 
+ * @returns {HTML}
  */
 export function html(strings, ...args) {
-  const te = new TextEncoder();
-  return asyncIterator2Stream(async function* () {
-    const stringsIt = strings[Symbol.iterator]()
-    const argsIt = args[Symbol.iterator]()
-    while (true) {
-      const { done: stringDone, value: string } = stringsIt.next();
-      if (stringDone) break;
-      else yield te.encode(string);
-
-      const { done: argDone, value: arg } = argsIt.next();
-      if (argDone) break;
-      else yield* aHelper(arg, te);
-    }
-  }());
+  return new HTML(strings, args);
 }
 
-// export { html as css };
+export class HTMLResponse extends Response {
+  /**
+   * @param {HTML} body 
+   * @param {ResponseInit} [init] 
+   */
+  constructor(body, init) {
+    super(asyncIterable2Stream(body), init);
+    this.headers.set('Content-Type', 'text/html;charset=UTF-8');
+  }
+}

@@ -1,11 +1,11 @@
-import { html, HTML } from '../../html';
+import { html, HTMLResponse } from '../../html';
 import { styles } from './styles';
 
 /**
  * @param {{ title?: string, hostname?: string, isBookmarked?: boolean, headers?: HeadersInit }} [param0]
- * @returns {(content: () => any) => Response}
+ * @returns {(contentFn: () => any) => Response}
  */
-export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = false, headers = [] } = {}) => (content) => new Response(html`
+export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = false, headers = [] } = {}) => (contentFn) => new HTMLResponse(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -29,7 +29,7 @@ export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = f
           </div>
         </div>
         <div class="bp3-navbar-group unlock ${hostname == null || !isBookmarked ? 'hidden' : ''}">
-          <!-- <a class="bp3-button bp3-minimal" href="/stats">Stats</a> -->
+          ${/*<a class="bp3-button bp3-minimal" href="/stats">Stats</a>*/''}
           <a class="bp3-button bp3-minimal" href="/subscription">Subscription</a>
           <a class="bp3-button bp3-minimal" href="/settings">Settings</a>
           <span class="bp3-navbar-divider"></span>
@@ -50,14 +50,13 @@ export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = f
         document.body.classList.toggle('bp3-dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
         window.matchMedia('(prefers-color-scheme: dark)').addListener(function(e) { document.body.classList.toggle('bp3-dark', e.matches); });
       </script>
-      ${content()}
+      ${contentFn()}
     </main>
     </div>
   </body>
 </html>`, {
   headers: [
     ...new Headers(headers),
-    ['Content-Type', 'text/html;charset=UTF-8'],
     ['X-Robots-Tag', 'noindex'],
   ],
 });
