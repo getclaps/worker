@@ -20,15 +20,16 @@ function* interleave(xs, ys) {
   }
 }
 
-// /**
-//  * @template A
-//  * @template B
-//  * @param {(a: A) => B} f 
-//  * @param {Iterable<A>|AsyncIterable<A>} forAwaitable 
-//  */
-// async function* map(f, forAwaitable) {
-//   for await (const x of forAwaitable) yield f(x);
-// }
+/**
+ * @template A
+ * @template B
+ * @param {(a: A) => B|Promise<B>} f 
+ */
+function aMap(f) {
+  return /** @param {Iterable<A>|AsyncIterable<A>} forAwaitable @returns {AsyncIterable<B>} */ async function*(forAwaitable) { 
+    for await (const x of forAwaitable) yield f(x);
+  };
+}
 
 /** @param {Iterable<String>} xs */
 const join = (xs) => [...xs].join('');
@@ -100,14 +101,14 @@ export function asyncIterable2Stream(asyncIterable) {
 
 /**
  * @param {Arg} arg 
- * @param {TextEncoder} encoder 
+ * @returns {AsyncGenerator<string>}
  */
-async function* aHelper(arg, encoder) {
+async function* aHelper(arg) {
   const x = await arg;
-  if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi, encoder);
+  if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi);
   else if (x instanceof HTML) yield* x;
-  else if (x instanceof UnsafeHTML) yield encoder.encode(x.value);
-  else yield encoder.encode(sanitize(x));
+  else if (x instanceof UnsafeHTML) yield x.value;
+  else yield sanitize(x);
 }
 
 export class HTML {
@@ -116,22 +117,24 @@ export class HTML {
    * @param {Arg[]} args 
    */
   constructor(strings, args) { 
-    this.encoder = new TextEncoder();
     this.strings = strings;
     this.args = args;
   }
 
+  /**
+   * @returns {AsyncGenerator<string>}
+   */
   async *[Symbol.asyncIterator]() {
     const stringsIt = this.strings[Symbol.iterator]()
     const argsIt = this.args[Symbol.iterator]()
     while (true) {
       const { done: stringDone, value: string } = stringsIt.next();
       if (stringDone) break;
-      else yield this.encoder.encode(string);
+      else yield string;
 
       const { done: argDone, value: arg } = argsIt.next();
       if (argDone) break;
-      else yield* aHelper(arg, this.encoder);
+      else yield* aHelper(arg);
     }
   }
 }
@@ -151,7 +154,9 @@ export class HTMLResponse extends Response {
    * @param {ResponseInit} [init] 
    */
   constructor(body, init) {
-    super(asyncIterable2Stream(body), init);
+    const encoder = new TextEncoder();
+    const encodeFn = aMap(str => encoder.encode(str));
+    super(asyncIterable2Stream(encodeFn(body)), init);
     this.headers.set('Content-Type', 'text/html;charset=UTF-8');
   }
 }
