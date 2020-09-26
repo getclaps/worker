@@ -1,38 +1,5 @@
 import sanitize from 'sanitize-html';
-
-/**
- * @template X
- * @template Y
- * @param {Iterable<X>} xs 
- * @param {Iterable<Y>} ys 
- * @returns {IterableIterator<X | Y>}
- */
-function* interleave(xs, ys) {
-  const itx = xs[Symbol.iterator]();
-  const ity = ys[Symbol.iterator]();
-  while (true) {
-    const rx = itx.next();
-    if (rx.done) break;
-    else yield rx.value;
-    const ry = ity.next();
-    if (ry.done) break;
-    else yield ry.value;
-  }
-}
-
-/**
- * @template A
- * @template B
- * @param {(a: A) => B|Promise<B>} f 
- */
-function aMap(f) {
-  return /** @param {Iterable<A>|AsyncIterable<A>} forAwaitable @returns {AsyncIterable<B>} */ async function*(forAwaitable) { 
-    for await (const x of forAwaitable) yield f(x);
-  };
-}
-
-/** @param {Iterable<String>} xs */
-const join = (xs) => [...xs].join('');
+import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
 export class UnsafeHTML {
   /** @param {string} value */
@@ -101,7 +68,7 @@ export function asyncIterable2Stream(asyncIterable) {
 
 /**
  * @param {Arg} arg 
- * @returns {AsyncGenerator<string>}
+ * @returns {AsyncIterableIterator<string>}
  */
 async function* aHelper(arg) {
   const x = await arg;
@@ -121,12 +88,9 @@ export class HTML {
     this.args = args;
   }
 
-  /**
-   * @returns {AsyncGenerator<string>}
-   */
   async *[Symbol.asyncIterator]() {
-    const stringsIt = this.strings[Symbol.iterator]()
-    const argsIt = this.args[Symbol.iterator]()
+    const stringsIt = this.strings[Symbol.iterator]();
+    const argsIt = this.args[Symbol.iterator]();
     while (true) {
       const { done: stringDone, value: string } = stringsIt.next();
       if (stringDone) break;
@@ -137,6 +101,10 @@ export class HTML {
       else yield* aHelper(arg);
     }
   }
+
+  // [Symbol.asyncIterator]() {
+  //   return aInterleaveFlattenSecond(this.strings, map(aHelper)(this.args));
+  // }
 }
 
 /**
