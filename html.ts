@@ -16,7 +16,7 @@ export function unsafeHTML(safeHTML: string) {
 }
 
 function helper(x: any) {
-  if (!x) return '';
+  if (x == null) return '';
   if (Array.isArray(x)) return x.map(helper).join('');
   if (x instanceof UnsafeHTML) return x.value;
   return sanitize(x);

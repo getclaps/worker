@@ -1,44 +1,23 @@
-const byteToHex = byte => byte.toString(16).padStart(2, '0');
-const hexToByte = hex => parseInt(hex, 16);
+const byteToHex = (byte: number) => byte.toString(16).padStart(2, '0');
+const hexToByte = (hex: string) => parseInt(hex, 16);
+const hexStringToArrayBuffer = (hex: string) => new Uint8Array(hex.match(/[0-9A-Fa-f]{1,2}/g).map(hexToByte)).buffer;
+const arrayBufferToHexString = (arrayBuffer: ArrayBuffer) => Array.from(new Uint8Array(arrayBuffer), byte => byteToHex(byte)).join('');
 
-/**
- * @param {string} hex 
- */
-const hexStringToArrayBuffer = (hex) => new Uint8Array(hex.match(/[0-9A-Fa-f]{1,2}/g).map(hexToByte)).buffer;
-
-/**
- * @param {ArrayBuffer} arrayBuffer 
- */
-const arrayBufferToHexString = (arrayBuffer) => Array.from(new Uint8Array(arrayBuffer), byte => byteToHex(byte)).join('');
-
-/** 
- * @param {ArrayBuffer} ab1
- * @param {ArrayBuffer} ab2 
- */ 
-function compareArrayBuffers(ab1, ab2) {
+function compareArrayBuffers(ab1: ArrayBuffer, ab2: ArrayBuffer) {
   if (ab1.byteLength != ab2.byteLength) return false;
   const dv1 = new Uint8Array(ab1);
   const dv2 = new Uint8Array(ab2);
-  for (let i = 0; i != ab1.byteLength; i++) {
-    if (dv1[i] != dv2[i]) return false;
-  }
+  for (let i = 0; i != ab1.byteLength; i++) if (dv1[i] !== dv2[i]) return false;
   return true;
 }
 
-/**
- * @param {ArrayBuffer} expected 
- */
-function compareArrayBufferTo(expected) {
-  return /** @param {ArrayBuffer} candidate */ (candidate) => {
+function compareArrayBufferTo(expected: ArrayBuffer) {
+  return (candidate: ArrayBuffer) => {
     return compareArrayBuffers(expected, candidate);
   }
 }
 
-/**
- * @param {string} signedPayload 
- * @param {string} secret 
- */
-async function computeSignature(signedPayload, secret) {
+async function computeSignature(signedPayload: string, secret: string) {
   const cryptoKey = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: { name: "SHA-256" } }, false, ["sign"]);
   const signature = await crypto.subtle.sign({ name: "HMAC" }, cryptoKey, new TextEncoder().encode(signedPayload));
   return signature;
@@ -46,13 +25,7 @@ async function computeSignature(signedPayload, secret) {
 
 const DEFAULT_TOLERANCE = 300; // 5 minutes
 
-/**
- * @param {string} payload 
- * @param {string} header 
- * @param {string} secret 
- * @param {number=} tolerance
- */
-export function constructEvent(payload, header, secret, tolerance) {
+export function constructEvent(payload: string, header: string, secret: string, tolerance?: number) {
   verifyHeader(
     payload,
     header,
@@ -66,15 +39,14 @@ export function constructEvent(payload, header, secret, tolerance) {
 
 /**
  * Generates a header to be used for webhook mocking
- *
- * @typedef {object} opts
- * @property {number} timestamp - Timestamp of the header. Defaults to Date.now()
- * @property {string} payload - JSON stringified payload object, containing the 'id' and 'object' parameters
- * @property {string} secret - Stripe webhook secret 'whsec_...'
- * @property {string} scheme - Version of API to hit. Defaults to 'v1'.
- * @property {string} signature - Computed webhook signature
  */
-export async function generateTestHeaderString(opts) {
+export async function generateTestHeaderString(opts: {
+  timestamp: number,
+  payload: string,
+  secret: string,
+  scheme: string,
+  signature: string,
+}) {
   if (!opts) {
     throw new Error('Options are required');
   }
@@ -100,13 +72,7 @@ export async function generateTestHeaderString(opts) {
 
 const EXPECTED_SCHEME = 'v1';
 
-/**
- * @param {string} payload 
- * @param {string} header 
- * @param {string} secret 
- * @param {number} tolerance 
- */
-async function verifyHeader(payload, header, secret, tolerance) {
+async function verifyHeader(payload: string, header: string, secret: string, tolerance: number) {
   const details = parseHeader(header, EXPECTED_SCHEME);
 
   if (!details || details.timestamp === -1) {
@@ -142,12 +108,7 @@ async function verifyHeader(payload, header, secret, tolerance) {
   return true;
 }
 
-/**
- * @param {string} header 
- * @param {string} scheme 
- * @returns {{ timestamp: number, signatures: string[] }}
- */
-function parseHeader(header, scheme) {
+function parseHeader(header: string, scheme: string): { timestamp: number, signatures: string[] } {
   if (typeof header !== 'string') {
     return null;
   }

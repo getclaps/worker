@@ -1,6 +1,6 @@
 import { UUID } from 'uuid-class';
 
-import { checkProofOfClap } from '../util.js';
+import { checkProofOfClap } from '../util';
 import { FaunaDAO } from '../fauna-dao';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
