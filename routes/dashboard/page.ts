@@ -1,12 +1,11 @@
 import { html, HTMLResponse, Arg } from '../../html';
 import { styles } from './styles';
 
-export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = false, headers = [] }: {
+export const page = ({ title = 'getclaps.dev', isBookmarked = false, headers = [] }: {
   title?: string,
-  hostname?: string,
   isBookmarked?: boolean,
   headers?: HeadersInit,
-} = {}) => (contentFn: () => Arg) => new HTMLResponse(html`
+} = {}) => (content: Arg) => new HTMLResponse(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -29,7 +28,7 @@ export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = f
             </a>
           </div>
         </div>
-        <div class="bp3-navbar-group unlock ${hostname == null || !isBookmarked ? 'hidden' : ''}">
+        <div class="bp3-navbar-group unlock ${!isBookmarked ? 'hidden' : ''}">
           ${/*<a class="bp3-button bp3-minimal" href="/stats">Stats</a>*/''}
           <a class="bp3-button bp3-minimal" href="/subscription">Subscription</a>
           <a class="bp3-button bp3-minimal" href="/settings">Settings</a>
@@ -51,7 +50,7 @@ export const page = ({ title = 'getclaps.dev', hostname = null, isBookmarked = f
         document.body.classList.toggle('bp3-dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
         window.matchMedia('(prefers-color-scheme: dark)').addListener(function(e) { document.body.classList.toggle('bp3-dark', e.matches); });
       </script>
-      ${contentFn()}
+      ${content}
     </main>
     </div>
   </body>

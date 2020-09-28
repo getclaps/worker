@@ -3,6 +3,7 @@ import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
 type Repeatable<T> = T|T[];
 type Awaitable<T> = T|Promise<T>;
+type Callable<T> = T|(() => T);
 
 export class UnsafeHTML {
   value: string;
@@ -49,11 +50,12 @@ export function asyncIterable2Stream<T>(asyncIterable: AsyncIterable<T>): Readab
 }
 
 type BaseArg = undefined|null|string|number|boolean|UnsafeHTML|HTML;
-export type Arg = Awaitable<Repeatable<BaseArg>>;
+export type Arg = Callable<Awaitable<Repeatable<BaseArg>>>;
 
 async function* aHelper(arg: Arg): AsyncIterableIterator<string> {
   const x = await arg;
   if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi);
+  else if (typeof x === 'function') yield* aHelper(x());
   else if (x instanceof HTML) yield* x;
   else if (x instanceof UnsafeHTML) yield x.value;
   else yield sanitize(x);

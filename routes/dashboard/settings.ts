@@ -51,7 +51,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
 
   const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
-  return page({ hostname: 'foobar', isBookmarked, headers: setHeaders })(async () => {
+  return page({ isBookmarked, headers: setHeaders })(async () => {
     const dashboard = postDashboard || await dao.getDashboard(uuid);
 
     // const isMac = (headers.get('user-agent') || '').match(/mac/i);

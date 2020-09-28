@@ -2,7 +2,7 @@ import { page } from './page';
 import { html } from '../../html';
 
 export function loginPage() {
-  return page()(async () => html`
+  return page()(html`
     <div class="flex-center" style="margin-top:3rem">
       <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
         <div class="bp3-form-group">
@@ -45,5 +45,5 @@ export function loginPage() {
         }
       })();
     </script>
-  `)
+  `);
 }
