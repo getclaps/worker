@@ -134,7 +134,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                document.cookie = '${mkBookmarkedCookie(id)}';
+                document.cookie = '${await mkBookmarkedCookie(id)}';
                 if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
               }));

@@ -1,4 +1,5 @@
 import { UUID } from 'uuid-class';
+import { Base64Encoder } from 'base64-encoding';
 
 import { FaunaDAO } from '../fauna-dao';
 import { elongateId, shortenId } from '../short-id';
@@ -13,20 +14,20 @@ const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
-// const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
+const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
 
 const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
 
 export const mkDNTCookieKey = (hostname: string) => `dnt_${encodeURIComponent(hostname)}`;
 export const mkDNTCookie = (dnt: boolean, hostname: string) => {
   return dnt
-    ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; Expires=${oneYearFromNow().toUTCString()}`
-    : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure}; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
+    ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure} Expires=${oneYearFromNow().toUTCString()}`
+    : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure} Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
 }
 
-export const mkBookmarkedCookieKey = (id: string) => `bkd_${id}`;
-export const mkBookmarkedCookie = (id: string) => {
-  return `${mkBookmarkedCookieKey(id)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
+export const mkBookmarkedCookieKey = async (id: string) => `bkd_${await shortHash(id)}`;
+export const mkBookmarkedCookie = async (id: string) => {
+  return `${await mkBookmarkedCookieKey(id)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
 }
 
 const mkLoginCookie = (id: string) => {
@@ -114,7 +115,7 @@ export async function handleDashboard(params: RouteParams) {
       return r.redirect(new URL(referrer.toString(), WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
-          ['Set-Cookie', mkBookmarkedCookie(id)]
+          ['Set-Cookie', await mkBookmarkedCookie(id)]
         ],
       });
     }
@@ -138,7 +139,7 @@ export async function handleDashboard(params: RouteParams) {
 
     const uuid = elongateId(id);
 
-    const isBookmarked = cookies.has(mkBookmarkedCookieKey(id));
+    const isBookmarked = cookies.has(await mkBookmarkedCookieKey(id));
 
     event.waitUntil((async () => {
       const ip = headers.get('cf-connecting-ip');
