@@ -150,7 +150,7 @@ export async function handleDashboard(params: RouteParams) {
 
     const snowball = { ...params, id, uuid, cookies, dao, isBookmarked, locale };
 
-    /** @type {Response} */ let res;
+    let res: Response;
     if (dir === 'settings') {
       res = await pages.settingsPage(snowball);
     }

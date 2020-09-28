@@ -29,7 +29,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
   //   totalViews,
   // } = await dao.getStats(uuid, [Number(value), unit]);
 
-  return page({ isBookmarked })(async () => html`
+  return page({ isBookmarked })(html`
     <div class="bp3-running-text">
       <br/>
       <br/>
@@ -70,7 +70,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.views.slice(0, 16).map(stat => html`
+              ${x.then(x => x.views.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
@@ -91,7 +91,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.claps.slice(0, 16).map(stat => html`
+              ${x.then(x => x.claps.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
@@ -114,7 +114,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.countries.slice(0, 16).map((stat) => html`
+              ${x.then(x => x.countries.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${(countriesByCode[stat.country] || {}).emoji || ''}</td>
                   <td>${(countriesByCode[stat.country] || {}).name || stat.country}</td>
@@ -134,7 +134,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.referrals.slice(0, 16).map((stat) => html`
+              ${x.then(x => x.referrals.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
                   <td title="${new URL(stat.referrer).href}">${new URL(stat.referrer).href}</td>
@@ -147,7 +147,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <small style="display:inline-block;margin-top:.5rem">
               Note that many popular sites will remove the referrer when linking to your site, 
               but you can add it back by adding a <code>referrer</code> search parameter to your link, e.g.:
-              <span style="white-space:nowrap;text-decoration:underline">https://${x.then(x => x.dashboard.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>
+              <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>
             </small>
           </p>
         </div>
