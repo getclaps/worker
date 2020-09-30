@@ -10,10 +10,14 @@ const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
 
 function getReferrer(referrerRaw: string|null, hostname: string): string|undefined {
   if (referrerRaw != null) {
-    try {
-      const refURL = validateURL(referrerRaw.match(RE_PROTOCOL) ? referrerRaw : `https://${referrerRaw}`);
-      if (refURL.hostname !== hostname) return refURL.href;
-    } catch { }
+    let refURL: URL;
+    try { 
+      refURL = validateURL(referrerRaw.match(RE_PROTOCOL) ? referrerRaw : `https://${referrerRaw}`);
+    } catch { return }
+    if (refURL.hostname !== hostname) {
+      if (refURL.pathname === '') refURL.pathname = '/'; // Cloudflare URL fix
+      return refURL.href;
+    }
   }
 }
 
