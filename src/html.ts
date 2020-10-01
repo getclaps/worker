@@ -1,4 +1,5 @@
-import sanitize from 'sanitize-html';
+// import sanitize from 'sanitize-html';
+import { filterXSS } from 'xss';
 import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
 type Repeatable<T> = T|T[];
@@ -20,7 +21,7 @@ function helper(x: any) {
   if (x == null) return '';
   if (Array.isArray(x)) return x.map(helper).join('');
   if (x instanceof UnsafeHTML) return x.value;
-  return sanitize(x);
+  return filterXSS(x);
 }
 
 export function css(strings: TemplateStringsArray, ...args: any[]) {
@@ -58,7 +59,7 @@ async function* aHelper(arg: Arg): AsyncIterableIterator<string> {
   else if (typeof x === 'function') yield* aHelper(x());
   else if (x instanceof HTML) yield* x;
   else if (x instanceof UnsafeHTML) yield x.value;
-  else yield sanitize(x);
+  else yield filterXSS(x as string);
 }
 
 export class HTML {
