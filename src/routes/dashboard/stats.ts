@@ -21,14 +21,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
   const x = dao.getStats(uuid, [Number(value), unit]);
 
   return page({ isBookmarked })(html`
-    <div class="bp3-running-text">
-      <br/>
-      <br/>
+    <div class="bp3-running-text" style="padding-top:2rem">
       ${/*<h2>Stats</h2>*/''}
       <form method="GET" action="/stats">
-        <label class="bp3-label bp3-inline" style="display:inline-block; margin-right:5px">
+        <label class="bp3-label bp3-inline" style="display:inline-block">
           Show data for the last
-          <div class="bp3-select">
+          <div class="bp3-select" style="margin-right:5px">
             <select name="time">
               <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
               <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
@@ -36,11 +34,11 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               <option ${timeFrame === '30-days' ? 'selected' : ''} value="30-days">30 days</option>
             </select>
           </div>
+          <span> on </span>
+          <strong>${d.then(d => d.hostname || 'your-site.com')}</strong>
           <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
-        <span> on </span>
-        <strong>${d.then(d => d.hostname || 'your-site.com')}</strong>
       </form>
       <div class="stats-card bp3-card bp3-elevation-2">
         <dl class="stats">

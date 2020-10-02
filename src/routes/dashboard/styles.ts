@@ -24,9 +24,22 @@ export const styles = css`
         "a1 b1 c1"
         "a2 b2 c2";
     font-size: larger; }
+  dl.stats > dt:after { content: ":" }
   dl.stats > dd { 
     margin-left: 0;
     font-size: 2rem; }
+  @media (max-width: 480px) {
+    dl.stats {
+      margin: 0;
+      grid-template-columns: 100%;
+      grid-template-rows: repeat(6, auto);
+      grid-template-areas: "a1"
+                           "a2"
+                           "b1"
+                           "b2"
+                           "c1"
+                           "c2" } 
+    dl.stats > dd { text-align: right } }
   dl.stats > dt:nth-of-type(1) { grid-area: a1 }
   dl.stats > dt:nth-of-type(2) { grid-area: b1 }
   dl.stats > dt:nth-of-type(3) { grid-area: c1 }
