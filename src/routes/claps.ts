@@ -4,11 +4,21 @@ import { checkProofOfClap } from '../pow';
 import { FaunaDAO } from '../fauna-dao';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
-export const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
+// const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
+const KV_NAMESPACE = 'KV_NAMESPACE';
+const IP_SALT_KEY = 'IP_SALT';
+
+self.addEventListener('scheduled', (e: ScheduledEvent) => {
+  e.waitUntil(async () => {
+    const newIPSalt = new UUID().uuid;
+    await Reflect.get(self, KV_NAMESPACE).put(IP_SALT_KEY, newIPSalt);
+  });
+});
 
 export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');
-  const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', IP_NAMESPACE);
+  const ipSalt = await Reflect.get(self, KV_NAMESPACE).get(IP_SALT_KEY);
+  const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', ipSalt);
   return { country, visitor };
 }
 

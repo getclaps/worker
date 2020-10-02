@@ -5,6 +5,9 @@ workers_dev = true
 webpack_config = "webpack.config.js"
 # route = ""
 # zone_id = ""
+kv_namespaces = [ 
+  { binding = "KV_NAMESPACE", id = "13cc39b5283e4b3f9910ba08cc87d2c3", preview_id = "13cc39b5283e4b3f9910ba08cc87d2c3" }
+]
 
 [vars]
 DEBUG = 'true'
@@ -14,6 +17,9 @@ WORKER_DOMAIN = 'http://localhost:8787'
 name = "clap-worker-stage"
 route = "https://worker.getclaps.dev/*"
 zone_id = "a0f647422a7f0fba9b734898e8a7883f"
+kv_namespaces = [
+  { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
+]
 
 [env.staging.vars]
 DEBUG = 'true'
