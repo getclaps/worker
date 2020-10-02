@@ -15,8 +15,9 @@ function getReferrer(referrerRaw: string|null, hostname: string): string|undefin
       refURL = validateURL(referrerRaw.match(RE_PROTOCOL) ? referrerRaw : `https://${referrerRaw}`);
     } catch { return }
     if (refURL.hostname !== hostname) {
-      if (refURL.pathname === '') refURL.pathname = '/'; // Cloudflare URL fix
-      return refURL.href;
+      return refURL.pathname === '/' && !refURL.href.endsWith('/') 
+        ? `${refURL.href}/` // Cloudflare URL fix
+        : refURL.href;
     }
   }
 }
