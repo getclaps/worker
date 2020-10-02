@@ -1,4 +1,3 @@
-// import sanitize from 'sanitize-html';
 import { filterXSS } from 'xss';
 import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
@@ -14,17 +13,19 @@ export class UnsafeHTML {
 }
 
 export function unsafeHTML(safeHTML: string) {
-  return new UnsafeHTML(safeHTML)
+  return new UnsafeHTML(safeHTML);
 }
 
-function helper(x: any) {
+type UnsafeArg = Repeatable<undefined|null|string|number|boolean|UnsafeHTML>;
+
+function helper(x: UnsafeArg): string {
   if (x == null) return '';
   if (Array.isArray(x)) return x.map(helper).join('');
   if (x instanceof UnsafeHTML) return x.value;
-  return filterXSS(x);
+  return filterXSS(x as string);
 }
 
-export function css(strings: TemplateStringsArray, ...args: any[]) {
+export function css(strings: TemplateStringsArray, ...args: UnsafeArg[]) {
   return new UnsafeHTML(join(interleave(strings, args.map(helper))));
 }
 
@@ -95,10 +96,10 @@ export function html(strings: TemplateStringsArray, ...args: Arg[]) {
 }
 
 export class HTMLResponse extends Response {
-  constructor(body: HTML, init?: ResponseInit) {
+  constructor(html: HTML, init?: ResponseInit) {
     const encoder = new TextEncoder();
-    const encodeFn = aMap((str: string) => encoder.encode(str));
-    super(asyncIterable2Stream(encodeFn(body)), init);
+    const htmlGenerator = aMap((str: string) => encoder.encode(str))(html);
+    super(asyncIterable2Stream(htmlGenerator), init);
     this.headers.set('Content-Type', 'text/html;charset=UTF-8');
   }
 }
