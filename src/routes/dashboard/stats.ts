@@ -15,26 +15,16 @@ const noOpener = (href: string) => {
 export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: Snowball) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-');
+  const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);
 
   const d = dao.getDashboard(uuid);
   const x = dao.getStats(uuid, [Number(value), unit]);
-  // const {
-  //   dashboard,
-  //   visitors,
-  //   views,
-  //   claps,
-  //   countries,
-  //   referrals,
-  //   totalClaps,
-  //   totalViews,
-  // } = await dao.getStats(uuid, [Number(value), unit]);
-  const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);
 
   return page({ isBookmarked })(html`
     <div class="bp3-running-text">
       <br/>
       <br/>
-      <!-- <h2>Stats</h2> -->
+      ${/*<h2>Stats</h2>*/''}
       <form method="GET" action="/stats">
         <label class="bp3-label bp3-inline" style="display:inline-block; margin-right:5px">
           Show data for the last
@@ -52,7 +42,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
         <span> on </span>
         <strong>${d.then(d => d.hostname || 'your-site.com')}</strong>
       </form>
-      <div class="stats-card bp3-card bp3-elevation-2" style="margin-bottom:0.5rem">
+      <div class="stats-card bp3-card bp3-elevation-2">
         <dl class="stats">
           <dt>Unique visitors${uniquenessWarning ? html`<sup>1</sup>`: ''}</dt>
           <dd><strong>${x.then(x => x.visitors.toLocaleString(locale))}</strong></dd>
@@ -65,8 +55,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
         </dl>
       </div>
       ${uniquenessWarning
-        ? html`<ol><li>For privacy reasons, uniqueness of visitors is only established within a single 24 hour frame.<br/>
-          Returning visitors are counted again for each day they return.</li></ol>` 
+        ? html`<ol style="margin-top:1rem"><li>For privacy reasons, uniqueness of visitors is only established within a single 24 hour frame.<br/>
+          Returning visitors are counted again for each returning day.</li></ol>` 
         : ''}
       <div class="row">
         <div class="col">
