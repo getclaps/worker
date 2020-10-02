@@ -3,7 +3,7 @@ const path = require('path')
 const mode = process.env.NODE_ENV || 'production'
 
 module.exports = {
-  entry: path.resolve('./index.ts'),
+  entry: path.resolve('./src/index.ts'),
   output: {
     filename: `worker.js`,
     path: path.resolve('./dist'),
