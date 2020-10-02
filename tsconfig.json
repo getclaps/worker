@@ -11,7 +11,6 @@
     "types": ["@cloudflare/workers-types"]
   },
   "include": [
-    "./*.ts",
     "./src/*.ts",
     "./src/**/*.ts",
   ],
