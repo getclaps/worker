@@ -9,10 +9,10 @@ const KV_NAMESPACE = 'KV_NAMESPACE';
 const IP_SALT_KEY = 'IP_SALT';
 
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
-  e.waitUntil(async () => {
+  e.waitUntil((async () => {
     const newIPSalt = new UUID().uuid;
     await Reflect.get(self, KV_NAMESPACE).put(IP_SALT_KEY, newIPSalt);
-  });
+  })());
 });
 
 export async function extractData(headers: Headers) {
