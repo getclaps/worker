@@ -30,7 +30,6 @@ export const styles = css`
     font-size: 2rem; }
   @media (max-width: 480px) {
     dl.stats {
-      margin: 0;
       grid-template-columns: 100%;
       grid-template-rows: repeat(6, auto);
       grid-template-areas: "a1"

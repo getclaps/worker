@@ -12,6 +12,12 @@ const noOpener = (href: string) => {
   return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener"><span class="bp3-icon bp3-icon-share"></span></a></td>`;
 }
 
+const mkRef = (href: string) => {
+  const url = new URL(href);
+  url.protocol = 'x:';
+  return url.href.substr(4);
+};
+
 export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: Snowball) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-');
@@ -21,10 +27,10 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
   const x = dao.getStats(uuid, [Number(value), unit]);
 
   return page({ isBookmarked })(html`
-    <div class="bp3-running-text" style="padding-top:2rem">
+    <div class="bp3-running-text" style="padding-top:40px">
       ${/*<h2>Stats</h2>*/''}
       <form method="GET" action="/stats">
-        <label class="bp3-label bp3-inline" style="display:inline-block">
+        <label class="bp3-label bp3-inline" style="display:inline-block; margin-bottom:2rem">
           Show data for the last
           <div class="bp3-select" style="margin-right:5px">
             <select name="time">
@@ -135,7 +141,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               ${x.then(x => x.referrals.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
-                  <td title="${new URL(stat.referrer).href}">${new URL(stat.referrer).href}</td>
+                  <td title="${new URL(stat.referrer).href}">${mkRef(stat.referrer)}</td>
                   <td>${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`))}
             </tbody>
@@ -144,8 +150,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             If the <a href="https://en.wikipedia.org/wiki/HTTP_referer" target="_blank"><code>Referrer</code></a> of a page view is known, it will be shown here. Direct traffic and empty referrers are omitted.<br/>
             <small style="display:inline-block;margin-top:.5rem">
               Note that many popular sites will remove the referrer when linking to your site, 
-              but you can add it back by adding a <code>referrer</code> search parameter to your link, e.g.:
-              <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>
+              but you can add it back by adding a <code>referrer</code> search parameter to your link. 
+              <!-- E.g.: <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span> -->
             </small>
           </p>
         </div>
