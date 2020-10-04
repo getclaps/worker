@@ -1,7 +1,7 @@
 interface ScheduledEvent {
   type: string;
   scheduledTime: number;
-  waitUntil(f: any): void;
+  waitUntil(promise: Promise<any>): void;
 }
 
 declare function addEventListener(
