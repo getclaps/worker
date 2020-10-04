@@ -52,7 +52,12 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
   const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
   return page({ isBookmarked, headers: setHeaders })(async () => {
-    const dashboard = postDashboard || await dao.getDashboard(uuid);
+    let dashboard;
+    try {
+      dashboard = postDashboard || await dao.getDashboard(uuid);
+    } catch (e) {
+      throw html`<div>Something went wrong.</div>`;
+    }
 
     // const isMac = (headers.get('user-agent') || '').match(/mac/i);
     // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)

@@ -6,7 +6,7 @@ type Awaitable<T> = T | Promise<T>;
 type Callable<T> = T | (() => T);
 type DataTypes = undefined | boolean | number | string | BigInt | Symbol;
 
-type Renderable = null | DataTypes | HTML | UnsafeHTML;
+type Renderable = null | DataTypes | HTML | UnsafeHTML | Fallback;
 type Content = Repeatable<Awaitable<Repeatable<Renderable>>>;
 export type HTMLContent = Callable<Content>;
 
@@ -32,18 +32,19 @@ export function asyncIterable2Stream<T>(asyncIterable: AsyncIterable<T>): Readab
   return readable;
 }
 
-
 async function* unpackContent(arg: Content): AsyncIterableIterator<string> {
-  try {
-    const x = await arg;
-    if (Array.isArray(x)) for (const xi of x) yield* unpackContent(xi);
-    else if (x instanceof HTML) yield* x;
-    else if (x instanceof UnsafeHTML) yield x.value;
-    else yield filterXSS(x as string);
-  } catch (err) {
-    if (err instanceof HTML) yield* err;
-    else throw err;
+  const x = await arg;
+  if (Array.isArray(x)) for (const xi of x) yield* unpackContent(xi);
+  else if (x instanceof HTML) yield* x;
+  else if (x instanceof UnsafeHTML) yield x.value;
+  else if (x instanceof Fallback) try {
+    yield* unpack(x.content)
+  } catch (e) {
+    yield* typeof x.fallback === 'function'
+      ? x.fallback(e)
+      : x.fallback;
   }
+  else yield filterXSS(x as string);
 }
 
 async function* unpack(arg: HTMLContent): AsyncIterableIterator<string> {
@@ -105,6 +106,19 @@ export class UnsafeHTML {
   constructor(value: string) { this.value = value }
   toString() { return this.value }
   toJSON() { return this.value }
+}
+
+class Fallback {
+  content: HTMLContent;
+  fallback: HTML | ((e: any) => HTML);
+  constructor(content: HTMLContent, fallback: HTML | ((e: any) => HTML)) {
+    this.content = content;
+    this.fallback = fallback;
+  }
+}
+
+export function fallback(content: HTMLContent, fallback: HTML | ((e: any) => HTML)) {
+  return new Fallback(content, fallback);
 }
 
 export function unsafeHTML(content: string) {

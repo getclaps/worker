@@ -1,4 +1,4 @@
-import { html } from '../../html';
+import { fallback, html, HTMLContent } from '../../html';
 import { page } from './page';
 
 import { countries as countriesE } from '../../countries.js';
@@ -17,6 +17,8 @@ const mkRef = (href: string) => {
   url.protocol = 'x:';
   return url.href.substr(4);
 };
+
+const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
 export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: Snowball) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
@@ -44,7 +46,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             </select>
           </div>
           <span> on </span>
-          <strong>${d.then(d => d.hostname || 'your-site.com')}</strong>
+          <strong>${fallback(d.then(d => d.hostname || 'your-site.com'), html``)}</strong>
           <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
@@ -52,13 +54,13 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
       <div class="stats-card bp3-card bp3-elevation-2">
         <dl class="stats">
           <dt>Unique visitors${uniquenessWarning ? html`<sup>1</sup>`: ''}</dt>
-          <dd><strong>${x.then(x => x.visitors.toLocaleString(locale))}</strong></dd>
+          <dd><strong>${withFallback(x.then(x => x.visitors.toLocaleString(locale)))}</strong></dd>
 
           <dt>Total page views</dt>
-          <dd><strong>${x.then(x => x.totalViews.toLocaleString(locale))}</strong></dd>
+          <dd><strong>${withFallback(x.then(x => x.totalViews.toLocaleString(locale)))}</strong></dd>
 
           <dt>Total claps</dt>
-          <dd><strong>${x.then(x => x.totalClaps.toLocaleString(locale))}</strong></dd>
+          <dd><strong>${withFallback(x.then(x => x.totalClaps.toLocaleString(locale)))}</strong></dd>
         </dl>
       </div>
       ${uniquenessWarning
@@ -77,12 +79,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.views.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.views.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
-                </tr>`))}
+                </tr>`)))}
             </tbody>
           </table>
         </div>
@@ -98,13 +100,13 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.claps.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.claps.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
                   <td>${stat.claps.toLocaleString(locale)}</td>
                   <td>${stat.clappers.toLocaleString(locale)}</td>
-                </tr>`))}
+                </tr>`)))}
             </tbody>
           </table>
         </div>
@@ -121,12 +123,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.countries.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.countries.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${(countriesByCode[stat.country] || {}).emoji || ''}</td>
                   <td>${(countriesByCode[stat.country] || {}).name || stat.country}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
-                </tr>`))}
+                </tr>`)))}
             </tbody>
           </table>
         </div>
@@ -141,12 +143,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${x.then(x => x.referrals.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.referrals.slice(0, 16).map((stat: any) => html`
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
                   <td title="${new URL(stat.referrer).href}">${mkRef(stat.referrer)}</td>
                   <td>${stat.referrals.toLocaleString(locale)}</td>
-                </tr>`))}
+                </tr>`)))}
             </tbody>
           </table>
           <p>
@@ -154,7 +156,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <small style="display:inline-block;margin-top:.5rem">
               Note that many popular sites will remove the referrer when linking to your site, 
               but you can add it back by adding a <code>referrer</code> search parameter to your link. 
-              <!-- E.g.: <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span> -->
+              ${/*E.g.: <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>*/''}
             </small>
           </p>
         </div>
