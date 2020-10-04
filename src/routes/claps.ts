@@ -77,6 +77,7 @@ export async function handleClaps({ request, requestURL, method, path, headers }
         hostname: originURL.hostname,
         href: url.href,
         hash: url.hash,
+        ip: headers.get('cf-connecting-ip'),
       });
     }
 
