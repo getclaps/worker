@@ -3,6 +3,7 @@ import { UUID } from 'uuid-class';
 import { checkProofOfClap } from '../pow';
 import { FaunaDAO } from '../fauna-dao';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
+import { mkDNTCookieKey, parseCookie } from './dashboard';
 
 // const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
 const KV_NAMESPACE = 'KV_NAMESPACE';
@@ -77,13 +78,17 @@ export async function handleClaps({ request, requestURL, method, path, headers }
 
       const { country, visitor } = await extractData(headers);
 
+      const cookies = parseCookie(headers.get('cookie') || '');
+
       return dao.updateClaps({
         claps, nonce, country, visitor,
         id: new UUID(id),
         hostname: originURL.hostname,
         href: url.href,
         hash: url.hash,
+      }, {
         ip: headers.get('cf-connecting-ip'),
+        dnt: cookies.has(mkDNTCookieKey(url.hostname))
       });
     }
 

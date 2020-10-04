@@ -38,7 +38,7 @@ const mkLogoutCookie = () => {
   return `did=; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
 }
 
-const parseCookie = (cookie: string) => new Map<string, string>(cookie.split(/;\s*/)
+export const parseCookie = (cookie: string) => new Map<string, string>(cookie.split(/;\s*/)
   .map(x => x.split('='))
   .map(([k, v]) => [k, v] as [string, string])
   .filter(([k]) => !!k)

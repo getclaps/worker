@@ -2,6 +2,7 @@ import { FaunaDAO } from '../fauna-dao';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
 import { validateURL, extractData } from './claps';
+import { mkDNTCookieKey, parseCookie } from './dashboard';
 
 function getReferrer(referrerRaw: string|null, hostname: string): string|undefined {
   if (referrerRaw != null) {
@@ -38,15 +39,16 @@ export async function handleViews({ requestURL, method, path, headers }: {
   const referrer = getReferrer(requestURL.searchParams.get('referrer'), url.hostname);
   const { country, visitor } = await extractData(headers);
 
-  const arg = {
+  const cookies = parseCookie(headers.get('cookie') || '');
+
+  return dao.getClapsAndUpdateViews({
     hostname: originURL.hostname,
     href: url.href,
     referrer,
     country,
     visitor,
-  };
-
-  return (headers.get('cookie') || '').includes(`dnt=${encodeURIComponent(url.hostname)}`)
-    ? dao.getClaps(arg)
-    : dao.getClapsAndUpdateViews(arg, headers.get('cf-connecting-ip'));
+  }, {
+    ip: headers.get('cf-connecting-ip'),
+    dnt: cookies.has(mkDNTCookieKey(url.hostname))
+  }); 
 }
