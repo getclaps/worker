@@ -24,15 +24,21 @@ export async function extractData(headers: Headers) {
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 
+// A non-empty scheme component followed by a colon (:),
+// consisting of a sequence of characters beginning with a letter and 
+// followed by any combination of letters, digits, plus (+), period (.), or hyphen (-).
+const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
+
 export const validateURL = (url: string) => {
   try {
     if (!url) throw badRequest('No url provided')
     if (url.length > 4096) throw badRequest('URL too long. 4096 characters max.');
-    const targetURL = new URL(url)
-    targetURL.search = ''
+    const withProtocol = url.match(RE_PROTOCOL) ? url : `https://${url}`;
+    const targetURL = new URL(withProtocol);
+    targetURL.search = '';
     return targetURL;
   } catch {
-    throw badRequest('Invalid URL. Needs to be fully qualified, e.g. https://getclaps.dev');
+    throw badRequest('Invalid or missing URL');
   }
 }
 

@@ -3,17 +3,10 @@ import { ok, badRequest, forbidden, notFound, redirect } from '../response-types
 
 import { validateURL, extractData } from './claps';
 
-// A non-empty scheme component followed by a colon (:),
-// consisting of a sequence of characters beginning with a letter and 
-// followed by any combination of letters, digits, plus (+), period (.), or hyphen (-).
-const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
-
 function getReferrer(referrerRaw: string|null, hostname: string): string|undefined {
   if (referrerRaw != null) {
     let refURL: URL;
-    try { 
-      refURL = validateURL(referrerRaw.match(RE_PROTOCOL) ? referrerRaw : `https://${referrerRaw}`);
-    } catch { return }
+    try { refURL = validateURL(referrerRaw) } catch { return }
     if (refURL.hostname !== hostname) {
       return refURL.pathname === '/' && !refURL.href.endsWith('/') 
         ? `${refURL.href}/` // Cloudflare URL fix
