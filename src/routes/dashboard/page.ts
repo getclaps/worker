@@ -1,11 +1,11 @@
-import { html, HTMLResponse, Arg } from '../../html';
+import { html, HTMLResponse, HTMLContent } from '../../html';
 import { styles } from './styles';
 
 export const page = ({ title = 'getclaps.dev', isBookmarked = false, headers = [] }: {
   title?: string,
   isBookmarked?: boolean,
   headers?: HeadersInit,
-} = {}) => (content: Arg) => new HTMLResponse(html`
+} = {}) => (content: HTMLContent) => new HTMLResponse(html`
 <!DOCTYPE html>
 <html lang="en">
   <head>

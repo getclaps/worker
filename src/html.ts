@@ -1,33 +1,14 @@
 import { filterXSS } from 'xss';
 import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
-type Repeatable<T> = T|T[];
-type Awaitable<T> = T|Promise<T>;
-type Callable<T> = T|(() => T);
+type Repeatable<T> = T | T[];
+type Awaitable<T> = T | Promise<T>;
+type Callable<T> = T | (() => T);
+type DataTypes = undefined | boolean | number | string | BigInt | Symbol;
 
-export class UnsafeHTML {
-  value: string;
-  constructor(value: string) { this.value = value }
-  toString() { return this.value }
-  toJSON() { return this.value }
-}
-
-export function unsafeHTML(safeHTML: string) {
-  return new UnsafeHTML(safeHTML);
-}
-
-type UnsafeArg = Repeatable<undefined|null|string|number|boolean|UnsafeHTML>;
-
-function helper(x: UnsafeArg): string {
-  if (x == null) return '';
-  if (Array.isArray(x)) return x.map(helper).join('');
-  if (x instanceof UnsafeHTML) return x.value;
-  return filterXSS(x as string);
-}
-
-export function css(strings: TemplateStringsArray, ...args: UnsafeArg[]) {
-  return new UnsafeHTML(join(interleave(strings, args.map(helper))));
-}
+type Renderable = null | DataTypes | HTML | UnsafeHTML;
+type Content = Repeatable<Awaitable<Repeatable<Renderable>>>;
+export type HTMLContent = Callable<Content>;
 
 export async function* stream2AsyncIterable<T>(stream: ReadableStream<T>): AsyncIterable<T> {
   const reader = stream.getReader();
@@ -51,23 +32,34 @@ export function asyncIterable2Stream<T>(asyncIterable: AsyncIterable<T>): Readab
   return readable;
 }
 
-type BaseArg = undefined|null|string|number|boolean|UnsafeHTML|HTML;
-export type Arg = Callable<Awaitable<Repeatable<BaseArg>>>;
 
-async function* aHelper(arg: Arg): AsyncIterableIterator<string> {
-  const x = await arg;
-  if (Array.isArray(x)) for (const xi of x) yield* aHelper(xi);
-  else if (typeof x === 'function') yield* aHelper(x());
-  else if (x instanceof HTML) yield* x;
-  else if (x instanceof UnsafeHTML) yield x.value;
-  else yield filterXSS(x as string);
+async function* unpackContent(arg: Content): AsyncIterableIterator<string> {
+  try {
+    const x = await arg;
+    if (Array.isArray(x)) for (const xi of x) yield* unpackContent(xi);
+    else if (x instanceof HTML) yield* x;
+    else if (x instanceof UnsafeHTML) yield x.value;
+    else yield filterXSS(x as string);
+  } catch (err) {
+    if (err instanceof HTML) yield* err;
+    else throw err;
+  }
+}
+
+async function* unpack(arg: HTMLContent): AsyncIterableIterator<string> {
+  try {
+    yield* unpackContent(typeof arg === 'function' ? arg() : arg);
+  } catch (err) {
+    if (err instanceof HTML) yield* err;
+    else throw err;
+  }
 }
 
 export class HTML {
   strings: TemplateStringsArray;
-  args: Arg[];
+  args: HTMLContent[];
 
-  constructor(strings: TemplateStringsArray, args: Arg[]) { 
+  constructor(strings: TemplateStringsArray, args: HTMLContent[]) {
     this.strings = strings;
     this.args = args;
   }
@@ -82,7 +74,7 @@ export class HTML {
 
       const { done: argDone, value: arg } = argsIt.next();
       if (argDone) break;
-      else yield* aHelper(arg);
+      else yield* unpack(arg);
     }
   }
 
@@ -91,7 +83,11 @@ export class HTML {
   // }
 }
 
-export function html(strings: TemplateStringsArray, ...args: Arg[]) {
+export function html(strings: TemplateStringsArray, ...args: HTMLContent[]) {
+  return new HTML(strings, args);
+}
+
+export function css(strings: TemplateStringsArray, ...args: HTMLContent[]) {
   return new HTML(strings, args);
 }
 
@@ -102,4 +98,15 @@ export class HTMLResponse extends Response {
     super(asyncIterable2Stream(htmlGenerator), init);
     this.headers.set('Content-Type', 'text/html;charset=UTF-8');
   }
+}
+
+export class UnsafeHTML {
+  value: string;
+  constructor(value: string) { this.value = value }
+  toString() { return this.value }
+  toJSON() { return this.value }
+}
+
+export function unsafeHTML(content: string) {
+  return new UnsafeHTML(content);
 }
