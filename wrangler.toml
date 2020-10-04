@@ -12,6 +12,8 @@ kv_namespaces = [
 [vars]
 DEBUG = 'true'
 WORKER_DOMAIN = 'http://localhost:8787'
+STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
+STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.staging]
 name = "clap-worker-stage"
@@ -33,5 +35,5 @@ name = "clap-worker"
 [env.production.vars]
 DEBUG = 'false'
 WORKER_DOMAIN = 'https://worker.getclaps.net'
-# STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
-# STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
+STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
