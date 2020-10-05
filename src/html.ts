@@ -1,5 +1,4 @@
 import { filterXSS } from 'xss';
-import { join, interleave, map, aMap, aInterleaveFlattenSecond } from './iter';
 
 type Repeatable<T> = T | T[];
 type Awaitable<T> = T | Promise<T>;
@@ -10,30 +9,8 @@ type Renderable = null | DataTypes | HTML | UnsafeHTML | Fallback;
 type Content = Repeatable<Awaitable<Repeatable<Renderable>>>;
 export type HTMLContent = Callable<Content>;
 
-export async function* stream2AsyncIterable<T>(stream: ReadableStream<T>): AsyncIterable<T> {
-  const reader = stream.getReader();
-  try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) return;
-      yield value;
-    }
-  } finally { reader.releaseLock() }
-}
-
-export function asyncIterable2Stream<T>(asyncIterable: AsyncIterable<T>): ReadableStream<T> {
-  const { readable, writable } = new TransformStream();
-  (async () => {
-    const writer = writable.getWriter();
-    try {
-      for await (const x of asyncIterable) writer.write(x);
-    } finally { writer.close() }
-  })();
-  return readable;
-}
-
-async function* unpackContent(arg: Content): AsyncIterableIterator<string> {
-  const x = await arg;
+async function* unpackContent(content: Content): AsyncIterableIterator<string> {
+  const x = await content;
   if (Array.isArray(x)) for (const xi of x) yield* unpackContent(xi);
   else if (x instanceof HTML) yield* x;
   else if (x instanceof UnsafeHTML) yield x.value;
@@ -47,9 +24,9 @@ async function* unpackContent(arg: Content): AsyncIterableIterator<string> {
   else yield filterXSS(x as string);
 }
 
-async function* unpack(arg: HTMLContent): AsyncIterableIterator<string> {
+async function* unpack(content: HTMLContent): AsyncIterableIterator<string> {
   try {
-    yield* unpackContent(typeof arg === 'function' ? arg() : arg);
+    yield* unpackContent(typeof content === 'function' ? content() : content);
   } catch (err) {
     if (err instanceof HTML) yield* err;
     else throw err;
@@ -88,18 +65,7 @@ export function html(strings: TemplateStringsArray, ...args: HTMLContent[]) {
   return new HTML(strings, args);
 }
 
-export function css(strings: TemplateStringsArray, ...args: HTMLContent[]) {
-  return new HTML(strings, args);
-}
-
-export class HTMLResponse extends Response {
-  constructor(html: HTML, init?: ResponseInit) {
-    const encoder = new TextEncoder();
-    const htmlGenerator = aMap((str: string) => encoder.encode(str))(html);
-    super(asyncIterable2Stream(htmlGenerator), init);
-    this.headers.set('Content-Type', 'text/html;charset=UTF-8');
-  }
-}
+export { html as css }
 
 export class UnsafeHTML {
   value: string;
@@ -124,3 +90,5 @@ export function fallback(content: HTMLContent, fallback: HTML | ((e: any) => HTM
 export function unsafeHTML(content: string) {
   return new UnsafeHTML(content);
 }
+
+export { HTMLResponse, CFWorkersHTMLResponse } from './html-response';
