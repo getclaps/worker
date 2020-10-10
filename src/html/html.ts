@@ -67,7 +67,7 @@ export function html(strings: TemplateStringsArray, ...args: HTMLContent[]) {
 
 export { html as css }
 
-export class UnsafeHTML {
+class UnsafeHTML {
   value: string;
   constructor(value: string) { this.value = value }
   toString() { return this.value }
@@ -90,5 +90,3 @@ export function fallback(content: HTMLContent, fallback: HTML | ((e: any) => HTM
 export function unsafeHTML(content: string) {
   return new UnsafeHTML(content);
 }
-
-export { HTMLResponse, CFWorkersHTMLResponse } from './html-response';
