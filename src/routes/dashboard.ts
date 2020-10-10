@@ -6,8 +6,8 @@ import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { elongateId, shortenId } from '../short-id';
 import { badRequest, notFound, seeOther } from '../response-types';
-import * as pages from './dashboard/index';
 import { stripeAPI } from './stripe';
+import * as pages from './dashboard/index';
 
 export { styles } from './dashboard/styles';
 
@@ -46,7 +46,7 @@ export const parseCookie = (cookie: string) => new Map<string, string>(cookie.sp
   .filter(([k]) => !!k)
 );
 
-export interface Snowball extends RouteParams {
+export interface DashboardParams extends RouteParams {
   id: string;
   uuid: UUID;
   cookies: Map<string, string>;

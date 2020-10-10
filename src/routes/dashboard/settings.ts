@@ -2,14 +2,14 @@ import { badRequest } from '../../response-types';
 import { html } from '../../html';
 import { page } from './page';
 
-import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, Snowball } from '../dashboard';
+import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardParams } from '../dashboard';
 import { Dashboard } from '../../dao';
 
-export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: Snowball) {
+export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardParams) {
   const setHeaders = new Headers();
 
   let showError = false;
-  let postDashboard: any;
+  let postDashboard: Dashboard;
   let postCookieDNT: boolean;
 
   if (method === 'POST') {

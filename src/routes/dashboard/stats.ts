@@ -3,7 +3,7 @@ import { page } from './page';
 
 import { TimeUnit } from '../../dao';
 import { countries as countriesE } from '../../countries.js';
-import { Snowball } from '../dashboard';
+import { DashboardParams } from '../dashboard';
 
 const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
 
@@ -21,7 +21,7 @@ const mkRef = (href: string) => {
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: Snowball) {
+export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: DashboardParams) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [value, unit] = timeFrame.split('-') as [number, TimeUnit];
   const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);
