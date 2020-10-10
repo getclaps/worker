@@ -1,7 +1,5 @@
 import { UUID } from 'uuid-class';
 
-type Result<T> = T | Error;
-
 export interface Dashboard {
   id: UUID,
   customer?: string,
@@ -56,12 +54,12 @@ export type TimeUnit = 'day' | 'days' | 'half day' | 'half days' | 'hour' | 'hou
 export interface DAO {
   init(): Promise<void>;
   originOk(hostname: string): Promise<boolean>;
-  upsertDashboard(data: Dashboard): Promise<Result<Dashboard>>;
-  getDashboard(id: UUID): Promise<Result<Dashboard>>;
-  updateDomain(id: UUID, hostname: string): Promise<Result<Dashboard>>;
-  relocateDashboard(oldId: UUID, newId: UUID): Promise<Result<Dashboard>>;
-  updateClaps(data: ClapData, options: UpdateOptions): Promise<Result<ClapCount>>;
-  getClaps({ hostname, href }: { href: string, hostname: string }): Promise<Result<{ [href: string]: ClapCount }>>;
-  getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<Result<{ [href: string]: ClapCount }>>;
-  getStats(did: UUID, timeFrame: [number, TimeUnit]): Promise<Result<StatsData>>;
+  upsertDashboard(data: Dashboard): Promise<Dashboard>;
+  getDashboard(id: UUID): Promise<Dashboard>;
+  updateDomain(id: UUID, hostname: string): Promise<Dashboard>;
+  relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
+  updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
+  getClaps({ hostname, href }: { href: string, hostname: string }): Promise<{ [href: string]: ClapCount }>;
+  getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
+  getStats(did: UUID, timeFrame: [number, TimeUnit]): Promise<StatsData>;
 }

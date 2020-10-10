@@ -19,7 +19,7 @@ const addCORSHeaders = (request: Request) => (response: Response) => {
   return response;
 }
 
-const handleError = (err: any) => {
+function handleError(err: any) {
   if (err instanceof NotFoundError) return notFound(err.message);
   if (err instanceof PaymentRequiredError) return paymentRequired(err.message);
   if (err instanceof ConflictError) return conflict(err.message);
