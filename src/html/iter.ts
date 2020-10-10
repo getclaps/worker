@@ -1,4 +1,7 @@
-export function* interleave<X, Y>(xs: Iterable<X>, ys: Iterable<Y>): IterableIterator<X|Y> {
+type Awaitable<T> = T | Promise<T>;
+type ForAwaitable<T> = Iterable<T> | AsyncIterable<T>;
+
+export function* interleave<X, Y>(xs: Iterable<X>, ys: Iterable<Y>): IterableIterator<X | Y> {
   const itx = xs[Symbol.iterator]();
   const ity = ys[Symbol.iterator]();
   while (true) {
@@ -11,7 +14,7 @@ export function* interleave<X, Y>(xs: Iterable<X>, ys: Iterable<Y>): IterableIte
   }
 }
 
-export async function* aInterleaveFlattenSecond<X, Y>(xs: Iterator<X>, ys: Iterable<AsyncIterable<Y>>): AsyncIterableIterator<X|Y> {
+export async function* aInterleaveFlattenSecond<X, Y>(xs: Iterator<X>, ys: Iterable<AsyncIterable<Y>>): AsyncIterableIterator<X | Y> {
   const itx = xs[Symbol.iterator]();
   const ity = ys[Symbol.iterator]();
   while (true) {
@@ -25,16 +28,13 @@ export async function* aInterleaveFlattenSecond<X, Y>(xs: Iterator<X>, ys: Itera
 }
 
 export function map<A, B>(f: (a: A) => B) {
-  return function*(iterable: Iterable<A>): IterableIterator<B> { 
+  return function* (iterable: Iterable<A>): IterableIterator<B> {
     for (const x of iterable) yield f(x);
   };
 }
 
-type Awaitable<T> = T|Promise<T>;
-type ForAwaitable<T> = Iterable<T>|AsyncIterable<T>;
-
 export function aMap<A, B>(f: (a: A) => Awaitable<B>) {
-  return async function*(forAwaitable: ForAwaitable<A>): AsyncIterableIterator<B> { 
+  return async function* (forAwaitable: ForAwaitable<A>): AsyncIterableIterator<B> {
     for await (const x of forAwaitable) yield f(x);
   };
 }
