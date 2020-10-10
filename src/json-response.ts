@@ -15,21 +15,10 @@ export {
   SearchParamsURL as ParamsURL,
 }
 
-type JSONBodyInit = BodyInit | object;
-type JSONRequestInit = Omit<RequestInit, 'body'> & { body?: JSONBodyInit | null };
+type JSONBodyInit<T> = T | BodyInit;
+type JSONRequestInit<T> = { body?: JSONBodyInit<T> | null } & Omit<RequestInit, 'body'>;
 
-// function isPOJO(arg) {
-//   if (arg == null || typeof arg !== 'object') {
-//     return false;
-//   }
-//   const proto = Object.getPrototypeOf(arg);
-//   if (proto == null) {
-//     return true; // `Object.create(null)`
-//   }
-//   return proto === Object.prototype;
-// }
-
-function isBodyInit(b: JSONBodyInit) {
+function isBodyInit<T>(b: JSONBodyInit<T>) {
   return (
     b == null ||
     typeof b === 'string' ||
@@ -41,13 +30,13 @@ function isBodyInit(b: JSONBodyInit) {
   );
 }
 
-export class JSONRequest extends Request {
+export class JSONRequest<T = object> extends Request {
   static contentType = 'application/json;charset=UTF-8';
   static accept = 'application/json, text/plain, */*';
 
   constructor(
     input: RequestInfo | URL,
-    init?: JSONRequestInit,
+    init?: JSONRequestInit<T>,
     replacer?: (this: any, key: string, value: any) => any,
     space?: string | number,
   ) {
@@ -64,11 +53,11 @@ export class JSONRequest extends Request {
   }
 }
 
-export class JSONResponse extends Response {
+export class JSONResponse<T = object> extends Response {
   static contentType = 'application/json;charset=UTF-8';
 
   constructor(
-    body: JSONBodyInit | null,
+    body: JSONBodyInit<T> | null,
     init?: ResponseInit,
     replacer?: (this: any, key: string, value: any) => any,
     space?: string | number,
@@ -94,11 +83,22 @@ export const urlWithParams = (
   return new SearchParamsURL(url, params, base).href;
 }
 
-export function jsonFetch(
+export function jsonFetch<T = object>(
   input: RequestInfo | URL,
-  init?: JSONRequestInit,
+  init?: JSONRequestInit<T>,
   replacer?: (this: any, key: string, value: any) => any,
   space?: string | number,
 ) {
   return fetch(new JSONRequest(input, init, replacer, space));
 }
+
+// function isPOJO(arg) {
+//   if (arg == null || typeof arg !== 'object') {
+//     return false;
+//   }
+//   const proto = Object.getPrototypeOf(arg);
+//   if (proto == null) {
+//     return true; // `Object.create(null)`
+//   }
+//   return proto === Object.prototype;
+// }

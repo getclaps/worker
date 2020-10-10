@@ -1,11 +1,13 @@
 import { UUID } from 'uuid-class';
 import { Base64Encoder } from 'base64-encoding';
 
-import { FaunaDAO } from '../fauna-dao';
+import { RouteParams } from '../index';
+import { DAO } from '../dao';
+import { getDAO } from '../dao/get-dao';
 import { elongateId, shortenId } from '../short-id';
-import { stripeAPI } from './stripe';
-import * as r from '../response-types';
+import { badRequest, notFound, redirect } from '../response-types';
 import * as pages from './dashboard/index';
+import { stripeAPI } from './stripe';
 
 export { styles } from './dashboard/styles';
 
@@ -44,12 +46,11 @@ export const parseCookie = (cookie: string) => new Map<string, string>(cookie.sp
   .filter(([k]) => !!k)
 );
 
-import { RouteParams } from '../index';
 export interface Snowball extends RouteParams {
   id: string;
   uuid: UUID;
   cookies: Map<string, string>;
-  dao: FaunaDAO;
+  dao: DAO;
   isBookmarked: boolean;
   locale: string;
 }
@@ -57,19 +58,19 @@ export interface Snowball extends RouteParams {
 export async function handleDashboard(params: RouteParams) {
   const { request, requestURL, event, headers, method, path: [, dir] } = params;
 
-  const dao = new FaunaDAO();
+  const dao: DAO = getDAO();
 
   const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
 
   if (dir === 'new') {
-    if (method !== 'GET') return r.notFound();
+    if (method !== 'GET') return notFound();
 
     const sessionId = requestURL.searchParams.get('session_id');
-    if (!sessionId) return r.notFound();
+    if (!sessionId) return notFound();
 
     const { customer, subscription } = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
 
-    if (!subscription || !customer) return r.badRequest();
+    if (!subscription || !customer) return badRequest();
 
     const id = await UUID.v5(sessionId, NAMESPACE);
 
@@ -86,13 +87,13 @@ export async function handleDashboard(params: RouteParams) {
       dnt: false,
     });
 
-    return r.redirect(new URL(`/`, WORKER_DOMAIN), {
+    return redirect(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLoginCookie(shortenId(id))]],
     });
   }
 
   else if (dir === 'logout') {
-    return r.redirect(new URL(`/`, WORKER_DOMAIN), {
+    return redirect(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLogoutCookie()]]
     });
   }
@@ -109,10 +110,10 @@ export async function handleDashboard(params: RouteParams) {
         const d = await dao.getDashboard(uuid);
         if (!d) throw Error();
       } catch {
-        return r.redirect(new URL(referrer.toString(), WORKER_DOMAIN))
+        return redirect(new URL(referrer.toString(), WORKER_DOMAIN))
       }
 
-      return r.redirect(new URL(referrer.toString(), WORKER_DOMAIN), {
+      return redirect(new URL(referrer.toString(), WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
           ['Set-Cookie', await mkBookmarkedCookie(id)]
@@ -120,12 +121,12 @@ export async function handleDashboard(params: RouteParams) {
       });
     }
 
-    return r.notFound();
+    return notFound();
   }
 
   else if (/([A-Za-z0-9-_]{22})/.test(dir)) {
     const [, id] = dir.match(/([A-Za-z0-9-_]{22})/);
-    return r.redirect(new URL(`/`, WORKER_DOMAIN), {
+    return redirect(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLoginCookie(id)]],
     });
   }
@@ -159,13 +160,13 @@ export async function handleDashboard(params: RouteParams) {
     }
     else if (!dir) {
       if (isBookmarked) {
-        res = r.redirect(new URL('/stats', WORKER_DOMAIN));
+        res = redirect(new URL('/stats', WORKER_DOMAIN));
       } else {
-        res = r.redirect(new URL('/settings', WORKER_DOMAIN));
+        res = redirect(new URL('/settings', WORKER_DOMAIN));
       }
     }
     else {
-      res = r.notFound();
+      res = notFound();
     }
 
     res.headers.append('Set-Cookie', mkLoginCookie(id));

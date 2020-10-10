@@ -1,4 +1,6 @@
-import { FaunaDAO } from '../fauna-dao';
+import { DAO } from '../dao';
+import { getDAO } from '../dao/get-dao';
+import { JSONResponse } from '../json-response';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
 import { validateURL, extractData } from './claps';
@@ -28,7 +30,7 @@ export async function handleViews({ requestURL, method, path, headers }: {
   if (method === 'OPTIONS') return ok();
   if (method !== 'POST') return notFound();
 
-  const dao = new FaunaDAO();
+  const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
   const url = validateURL(requestURL.searchParams.get('href') || requestURL.searchParams.get('url'));
@@ -41,7 +43,7 @@ export async function handleViews({ requestURL, method, path, headers }: {
 
   const cookies = parseCookie(headers.get('cookie') || '');
 
-  return dao.getClapsAndUpdateViews({
+  const data = await dao.getClapsAndUpdateViews({
     hostname: originURL.hostname,
     href: url.href,
     referrer,
@@ -51,4 +53,6 @@ export async function handleViews({ requestURL, method, path, headers }: {
     ip: headers.get('cf-connecting-ip'),
     dnt: cookies.has(mkDNTCookieKey(url.hostname))
   }); 
+
+  return new JSONResponse(data);
 }

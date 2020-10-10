@@ -1,6 +1,8 @@
-import * as r from './response-types';
 import * as routes from './routes/index';
-import { FaunaDAO } from './fauna-dao';
+import { DAO } from './dao';
+import { getDAO } from './dao/get-dao';
+import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
+import { badRequest, conflict, forbidden, internalServerError, notFound, ok, paymentRequired } from './response-types';
 
 export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
 
@@ -18,9 +20,12 @@ const addCORSHeaders = (request: Request) => (response: Response) => {
 }
 
 const handleError = (err: any) => {
-  if (err instanceof Response) return err;
-  else if (DEBUG) throw err;
-  else return r.internalServerError();
+  if (err instanceof NotFoundError) return notFound(err.message);
+  if (err instanceof PaymentRequiredError) return paymentRequired(err.message);
+  if (err instanceof ConflictError) return conflict(err.message);
+  if (err instanceof BadRequestError) return badRequest(err.message);
+  if (DEBUG) throw err;
+  else return internalServerError();
 }
 
 self.addEventListener('fetch', (event: FetchEvent) => {
@@ -47,9 +52,9 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
 
   switch (path[0]) {
     case '__init': {
-      const dao = new FaunaDAO();
-      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return r.forbidden();
-      return dao.init().catch(handleError);
+      const dao: DAO = getDAO();
+      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
+      return dao.init().then(() => ok()).catch(handleError);
     }
     case 'claps': {
       return routes.handleClaps(args).catch(handleError).then(addCORSHeaders(request));

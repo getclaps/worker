@@ -1,6 +1,7 @@
 import { fallback, html, HTMLContent } from '../../html';
 import { page } from './page';
 
+import { TimeUnit } from '../../dao';
 import { countries as countriesE } from '../../countries.js';
 import { Snowball } from '../dashboard';
 
@@ -22,7 +23,7 @@ const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Somethin
 
 export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: Snowball) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
-  const [value, unit] = timeFrame.split('-');
+  const [value, unit] = timeFrame.split('-') as [number, TimeUnit];
   const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);
 
   const d = dao.getDashboard(uuid);
