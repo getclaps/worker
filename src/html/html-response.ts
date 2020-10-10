@@ -1,4 +1,4 @@
-import { aMap } from '../iter';
+import { aMap } from './iter';
 import { asyncIterable2Stream } from './stream-util';
 import { HTML } from './html';
 
