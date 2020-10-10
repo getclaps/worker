@@ -32,7 +32,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   event.respondWith(handleRequest(event.request, new URL(event.request.url), event));
 });
 
-export interface RouteParams {
+export interface RouteArgs {
   request: Request;
   requestURL: URL;
   event: FetchEvent;
@@ -48,7 +48,7 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
 
   const path = getPath(pathname);
 
-  const args: RouteParams = { request, requestURL, event, method, pathname, path, headers };
+  const args: RouteArgs = { request, requestURL, event, method, pathname, path, headers };
 
   switch (path[0]) {
     case '__init': {

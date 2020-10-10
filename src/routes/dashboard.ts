@@ -1,7 +1,7 @@
 import { UUID } from 'uuid-class';
 import { Base64Encoder } from 'base64-encoding';
 
-import { RouteParams } from '../index';
+import { RouteArgs } from '../index';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { elongateId, shortenId } from '../short-id';
@@ -46,7 +46,7 @@ export const parseCookie = (cookie: string) => new Map<string, string>(cookie.sp
   .filter(([k]) => !!k)
 );
 
-export interface DashboardParams extends RouteParams {
+export interface DashboardArgs extends RouteArgs {
   id: string;
   uuid: UUID;
   cookies: Map<string, string>;
@@ -55,7 +55,7 @@ export interface DashboardParams extends RouteParams {
   locale: string;
 }
 
-export async function handleDashboard(params: RouteParams) {
+export async function handleDashboard(params: RouteArgs) {
   const { request, requestURL, event, headers, method, path: [, dir] } = params;
 
   const dao: DAO = getDAO();

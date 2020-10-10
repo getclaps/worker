@@ -2,10 +2,10 @@ import { badRequest } from '../../response-types';
 import { html } from '../../html';
 import { page } from './page';
 
-import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardParams } from '../dashboard';
+import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs } from '../dashboard';
 import { Dashboard } from '../../dao';
 
-export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardParams) {
+export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardArgs) {
   const setHeaders = new Headers();
 
   let showError = false;
