@@ -15,10 +15,10 @@ export {
   SearchParamsURL as ParamsURL,
 }
 
-type JSONBodyInit<T> = T | BodyInit;
-type JSONRequestInit<T> = { body?: JSONBodyInit<T> | null } & Omit<RequestInit, 'body'>;
+type JSONBodyInit = object | BodyInit;
+type JSONRequestInit = { body?: JSONBodyInit | null } & Omit<RequestInit, 'body'>;
 
-function isBodyInit<T>(b: JSONBodyInit<T>) {
+function isBodyInit(b: JSONBodyInit) {
   return (
     b == null ||
     typeof b === 'string' ||
@@ -30,13 +30,13 @@ function isBodyInit<T>(b: JSONBodyInit<T>) {
   );
 }
 
-export class JSONRequest<T = object> extends Request {
+export class JSONRequest extends Request {
   static contentType = 'application/json;charset=UTF-8';
   static accept = 'application/json, text/plain, */*';
 
   constructor(
     input: RequestInfo | URL,
-    init?: JSONRequestInit<T>,
+    init?: JSONRequestInit,
     replacer?: (this: any, key: string, value: any) => any,
     space?: string | number,
   ) {
@@ -53,11 +53,11 @@ export class JSONRequest<T = object> extends Request {
   }
 }
 
-export class JSONResponse<T = object> extends Response {
+export class JSONResponse extends Response {
   static contentType = 'application/json;charset=UTF-8';
 
   constructor(
-    body: JSONBodyInit<T> | null,
+    body: JSONBodyInit | null,
     init?: ResponseInit,
     replacer?: (this: any, key: string, value: any) => any,
     space?: string | number,
@@ -83,9 +83,9 @@ export const urlWithParams = (
   return new SearchParamsURL(url, params, base).href;
 }
 
-export function jsonFetch<T = object>(
+export function jsonFetch(
   input: RequestInfo | URL,
-  init?: JSONRequestInit<T>,
+  init?: JSONRequestInit,
   replacer?: (this: any, key: string, value: any) => any,
   space?: string | number,
 ) {
