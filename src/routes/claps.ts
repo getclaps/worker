@@ -82,7 +82,7 @@ export async function handleClaps({ request, requestURL, method, path, headers }
 
       const cookies = parseCookie(headers.get('cookie') || '');
 
-      const data = dao.updateClaps({
+      const data = await dao.updateClaps({
         claps, nonce, country, visitor,
         id: new UUID(id),
         hostname: originURL.hostname,
