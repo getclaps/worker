@@ -1,6 +1,6 @@
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
-import { JSONResponse } from '../json-response';
+import { JSONResponse } from '../json-fetch';
 import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
 
 import { validateURL, extractData } from './claps';
