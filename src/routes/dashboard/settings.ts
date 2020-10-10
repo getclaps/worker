@@ -1,8 +1,9 @@
-import * as r from '../../response-types';
+import { badRequest } from '../../response-types';
 import { html } from '../../html';
 import { page } from './page';
 
 import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, Snowball } from '../dashboard';
+import { Dashboard } from '../../dao';
 
 export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: Snowball) {
   const setHeaders = new Headers();
@@ -47,12 +48,12 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
       // }
       default: break;
     }
-  } else if (method !== 'GET') return r.badRequest();
+  } else if (method !== 'GET') return badRequest();
 
   const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
   return page({ isBookmarked, headers: setHeaders })(async () => {
-    let dashboard;
+    let dashboard: Dashboard;
     try {
       dashboard = postDashboard || await dao.getDashboard(uuid);
     } catch (e) {

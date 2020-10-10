@@ -5,7 +5,7 @@ import { RouteParams } from '../index';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { elongateId, shortenId } from '../short-id';
-import { badRequest, notFound, redirect } from '../response-types';
+import { badRequest, notFound, seeOther } from '../response-types';
 import * as pages from './dashboard/index';
 import { stripeAPI } from './stripe';
 
@@ -87,13 +87,13 @@ export async function handleDashboard(params: RouteParams) {
       dnt: false,
     });
 
-    return redirect(new URL(`/`, WORKER_DOMAIN), {
+    return seeOther(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLoginCookie(shortenId(id))]],
     });
   }
 
   else if (dir === 'logout') {
-    return redirect(new URL(`/`, WORKER_DOMAIN), {
+    return seeOther(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLogoutCookie()]]
     });
   }
@@ -110,10 +110,10 @@ export async function handleDashboard(params: RouteParams) {
         const d = await dao.getDashboard(uuid);
         if (!d) throw Error();
       } catch {
-        return redirect(new URL(referrer.toString(), WORKER_DOMAIN))
+        return seeOther(new URL(referrer.toString(), WORKER_DOMAIN))
       }
 
-      return redirect(new URL(referrer.toString(), WORKER_DOMAIN), {
+      return seeOther(new URL(referrer.toString(), WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
           ['Set-Cookie', await mkBookmarkedCookie(id)]
@@ -126,7 +126,7 @@ export async function handleDashboard(params: RouteParams) {
 
   else if (/([A-Za-z0-9-_]{22})/.test(dir)) {
     const [, id] = dir.match(/([A-Za-z0-9-_]{22})/);
-    return redirect(new URL(`/`, WORKER_DOMAIN), {
+    return seeOther(new URL(`/`, WORKER_DOMAIN), {
       headers: [['Set-Cookie', mkLoginCookie(id)]],
     });
   }
@@ -160,9 +160,9 @@ export async function handleDashboard(params: RouteParams) {
     }
     else if (!dir) {
       if (isBookmarked) {
-        res = redirect(new URL('/stats', WORKER_DOMAIN));
+        res = seeOther(new URL('/stats', WORKER_DOMAIN));
       } else {
-        res = redirect(new URL('/settings', WORKER_DOMAIN));
+        res = seeOther(new URL('/settings', WORKER_DOMAIN));
       }
     }
     else {

@@ -2,7 +2,7 @@ import * as routes from './routes/index';
 import { DAO } from './dao';
 import { getDAO } from './dao/get-dao';
 import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
-import { badRequest, conflict, forbidden, internalServerError, notFound, ok, paymentRequired } from './response-types';
+import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired } from './response-types';
 
 export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
 
@@ -53,7 +53,7 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
   switch (path[0]) {
     case '__init': {
       const dao: DAO = getDAO();
-      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return forbidden();
+      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return unauthorized();
       return dao.init().then(() => ok()).catch(handleError);
     }
     case 'claps': {

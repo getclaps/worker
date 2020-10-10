@@ -1,17 +1,17 @@
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { JSONResponse } from '../json-fetch';
-import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
+import { ok, badRequest, notFound } from '../response-types';
 
 import { validateURL, extractData } from './claps';
 import { mkDNTCookieKey, parseCookie } from './dashboard';
 
-function getReferrer(referrerRaw: string|null, hostname: string): string|undefined {
+function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
     let refURL: URL;
     try { refURL = validateURL(referrerRaw) } catch { return }
     if (refURL.hostname !== hostname) {
-      return refURL.pathname === '/' && !refURL.href.endsWith('/') 
+      return refURL.pathname === '/' && !refURL.href.endsWith('/')
         ? `${refURL.href}/` // Cloudflare URL fix
         : refURL.href;
     }
@@ -52,7 +52,7 @@ export async function handleViews({ requestURL, method, path, headers }: {
   }, {
     ip: headers.get('cf-connecting-ip'),
     dnt: cookies.has(mkDNTCookieKey(url.hostname))
-  }); 
+  });
 
   return new JSONResponse(data);
 }

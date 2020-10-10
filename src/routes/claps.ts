@@ -3,7 +3,7 @@ import { UUID } from 'uuid-class';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { checkProofOfClap } from '../pow';
-import { ok, badRequest, forbidden, notFound, redirect } from '../response-types';
+import { ok, badRequest, notFound } from '../response-types';
 import { mkDNTCookieKey, parseCookie } from './dashboard';
 import { JSONResponse } from '../json-fetch';
 
