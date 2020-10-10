@@ -1,0 +1,3 @@
+[submodule "src/dao"]
+	path = src/dao
+	url = git@github.com:getclaps/worker-dao.git
