@@ -11,7 +11,7 @@
   "author": "Florian Klampfer <mail@qwtel.com>",
   "license": "MIT",
   "devDependencies": {
-    "@cloudflare/workers-types": "^2.0.0",
+    "@cloudflare/workers-types": "cloudflare/workers-types",
     "prettier": "^2.1.2",
     "ts-loader": "^8.0.4",
     "typescript": "^4.0.3"
