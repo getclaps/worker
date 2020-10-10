@@ -1,10 +1,12 @@
-const mkResponse = (status: number, statusText: string) => (body: BodyInit = null, init: Omit<RequestInit, 'status' | 'statusText'> = {}) => new Response(body, {
+export type RequestInitExStatus = Omit<RequestInit, 'status' | 'statusText'>;
+
+const mkResponse = (status: number, statusText: string) => (body: BodyInit = null, init: RequestInitExStatus = {}) => new Response(body, {
   status,
   statusText,
   ...init,
 });
 
-const mkRedirect = (status: number, statusText: string) => (location: string | URL, init: Omit<RequestInit, 'status' | 'statusText'> = {}) => new Response(null, {
+const mkRedirect = (status: number, statusText: string) => (location: string | URL, init: RequestInitExStatus = {}) => new Response(null, {
   status,
   statusText,
   ...init,
@@ -13,6 +15,17 @@ const mkRedirect = (status: number, statusText: string) => (location: string | U
     ['Location', location.toString()],
   ],
 }); 
+
+const mkNotModified = (status: number, statusText: string) => (ifNoneMatch: string, ifModifiedSince: Date, init: RequestInitExStatus = {}) => new Response(null, {
+  status,
+  statusText,
+  ...init,
+  headers: [
+    ...init?.headers ? Array.isArray(init.headers) ? init.headers : new Headers(init.headers) : [],
+    ['If-None-Match', ifNoneMatch],
+    ['If-Modified-Since', ifModifiedSince.toUTCString()],
+  ],
+})
 
 export const ok = mkResponse(200, 'OK');
 export const created = mkResponse(201, 'Created');
@@ -29,7 +42,7 @@ export const multipleChoices = mkRedirect(300, 'Multiple Choices');
 export const movedPermanently = mkRedirect(301, 'Moved Permanently');
 export const found = mkRedirect(302, 'Found');
 export const seeOther = mkRedirect(303, 'See Other');
-export const notModified = mkResponse(304, 'Not Modified');
+export const notModified = mkNotModified(304, 'Not Modified');
 export const temporaryRedirect = mkRedirect(307, 'Temporary Redirect');
 export const permanentRedirect = mkRedirect(308, 'Permanent Redirect');
 
