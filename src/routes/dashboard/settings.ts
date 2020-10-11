@@ -1,9 +1,9 @@
-import { badRequest } from '../../response-types';
-import { html } from '../../html';
-import { page } from './page';
+import { badRequest } from '@werker/response-creators';
+import { html } from '@werker/html';
 
-import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs } from '../dashboard';
 import { Dashboard } from '../../dao';
+import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs } from '../dashboard';
+import { page } from './page';
 
 export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardArgs) {
   const setHeaders = new Headers();

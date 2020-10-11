@@ -1,7 +1,8 @@
+import { JSONResponse } from '@werker/json-fetch';
+import { ok, badRequest, notFound } from '@werker/response-creators';
+
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
-import { JSONResponse } from '../json-fetch';
-import { ok, badRequest, notFound } from '../response-types';
 
 import { validateURL, extractData } from './claps';
 import { mkDNTCookieKey, parseCookie } from './dashboard';

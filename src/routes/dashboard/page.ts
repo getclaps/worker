@@ -1,4 +1,5 @@
-import { html, HTMLContent, CFWorkersHTMLResponse as HTMLResponse } from '../../html';
+import { html, HTMLContent, CFWorkersHTMLResponse as HTMLResponse } from '@werker/html';
+
 import { styles } from './styles';
 
 export const page = ({ title = 'getclaps.dev', isBookmarked = false, headers = [] }: {

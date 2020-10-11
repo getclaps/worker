@@ -1,9 +1,9 @@
-import { fallback, html, HTMLContent } from '../../html';
-import { page } from './page';
+import { fallback, html, HTMLContent } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
 import { countries as countriesE } from '../../countries.js';
 import { DashboardArgs } from '../dashboard';
+import { page } from './page';
 
 const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
 

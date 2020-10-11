@@ -1,6 +1,6 @@
 {
   "private": true,
-  "name": "applause-worker",
+  "name": "@getclaps/worker",
   "version": "1.0.0",
   "description": "A template for kick starting a Cloudflare Workers project",
   "main": "index.js",
@@ -17,6 +17,10 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
+    "@werker/html": "^1.0.0",
+    "@werker/json-fetch": "^1.0.0",
+    "@werker/response-creators": "^1.0.0",
+    "@werker/stripe-webhook": "^1.0.0",
     "base64-encoding": "^0.11.0",
     "faunadb": "^3.0.1",
     "uuid-class": "^0.9.0",

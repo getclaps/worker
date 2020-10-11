@@ -1,5 +1,6 @@
+import { html } from '@werker/html';
+
 import { page } from './page';
-import { html } from '../../html';
 
 export function loginPage() {
   return page()(html`

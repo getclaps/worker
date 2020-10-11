@@ -1,11 +1,11 @@
 import { UUID } from 'uuid-class';
+import { JSONResponse } from '@werker/json-fetch';
+import { ok, badRequest, notFound } from '@werker/response-creators';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { checkProofOfClap } from '../pow';
-import { ok, badRequest, notFound } from '../response-types';
 import { mkDNTCookieKey, parseCookie } from './dashboard';
-import { JSONResponse } from '../json-fetch';
 
 // const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
 const KV_NAMESPACE = 'KV_NAMESPACE';

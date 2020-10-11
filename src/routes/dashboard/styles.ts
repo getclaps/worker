@@ -1,4 +1,4 @@
-import { css } from '../../html';
+import { css } from '@werker/html';
 
 export const styles = css`
   [hidden] { display: none!important }
