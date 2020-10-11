@@ -1,0 +1,27 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - uses: actions/checkout@v2
+      - name: Publish
+        uses: cloudflare/wrangler-action@1.3.0
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          environment: 'staging'
+          secrets: |
+            AUTH
+            FAUNA_DB_KEY
+            STRIPE_SECRET_KEY
+        env:
+          AUTH: ${{ secrets.AUTH_TEST }}
+          FAUNA_DB_KEY: ${{ secrets.FAUNA_DB_KEY_TEST }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
+          DEBUG: true
