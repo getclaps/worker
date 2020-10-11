@@ -15,8 +15,8 @@ export {
   SearchParamsURL as ParamsURL,
 }
 
-type JSONBodyInit = object | BodyInit;
-type JSONRequestInit = { body?: JSONBodyInit | null } & Omit<RequestInit, 'body'>;
+export type JSONBodyInit = object | BodyInit;
+export type JSONRequestInit = { body?: JSONBodyInit | null } & Omit<RequestInit, 'body'>;
 
 function isBodyInit(b: JSONBodyInit) {
   return (
