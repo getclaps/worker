@@ -11,7 +11,7 @@
   "author": "Florian Klampfer <mail@qwtel.com>",
   "license": "GPL-3.0",
   "devDependencies": {
-    "@cloudflare/workers-types": "cloudflare/workers-types",
+    "@cloudflare/workers-types": "github:cloudflare/workers-types",
     "ts-loader": "^8.0.4",
     "typescript": "^4.0.3"
   },
@@ -20,9 +20,9 @@
     "@werker/json-fetch": "^1.0.0",
     "@werker/response-creators": "^1.0.0",
     "@werker/stripe-webhook": "^1.0.0",
-    "base64-encoding": "^0.11.0",
+    "base64-encoding": "^0.12.0",
     "faunadb": "^3.0.1",
-    "uuid-class": "^0.9.0",
+    "uuid-class": "^0.10.0",
     "xss": "^1.0.8"
   }
 }

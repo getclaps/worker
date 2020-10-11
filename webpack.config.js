@@ -12,6 +12,7 @@ module.exports = {
   mode,
   resolve: {
     extensions: ['.ts', '.js'],
+    mainFields: ['module', 'main'],
     plugins: [],
   },
   module: {
