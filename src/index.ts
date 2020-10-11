@@ -1,7 +1,6 @@
 import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired } from '@werker/response-creators';
 
 import * as routes from './routes/index';
-import { DAO } from './dao';
 import { getDAO } from './dao/get-dao';
 import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
 
@@ -53,9 +52,9 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
 
   switch (path[0]) {
     case '__init': {
-      const dao: DAO = getDAO();
       if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return unauthorized();
-      return dao.init().then(() => ok()).catch(handleError);
+      if (method === 'POST') return getDAO().init().then(() => ok()).catch(handleError);
+      return ok();
     }
     case 'claps': {
       return routes.handleClaps(args).catch(handleError).then(addCORSHeaders(request));
