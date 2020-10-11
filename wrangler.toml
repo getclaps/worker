@@ -9,6 +9,9 @@ kv_namespaces = [
   { binding = "KV_NAMESPACE", id = "13cc39b5283e4b3f9910ba08cc87d2c3", preview_id = "13cc39b5283e4b3f9910ba08cc87d2c3" }
 ]
 
+[triggers]
+  crons = ["0 0 * * *"]
+
 [vars]
 DEBUG = 'true'
 WORKER_DOMAIN = 'http://localhost:8787'
