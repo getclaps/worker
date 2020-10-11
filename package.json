@@ -9,7 +9,7 @@
     "format": "prettier --write '**/*.{js,css,json,md}'"
   },
   "author": "Florian Klampfer <mail@qwtel.com>",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@cloudflare/workers-types": "cloudflare/workers-types",
     "prettier": "^2.1.2",
