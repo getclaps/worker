@@ -13,30 +13,35 @@ kv_namespaces = [
   crons = ["0 0 * * *"]
 
 [vars]
-DEBUG = 'true'
-WORKER_DOMAIN = 'http://localhost:8787'
-STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
-STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+  DEBUG = 'true'
+  WORKER_DOMAIN = 'http://localhost:8787'
+  STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
+  STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.staging]
-name = "clap-worker-stage"
-route = "https://worker.getclaps.dev/*"
-zone_id = "a0f647422a7f0fba9b734898e8a7883f"
-kv_namespaces = [
-  { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
-]
+  name = "clap-worker-stage"
+  route = "https://worker.getclaps.dev/*"
+  zone_id = "a0f647422a7f0fba9b734898e8a7883f"
+  kv_namespaces = [
+    { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
+  ]
 
-[env.staging.vars]
-DEBUG = 'true'
-WORKER_DOMAIN = 'https://worker.getclaps.dev'
-STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
-STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+  [env.staging.vars]
+    DEBUG = 'true'
+    WORKER_DOMAIN = 'https://worker.getclaps.dev'
+    STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
+    STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.production]
-name = "clap-worker"
+  name = "clap-worker"
+  # route = "https://worker.getclaps.dev/*"
+  # zone_id = "a0f647422a7f0fba9b734898e8a7883f"
+  # kv_namespaces = [
+  #   { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
+  # ]
 
-[env.production.vars]
-DEBUG = 'false'
-WORKER_DOMAIN = 'https://worker.getclaps.net'
-STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
-STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+  [env.production.vars]
+    DEBUG = 'false'
+    WORKER_DOMAIN = 'https://worker.getclaps.net'
+    STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
+    STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
