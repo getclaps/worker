@@ -7,20 +7,21 @@ import { getDAO } from '../dao/get-dao';
 import { checkProofOfClap } from '../pow';
 import { mkDNTCookieKey, parseCookie } from './dashboard';
 
-// const IP_NAMESPACE = '393e8e4f-bb49-4c17-83eb-444b5be4885b';
 const KV_NAMESPACE = 'KV_NAMESPACE';
 const IP_SALT_KEY = 'IP_SALT';
 
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
     const newIPSalt = new UUID().uuid;
-    await Reflect.get(self, KV_NAMESPACE).put(IP_SALT_KEY, newIPSalt);
+    const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
+    await kv.put(IP_SALT_KEY, newIPSalt);
   })());
 });
 
 export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');
-  const ipSalt = await Reflect.get(self, KV_NAMESPACE).get(IP_SALT_KEY);
+  const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
+  const ipSalt = await kv.get(IP_SALT_KEY);
   const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', ipSalt);
   return { country, visitor };
 }

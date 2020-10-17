@@ -1,6 +1,17 @@
 import { UUID } from "uuid-class";
 
-type AnyData = Int8Array | Int16Array | Int32Array | Uint8Array | Uint16Array | Uint32Array | Uint8ClampedArray | Float32Array | Float64Array | DataView | ArrayBuffer;
+type AnyBytes =
+  | Int8Array 
+  | Int16Array 
+  | Int32Array 
+  | Uint8Array 
+  | Uint16Array 
+  | Uint32Array 
+  | Uint8ClampedArray 
+  | Float32Array 
+  | Float64Array 
+  | DataView 
+  | ArrayBuffer;
 
 const BASE_DIFFICULTY = 8;
 const BASE_CLAPS = 15;
@@ -17,7 +28,7 @@ function concatArrayBuffers(...abs: ArrayBuffer[]) {
   return res.buffer;
 }
 
-const sha256 = (data: AnyData) => crypto.subtle.digest('SHA-256', data);
+const sha256 = (data: AnyBytes) => crypto.subtle.digest('SHA-256', data);
 
 const digest = (message: string) => sha256(new TextEncoder().encode(message));
 
