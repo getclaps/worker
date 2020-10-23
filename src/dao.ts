@@ -53,7 +53,6 @@ export type TimeUnit = 'day' | 'days' | 'half day' | 'half days' | 'hour' | 'hou
 
 export interface DAO {
   init(): Promise<void>;
-  originOk(hostname: string): Promise<boolean>;
   upsertDashboard(data: Dashboard): Promise<Dashboard>;
   getDashboard(id: UUID): Promise<Dashboard>;
   updateDomain(id: UUID, hostname: string): Promise<Dashboard>;
