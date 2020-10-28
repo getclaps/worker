@@ -33,7 +33,8 @@ const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
  
 export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: DashboardArgs) {
   const timeFrame = requestURL.searchParams.get('time') || '2-hours';
-  const [value, unit] = timeFrame.split('-') as [string, TimeUnit];
+  const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
+  const value = Number(valueString)
 
   const d = dao.getDashboard(uuid);
 
@@ -79,9 +80,10 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                 const seed = new Base64Encoder().encode(entry.visitor);
                 const img = `data:image/svg+xml;base64,${btoa(renderIconSVG({ seed, size: 8, scale: 2 }))}`;
                 const emoji = countriesByCode[entry.country]?.emoji ?? '';
+                const url = new URL(entry.href);
                 return html`<tr>
                   <td>${noOpener(entry.href)}</td>
-                  <td title="${new URL(entry.href).href}">${new URL(entry.href).pathname}</td>
+                  <td title="${url.href}">${url.pathname + url.hash}</td>
                   <td>${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
