@@ -158,6 +158,9 @@ export async function handleDashboard(params: RouteArgs) {
     else if (dir === 'stats') {
       res = await pages.statsPage(snowball);
     }
+    else if (dir === 'log') {
+      res = await pages.logPage(snowball);
+    }
     else if (!dir) {
       if (isBookmarked) {
         res = seeOther(new URL('/stats', WORKER_DOMAIN));

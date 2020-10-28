@@ -9,7 +9,8 @@ export interface DAO {
   updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
   getClaps({ hostname, href }: { href: string, hostname: string }): Promise<{ [href: string]: ClapCount }>;
   getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
-  getStats(did: UUID, timeFrame: [number, TimeUnit]): Promise<StatsData>;
+  getStats(did: UUID, timeFrame?: [number, TimeUnit]): Promise<StatsData>;
+  getLog(did: UUID, timeFrame?: [number, TimeUnit]): Promise<LogEntry[]>;
 }
 
 export interface Dashboard {
@@ -59,6 +60,14 @@ export interface StatsData {
   claps: { href: string, claps: number, clappers: number }[],
   countries: { country: string, views: number }[],
   referrals: { referrer: string, referrals: number }[], 
+}
+
+export interface LogEntry {
+  href: string,
+  visitor: UUID,
+  country: string,
+  claps: number,
+  ts: Date
 }
 
 export type TimeUnit = 'day' | 'days' | 'half day' | 'half days' | 'hour' | 'hours' | 'minute' | 'minutes' | 'second' | 'seconds';

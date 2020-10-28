@@ -15,11 +15,13 @@
     "typescript": "^4.0.3"
   },
   "dependencies": {
+    "@vechain/picasso": "^2.0.2",
     "@werker/html": "^1.0.0",
     "@werker/json-fetch": "^1.0.0",
     "@werker/response-creators": "^1.0.0",
     "@werker/stripe-webhook": "^1.0.0",
     "base64-encoding": "^0.12.0",
+    "date-fns": "^2.16.1",
     "faunadb": "^3.0.1",
     "uuid-class": "^0.10.0",
     "xss": "^1.0.8"

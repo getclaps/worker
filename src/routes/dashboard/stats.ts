@@ -23,7 +23,7 @@ const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Somethin
 
 export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }: DashboardArgs) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
-  const [value, unit] = timeFrame.split('-') as [number, TimeUnit];
+  const [value, unit] = timeFrame.split('-') as [string, TimeUnit];
   const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);
 
   const d = dao.getDashboard(uuid);
