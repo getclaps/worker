@@ -80,7 +80,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${withFallback(x.then(x => x.views.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.views.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
@@ -101,7 +101,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${withFallback(x.then(x => x.claps.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.claps.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
@@ -124,7 +124,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${withFallback(x.then(x => x.countries.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.countries.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${countriesByCode[stat.country]?.emoji ??''}</td>
                   <td>${countriesByCode[stat.country]?.name ?? stat.country}</td>
@@ -144,7 +144,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               </tr>
             </thead>
             <tbody>
-              ${withFallback(x.then(x => x.referrals.slice(0, 16).map((stat: any) => html`
+              ${withFallback(x.then(x => x.referrals.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
                   <td title="${new URL(stat.referrer).href}">${mkRef(stat.referrer)}</td>
