@@ -1,7 +1,7 @@
 import { fallback, html, HTMLContent } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
-import { countries as countriesE } from '../../countries.js';
+import { countries as countriesE } from '../../vendor/countries';
 import { DashboardArgs } from '../dashboard';
 import { page } from './page';
 
@@ -70,7 +70,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
         : ''}
       <div class="row">
         <div class="col">
-          <h3>Views <small>by page</small></h3>
+          <h3>Views by page</h3>
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
@@ -90,14 +90,13 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
           </table>
         </div>
         <div class="col">
-          <h3>Claps <small>by page</small></h3>
+          <h3>Claps by page</h3>
           <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
                 <th></th>
                 <th>Page</th>
-                <th>Claps</th>
-                <th>Clappers</th>
+                <th>Claps (Unique)</th>
               </tr>
             </thead>
             <tbody>
@@ -105,8 +104,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
-                  <td>${stat.claps.toLocaleString(locale)}</td>
-                  <td>${stat.clappers.toLocaleString(locale)}</td>
+                  <td>${stat.claps.toLocaleString(locale)} (${stat.clappers.toLocaleString(locale)})</td>
                 </tr>`)))}
             </tbody>
           </table>
