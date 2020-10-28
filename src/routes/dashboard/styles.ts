@@ -50,4 +50,8 @@ export const styles = css`
     display: flex;
     justify-content: center; }
   .unlock.hidden { display: none }
+  .identicon {
+    border-radius: 8px; 
+    display: inline-block;
+    margin-top: 2px }
 `;

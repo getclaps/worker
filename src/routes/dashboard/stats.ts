@@ -126,8 +126,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <tbody>
               ${withFallback(x.then(x => x.countries.slice(0, 16).map((stat: any) => html`
                 <tr>
-                  <td>${(countriesByCode[stat.country] || {}).emoji || ''}</td>
-                  <td>${(countriesByCode[stat.country] || {}).name || stat.country}</td>
+                  <td>${countriesByCode[stat.country]?.emoji ??''}</td>
+                  <td>${countriesByCode[stat.country]?.name ?? stat.country}</td>
                   <td>${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>

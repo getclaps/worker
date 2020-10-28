@@ -1,6 +1,6 @@
 const path = require('path')
 
-const mode = process.env.NODE_ENV || 'production'
+const mode = process.env.NODE_ENV || 'development'
 
 module.exports = {
   entry: path.resolve('./src/index.ts'),
