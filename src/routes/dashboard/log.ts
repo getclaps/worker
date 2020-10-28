@@ -1,10 +1,10 @@
 import { html, HTMLContent, fallback } from '@werker/html';
-// import { renderIconSVG } from '@download/blockies';
+import { renderIconSVG } from '@download/blockies';
 import { formatDistance } from 'date-fns';
 import { Base64Encoder } from 'base64-encoding';
 
 import { countries as countriesE } from '../../vendor/countries';
-import { renderIconSVG } from '../../vendor/blockies';
+// import { renderIconSVG } from '../../vendor/blockies';
 import { TimeUnit } from '../../dao.js';
 import { DashboardArgs } from '../dashboard';
 import { page } from './page';
@@ -76,15 +76,15 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
               const logEntries = await dao.getLog(uuid, [Number(value), unit]);
               const now = new Date();
               return logEntries.filter(x => x && x.href != null).map(entry => withFallback(() => {
-                const img = `data:image/svg+xml;base64,${btoa(renderIconSVG({ seed: entry.visitor, size: 8, scale: 2 }))}`;
-                const ipId = new Base64Encoder().encode(entry.visitor).slice(0, 7);
+                const seed = new Base64Encoder().encode(entry.visitor);
+                const img = `data:image/svg+xml;base64,${btoa(renderIconSVG({ seed, size: 8, scale: 2 }))}`;
                 const emoji = countriesByCode[entry.country]?.emoji ?? '';
                 return html`<tr>
                   <td>${noOpener(entry.href)}</td>
                   <td title="${new URL(entry.href).href}">${new URL(entry.href).pathname}</td>
                   <td>${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
-                  <td><img class="identicon" src="${img}" alt="${ipId}" width="16" height="16"/></td>
+                  <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
                   <td>${entry.claps?.toLocaleString(locale) ?? ''}</td>
                 </tr>`; 
               }));
