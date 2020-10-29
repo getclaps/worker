@@ -55,7 +55,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
             </select>
           </div>
           <span> on </span>
-          <strong>${fallback(d.then(d => d.hostname || 'your-site.com'), html``)}</strong>
+          <strong>${fallback(d.then(d => d.hostname[0] || 'your-site.com'), html``)}</strong>
           <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>

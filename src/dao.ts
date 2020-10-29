@@ -4,8 +4,8 @@ export interface DAO {
   init(): Promise<void>;
   upsertDashboard(data: Dashboard): Promise<Dashboard>;
   getDashboard(id: UUID): Promise<Dashboard>;
-  updateDomain(id: UUID, hostname: string): Promise<Dashboard>;
-  addDomain(id: UUID, hostname: string): Promise<Dashboard>;
+  /** @deprecated */ updateDomain(id: UUID, hostname: string): Promise<Dashboard>;
+  appendDomain(id: UUID, hostname: string): Promise<Dashboard>;
   removeDomain(id: UUID, hostname: string): Promise<Dashboard>;
   relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
   updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
@@ -19,7 +19,7 @@ export interface Dashboard {
   id: UUID,
   customer?: string,
   subscription?: string,
-  hostname?: string,
+  hostname?: string[],
   active?: boolean,
   ip?: string,
   dnt?: boolean,

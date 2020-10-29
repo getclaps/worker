@@ -47,7 +47,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             </select>
           </div>
           <span> on </span>
-          <strong>${fallback(d.then(d => d.hostname || 'your-site.com'), html``)}</strong>
+          <strong>${fallback(d.then(d => d.hostname[0] || 'your-site.com'), html``)}</strong>
           <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
@@ -155,7 +155,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <small style="display:inline-block;margin-top:.5rem">
               Note that many popular sites will remove the referrer when linking to your site, 
               but you can add it back by adding a <code>referrer</code> search parameter to your link. 
-              ${/*E.g.: <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>*/''}
+              ${/*E.g.: <span style="white-space:nowrap;text-decoration:underline">https://${d.then(d => d.hostname[0] || 'your-site.com')}/linked-page/?referrer=popularsite.com</span>*/''}
             </small>
           </p>
         </div>

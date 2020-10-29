@@ -4,6 +4,7 @@ import { html } from '@werker/html';
 import { Dashboard } from '../../dao';
 import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs } from '../dashboard';
 import { page } from './page';
+import { ConflictError } from '../../errors';
 
 export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardArgs) {
   const setHeaders = new Headers();
@@ -17,12 +18,20 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
     switch (fd.get('method')) {
       case 'domain': {
         try {
-          postDashboard = await dao.updateDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+          postDashboard = await dao.appendDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
         } catch (err) {
-          if (err instanceof Response) {
-            if (err.status === 409) {
-              showError = true;
-            } else throw err;
+          if (err instanceof ConflictError) {
+            showError = true;
+          } else throw err;
+        }
+        break;
+      }
+      case 'delete-domain': {
+        try {
+          postDashboard = await dao.removeDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+        } catch (err) {
+          if (err instanceof ConflictError) {
+            showError = true;
           } else throw err;
         }
         break;
@@ -30,7 +39,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
       case 'dnt': {
         postCookieDNT = fd.get('dnt') === 'on'
         postDashboard = await dao.upsertDashboard({ id: uuid, dnt: postCookieDNT });
-        setHeaders.append('Set-Cookie', mkDNTCookie(postCookieDNT, postDashboard.hostname));
+        setHeaders.append('Set-Cookie', mkDNTCookie(postCookieDNT, postDashboard.hostname[0]));
         break;
       }
       // case 'relocate': {
@@ -63,7 +72,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
     // const isMac = (headers.get('user-agent') || '').match(/mac/i);
     // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)
 
-    let cookieDNT = postCookieDNT || cookies.has(mkDNTCookieKey(dashboard.hostname));
+    let cookieDNT = postCookieDNT || cookies.has(mkDNTCookieKey(dashboard.hostname[0]));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
@@ -72,42 +81,54 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
     
         <div>
           <h3>Domain</h3>
-          ${dashboard.hostname != null ? '' : html`
+          ${dashboard.hostname.length ? '' : html`
           <div class="bp3-callout bp3-intent-warning bp3-icon-warning-sign" style="margin-bottom:1rem;">
             <h4 class="bp3-heading">Please set a domain</h4>
             You can change this later.
             Once you've set a domain, Clap Button will show and persist claps on all pages within that domain.
-          </div>
-          `}
+            </div>`}
           <form method="POST" action="/settings">
-            <input type="hidden" name="method" value="domain" />
+            <input type="hidden" name="method" value="domain"/>
             <div class="bp3-input-group" style="display:inline-block; width:16rem">
               <span class="bp3-icon bp3-icon-globe-network"></span>
-              <input type="url" class="bp3-input" name="hostname" placeholder="https://example.com" value="https://"
-                required />
+              <input type="url" class="bp3-input" name="hostname" placeholder="https://example.com" value="https://" required />
             </div>
-            <button class="bp3-button" type="submit">Set domain</button>
+            <button class="bp3-button bp3-icon-add" type="submit">Add domain</button>
             ${showError 
                 ? html`<div class="bp3-callout bp3-intent-danger">Someone is already using that domain!</div>` 
                 : ''}
           </form>
-          ${dashboard.hostname 
-             ? html`<p style="margin-top:.5rem">Your current domain is: <strong>${dashboard.hostname}</strong></p>`
-             : ''}
+          ${dashboard.hostname.length 
+            ? html`<form method="POST" action="/settings" style="margin-top:.5rem">
+                <input type="hidden" name="method" value="delete-domain"/>
+                <p>
+                  Your current domains are:
+                  <ul>${dashboard.hostname.map((h, i) =>
+                    html`<li>
+                      ${i === 0 
+                        ? html`<strong>${h}</strong>` 
+                        : h}
+                      ${dashboard.hostname.length > 1 
+                        ? html`<button class="bp3-button bp3-small bp3-icon-delete" type="submit" name="hostname" value="https://${h}"></button>` 
+                        : ''}
+                     </li>`
+                  )}</ul>
+                </p>
+              </form>`
+            : ''}
         </div>
     
-        ${dashboard.hostname == null ? html`<div></div>` : html`<div>
+        ${dashboard.hostname.length === 0 ? html`<div></div>` : html`<div>
           <h3>Key</h3>
           <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
             <input type="hidden" name="referrer" value="/settings" />
-            <input type="text" class="bp3-input" name="id" value="${dashboard.hostname}" hidden readonly
-              autocomplete="username" />
+            <input type="text" class="bp3-input" name="id" value="${dashboard.hostname[0]}" hidden readonly autocomplete="username" />
             <div class="bp3-input-group" style="display:inline-block; width:16rem">
               <span class="bp3-icon bp3-icon-key"></span>
               <input type="password" class="bp3-input" name="password" value="${id}" readonly autocomplete="new-password" />
               <button class="bp3-button bp3-minimal bp3-icon-eye-open"></button>
             </div>
-            <button class="bp3-button" type="submit">Store Password</button>
+            <button class="bp3-button bp3-icon-database" type="submit">Store Password</button>
             <script>
               document.querySelector('input[name=password] + button').addEventListener('click', function(e) { 
                 e.preventDefault();
@@ -118,7 +139,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
                 el.previousElementSibling.type = show ? 'text' : 'password';
               });
             </script>
-            <p style="margin-top:.5rem" class="unlock ${dashboard.hostname == null || !isBookmarked ? 'hidden' : ''}">
+            <p style="margin-top:.5rem" class="unlock ${dashboard.hostname.length === 0 || !isBookmarked ? 'hidden' : ''}">
               Clicking the ${storePassword} button will trigger your browser's password manager.
               Use it to store the key to this dashboard.
               <br /><small style="display:inline-block;margin-top:.5rem;">If you've already stored the key, clicking the
@@ -162,7 +183,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
       </div>
     
       <div class="row">
-        <div class="unlock ${dashboard.hostname == null || !isBookmarked ? 'hidden' : ''}">
+        <div class="unlock ${dashboard.hostname.length === 0 || !isBookmarked ? 'hidden' : ''}">
           <h3>Self-Tracking</h3>
           <form method="POST" action="/settings">
             <input type="hidden" name="method" value="dnt" />
@@ -187,7 +208,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
         </div>
         <div></div>
       </div>
-      <script>document.cookie = '${mkDNTCookie(dashboard.dnt, dashboard.hostname)}';</script>
+      <script>document.cookie = '${mkDNTCookie(dashboard.dnt, dashboard.hostname[0])}';</script>
     `;
   });
 }
