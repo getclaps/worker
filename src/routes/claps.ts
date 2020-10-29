@@ -62,9 +62,6 @@ export async function handleClaps({ request, requestURL, method, path, headers }
 
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(requestURL.searchParams.get('href') || requestURL.searchParams.get('url'));
-  if (![url.hostname, 'localhost'].includes(originURL.hostname)) {
-    return badRequest("Origin doesn't match");
-  }
 
   switch (method) {
     case 'POST': {
@@ -83,10 +80,10 @@ export async function handleClaps({ request, requestURL, method, path, headers }
 
       const cookies = parseCookie(headers.get('cookie') || '');
 
-      const data = await dao.updateClaps({
+      const data = await dao.updateClaps(originURL.hostname, {
         claps, nonce, country, visitor,
         id: new UUID(id),
-        hostname: originURL.hostname,
+        hostname: url.hostname,
         href: url.href,
         hash: url.hash,
       }, {
@@ -98,8 +95,7 @@ export async function handleClaps({ request, requestURL, method, path, headers }
     }
 
     case 'GET': {
-      const data = await dao.getClaps({
-        hostname: originURL.hostname,
+      const data = await dao.getClaps(originURL.hostname, {
         href: url.href,
       });
 

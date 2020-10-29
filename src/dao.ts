@@ -5,10 +5,12 @@ export interface DAO {
   upsertDashboard(data: Dashboard): Promise<Dashboard>;
   getDashboard(id: UUID): Promise<Dashboard>;
   updateDomain(id: UUID, hostname: string): Promise<Dashboard>;
+  addDomain(id: UUID, hostname: string): Promise<Dashboard>;
+  removeDomain(id: UUID, hostname: string): Promise<Dashboard>;
   relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
-  updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
-  getClaps({ hostname, href }: { href: string, hostname: string }): Promise<{ [href: string]: ClapCount }>;
-  getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
+  updateClaps(originHostname: string, data: ClapData, options: UpdateOptions): Promise<ClapCount>;
+  getClaps(originHostname: string, { href }: { href: string }): Promise<{ [href: string]: ClapCount }>;
+  getClapsAndUpdateViews(originHostname: string, data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
   getStats(did: UUID, timeFrame?: [number, TimeUnit]): Promise<StatsData>;
   getLog(did: UUID, timeFrame?: [number, TimeUnit]): Promise<LogEntry[]>;
 }
@@ -35,8 +37,8 @@ export interface ClapData {
 }
 
 export interface ViewData {
-  href: string,
   hostname: string,
+  href: string,
   country: string,
   visitor: UUID,
   referrer: string,
