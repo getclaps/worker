@@ -14,7 +14,9 @@ const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [s
 const noOpener = (href: string) => {
   let url: URL;
   try { url = new URL(href) } catch { return '' }
-  return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener"><span class="bp3-icon bp3-icon-share"></span></a></td>`;
+  return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
+    <span class="bp3-icon bp3-icon-share"></span>
+  </a>`;
 }
 
 // const mkRef = (href: string) => {
@@ -99,8 +101,3 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
     </div>
   `);
 }
-
-              // <td>${(countriesByCode[e.country] || {}).emoji || ''}</td>
-              // <td title="${new URL(e.href).href}">${new URL(e.href).pathname}</td>
-              // <td>${new Base64Encoder().encode(e.visitor).substr(0, 7)}</td>
-              // <td>${(e.claps || '').toLocaleString(locale)}</td>
