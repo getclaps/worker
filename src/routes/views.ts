@@ -41,13 +41,14 @@ export async function handleViews({ requestURL, method, path, headers }: {
 
   const cookies = parseCookie(headers.get('cookie') || '');
 
-  const data = await dao.getClapsAndUpdateViews(originURL.hostname, {
+  const data = await dao.getClapsAndUpdateViews({
     hostname: url.hostname,
     href: url.href,
     referrer,
     country,
     visitor,
   }, {
+    originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),
     dnt: cookies.has(mkDNTCookieKey(url.hostname))
   });

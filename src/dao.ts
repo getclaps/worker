@@ -8,9 +8,9 @@ export interface DAO {
   addDomain(id: UUID, hostname: string): Promise<Dashboard>;
   removeDomain(id: UUID, hostname: string): Promise<Dashboard>;
   relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
-  updateClaps(originHostname: string, data: ClapData, options: UpdateOptions): Promise<ClapCount>;
-  getClaps(originHostname: string, { href }: { href: string }): Promise<{ [href: string]: ClapCount }>;
-  getClapsAndUpdateViews(originHostname: string, data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
+  updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
+  getClaps({ href }: { href: string }): Promise<{ [href: string]: ClapCount }>;
+  getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
   getStats(did: UUID, timeFrame?: [number, TimeUnit]): Promise<StatsData>;
   getLog(did: UUID, timeFrame?: [number, TimeUnit]): Promise<LogEntry[]>;
 }
@@ -47,6 +47,7 @@ export interface ViewData {
 export interface UpdateOptions {
   ip: string | null, 
   dnt: boolean,
+  originHostname: string,
 }
 
 export interface ClapCount {

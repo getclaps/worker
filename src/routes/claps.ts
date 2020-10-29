@@ -80,13 +80,14 @@ export async function handleClaps({ request, requestURL, method, path, headers }
 
       const cookies = parseCookie(headers.get('cookie') || '');
 
-      const data = await dao.updateClaps(originURL.hostname, {
+      const data = await dao.updateClaps({
         claps, nonce, country, visitor,
         id: new UUID(id),
         hostname: url.hostname,
         href: url.href,
         hash: url.hash,
       }, {
+        originHostname: originURL.hostname,
         ip: headers.get('cf-connecting-ip'),
         dnt: cookies.has(mkDNTCookieKey(url.hostname))
       });
@@ -95,7 +96,7 @@ export async function handleClaps({ request, requestURL, method, path, headers }
     }
 
     case 'GET': {
-      const data = await dao.getClaps(originURL.hostname, {
+      const data = await dao.getClaps({
         href: url.href,
       });
 
