@@ -4,8 +4,9 @@
     "module": "ESNext",
     "target": "ES2019",
     "lib": ["ES2020", "WebWorker", "ESNext.AsyncIterable"],
-    "preserveConstEnums": true,
     "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "preserveConstEnums": true,
     "sourceMap": true,
     "esModuleInterop": true,
     "types": ["@cloudflare/workers-types"]
