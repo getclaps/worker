@@ -1,10 +1,10 @@
 import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { ok, badRequest, notFound } from '@werker/response-creators';
+import { checkProofOfClap } from '@getclaps/poc';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
-import { checkProofOfClap } from '../pow';
 import { mkDNTCookieKey, parseCookie } from './dashboard';
 
 const KV_NAMESPACE = 'KV_NAMESPACE';
