@@ -83,8 +83,8 @@ export async function proofOfClap({ url, claps, id }: {
 
 export async function checkProofOfClap({ url, claps, id, nonce }: {
   url: URL | string,
-  claps: number,
   id: UUID | string,
+  claps: number,
   nonce: number,
 }) {
   const difficulty = calcDifficulty(claps);
