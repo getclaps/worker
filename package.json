@@ -16,7 +16,6 @@
   },
   "dependencies": {
     "@download/blockies": "github:qwtel/blockies",
-    "@getclaps/poc": "github:getclaps/poc",
     "@werker/html": "^1.0.0",
     "@werker/json-fetch": "^1.0.0",
     "@werker/response-creators": "^1.0.0",
