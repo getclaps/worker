@@ -23,6 +23,7 @@ export interface Dashboard {
   active?: boolean,
   ip?: string,
   dnt?: boolean,
+  views: number,
 }
 
 export interface ClapData {
