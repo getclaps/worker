@@ -15,6 +15,11 @@ self.addEventListener('scheduled', (e: ScheduledEvent) => {
     const newIPSalt = new UUID().uuid;
     const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
     await kv.put(IP_SALT_KEY, newIPSalt);
+
+    const scheduledDate = new Date(e.scheduledTime);
+    if (scheduledDate.getUTCDay() === 0 && scheduledDate.getUTCHours() === 0 && scheduledDate.getUTCMinutes() === 0) {
+      await getDAO().resetUsage();
+    }
   })());
 });
 

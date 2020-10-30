@@ -10,7 +10,7 @@ kv_namespaces = [
 ]
 
 [triggers]
-  crons = ["0 0 * * *"]
+  crons = ["0 0 * * *", "0 0 1 * *"]
 
 [vars]
   DEBUG = 'true'

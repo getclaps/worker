@@ -86,6 +86,7 @@ export async function handleDashboard(params: RouteArgs) {
       active: true,
       dnt: false,
       hostname: [],
+      views: 0,
     });
 
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
