@@ -19,11 +19,11 @@ const noOpener = (href: string) => {
   </a>`;
 }
 
-// const mkRef = (href: string) => {
-//   const url = new URL(href);
-//   url.protocol = 'x:';
-//   return url.href.substr(4);
-// };
+const mkRef = (href: string) => {
+  const url = new URL(href);
+  url.protocol = 'x:';
+  return url.href.substr(4);
+};
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
@@ -62,11 +62,12 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
       </form>
-      <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+      <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
         <thead>
           <tr>
             <th></th>
             <th>Href</th>
+            <th>Referrer</th>
             <th>Time ago</th>
             <th>Country</th>
             <th>Visitor</th>
@@ -86,6 +87,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                 return html`<tr>
                   <td>${noOpener(entry.href)}</td>
                   <td title="${url.href}">${url.pathname + url.hash}</td>
+                  ${entry.referrer ? html`<td title="${new URL(entry.referrer).href}">${mkRef(entry.referrer)}</td>` : html`<td></td>`}
                   <td>${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>

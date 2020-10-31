@@ -71,6 +71,7 @@ export interface LogEntry {
   href: string,
   visitor: UUID,
   country: string,
+  referrer: string,
   claps: number,
   ts: Date
 }

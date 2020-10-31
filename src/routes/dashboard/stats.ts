@@ -41,8 +41,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <select name="time">
               <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
               <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
-              <option ${timeFrame === '7-days' ? 'selected' : ''} value="7-days">7 days</option>
-              <option ${timeFrame === '30-days' ? 'selected' : ''} value="30-days">30 days</option>
+              <option ${timeFrame === '7-days'   ? 'selected' : ''} value="7-days">7 days</option>
+              <option ${timeFrame === '30-days'  ? 'selected' : ''} value="30-days">30 days</option>
               ${!['12-hours', '24-hours', '7-days', '30-days'].includes(timeFrame)
                 ? html`<option selected value="${timeFrame}">---</option>`
                 : ''}
