@@ -15,7 +15,7 @@ export const page = ({ title = 'getclaps.dev', isBookmarked = false, headers = [
     <title>${title}</title>
     <meta name="robots" content="noindex">
     <link href="https://unpkg.com//normalize.css/normalize.css" rel="stylesheet"/>
-    <link href="https://unpkg.com/@blueprintjs/icons/lib/css/blueprint-icons.css" rel="stylesheet" />
+    <link href="https://unpkg.com/@blueprintjs/icons/lib/css/blueprint-icons.css" rel="stylesheet"/>
     <link href="https://unpkg.com/@blueprintjs/core/lib/css/blueprint.css" rel="stylesheet"/>
     <style>${styles}</style>
   </head>
@@ -47,13 +47,13 @@ export const page = ({ title = 'getclaps.dev', isBookmarked = false, headers = [
       </div>
     </nav>
     <div style="padding:0 1rem">
-    <main>
-      <script>
-        document.body.classList.toggle('bp3-dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
-        window.matchMedia('(prefers-color-scheme: dark)').addListener(function(e) { document.body.classList.toggle('bp3-dark', e.matches); });
-      </script>
-      ${content}
-    </main>
+      <main>
+        <script>
+          document.body.classList.toggle('bp3-dark', window.matchMedia('(prefers-color-scheme: dark)').matches);
+          window.matchMedia('(prefers-color-scheme: dark)').addListener(function(e) { document.body.classList.toggle('bp3-dark', e.matches); });
+        </script>
+        ${content}
+      </main>
     </div>
   </body>
 </html>`, {
