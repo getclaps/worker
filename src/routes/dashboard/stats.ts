@@ -73,12 +73,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
       <div class="row">
         <div class="col">
           <h3>Views by page</h3>
-          <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+          <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
                 <th></th>
                 <th>Page</th>
-                <th>Views</th>
+                <th style="text-align:right">Views</th>
               </tr>
             </thead>
             <tbody>
@@ -86,19 +86,19 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
-                  <td>${stat.views.toLocaleString(locale)}</td>
+                  <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
           </table>
         </div>
         <div class="col">
           <h3>Claps by page</h3>
-          <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+          <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
                 <th></th>
                 <th>Page</th>
-                <th>Claps (Unique)</th>
+                <th style="text-align:right">Claps (Unique)</th>
               </tr>
             </thead>
             <tbody>
@@ -106,7 +106,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
                 <tr>
                   <td>${noOpener(stat.href)}</td>
                   <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
-                  <td>${stat.claps.toLocaleString(locale)} (${stat.clappers.toLocaleString(locale)})</td>
+                  <td style="text-align:right">${stat.claps.toLocaleString(locale)} (${stat.clappers.toLocaleString(locale)})</td>
                 </tr>`)))}
             </tbody>
           </table>
@@ -115,12 +115,12 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
       <div class="row">
         <div class="col">
           <h3>Top countries</h3>
-          <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+          <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
                 <th></th>
                 <th>Country</th>
-                <th>Views</th>
+                <th style="text-align:right">Views</th>
               </tr>
             </thead>
             <tbody>
@@ -128,19 +128,19 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
                 <tr>
                   <td>${countriesByCode[stat.country]?.emoji ??''}</td>
                   <td>${countriesByCode[stat.country]?.name ?? stat.country}</td>
-                  <td>${stat.views.toLocaleString(locale)}</td>
+                  <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
           </table>
         </div>
         <div class="col">
           <h3>Top referrers</h3>
-          <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+          <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
             <thead>
               <tr>
                 <th></th>
                 <th>Referrer</th>
-                <th>Referrals</th>
+                <th style="text-align:right">Referrals</th>
               </tr>
             </thead>
             <tbody>
@@ -148,7 +148,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
                   <td title="${new URL(stat.referrer).href}">${mkRef(stat.referrer)}</td>
-                  <td>${stat.referrals.toLocaleString(locale)}</td>
+                  <td style="text-align:right">${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
           </table>

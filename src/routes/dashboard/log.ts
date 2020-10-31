@@ -47,8 +47,8 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
           Show data for the last
           <div class="bp3-select" style="margin-right:5px">
             <select name="time">
-              <option ${timeFrame === '2-hours' ? 'selected' : ''} value="2-hours">2 hours</option>
-              <option ${timeFrame === '6-hours' ? 'selected' : ''} value="6-hours">6 hours</option>
+              <option ${timeFrame === '2-hours'  ? 'selected' : ''} value="2-hours">2 hours</option>
+              <option ${timeFrame === '6-hours'  ? 'selected' : ''} value="6-hours">6 hours</option>
               <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
               <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
               ${!['2-hours', '6-hours', '12-hours', '24-hours'].includes(timeFrame)
@@ -62,7 +62,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
       </form>
-      <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+      <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
         <thead>
           <tr>
             <th></th>
@@ -70,7 +70,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
             <th>Time ago</th>
             <th>Country</th>
             <th>Visitor</th>
-            <th>Claps</th>
+            <th style="text-align:right">Claps</th>
           </tr>
         </thead>
         <tbody>
@@ -89,7 +89,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                   <td>${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
-                  <td>${entry.claps?.toLocaleString(locale) ?? ''}</td>
+                  <td style="text-align:right">${entry.claps?.toLocaleString(locale) ?? ''}</td>
                 </tr>`; 
               }));
             } catch (e) {

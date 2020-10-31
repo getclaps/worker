@@ -6,13 +6,13 @@ export const styles = css`
   main, nav > div { max-width: 1024px; margin: auto; }
   body { padding: 3rem 0; overflow-x: hidden; overflow-y: scroll; }
   body.bp3-dark { color: #ccc; background: #293742; }
-  table { width: 100% }
-  table.bp3-html-table-condensed tr > td:first-child { width: 25px }
-  table.bp3-html-table-condensed tr > td:nth-child(2) { width: 60%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table.stats { width: 100% }
+  table.stats.bp3-html-table-condensed tr > td:first-child  { width: 25px }
+  table.stats.bp3-html-table-condensed tr > td:nth-child(2) { width: 60%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .opener { color:#bfccd6 }
   @media screen and (min-width: 768px) {
-    .row { display:flex; margin:0 -.5rem; }
-    .row > * { flex:1; margin:0 .5rem; } }
+    .row { display:flex; margin:0 -.75rem; }
+    .row > * { flex:1; margin:0 .75rem; } }
   div.stats-card {
     max-width: 640px; }
   dl.stats {
