@@ -13,7 +13,7 @@ export interface DAO {
   getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
   getStats(did: UUID, timeFrame?: [number, TimeUnit]): Promise<StatsData>;
   getLog(did: UUID, timeFrame?: [number, TimeUnit]): Promise<LogEntry[]>;
-  resetUsage(): Promise<void>;
+  // resetUsage(): Promise<void>;
 }
 
 export interface Dashboard {

@@ -15,9 +15,9 @@ async function resetIPSalt() {
   await kv.put(IP_SALT_KEY, UUID.v4().toString());
 }
 
-async function resetUsage() {
-  await getDAO().resetUsage();
-}
+// async function resetUsage() {
+//   await getDAO().resetUsage();
+// }
 
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
@@ -25,7 +25,7 @@ self.addEventListener('scheduled', (e: ScheduledEvent) => {
     if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
       await resetIPSalt();
       if (scheduledDate.getUTCDay() === 0) {
-        await resetUsage();
+        // await resetUsage();
       }
     }
   })());
