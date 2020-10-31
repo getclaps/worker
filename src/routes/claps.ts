@@ -10,15 +10,23 @@ import { mkDNTCookieKey, parseCookie } from './dashboard';
 const KV_NAMESPACE = 'KV_NAMESPACE';
 const IP_SALT_KEY = 'IP_SALT';
 
+async function resetIPSalt() {
+  const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
+  await kv.put(IP_SALT_KEY, UUID.v4().toString());
+}
+
+async function resetUsage() {
+  await getDAO().resetUsage();
+}
+
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
-    const newIPSalt = new UUID().uuid;
-    const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
-    await kv.put(IP_SALT_KEY, newIPSalt);
-
     const scheduledDate = new Date(e.scheduledTime);
-    if (scheduledDate.getUTCDay() === 0 && scheduledDate.getUTCHours() === 0 && scheduledDate.getUTCMinutes() === 0) {
-      await getDAO().resetUsage();
+    if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
+      await resetIPSalt();
+      if (scheduledDate.getUTCDay() === 0) {
+        await resetUsage();
+      }
     }
   })());
 });
