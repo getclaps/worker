@@ -2,6 +2,8 @@ import { UUID } from 'uuid-class';
 
 export interface DAO {
   init(): Promise<void>;
+  getDashboards(): Promise<Dashboard[]>;
+  cancelAll(toCancel: Dashboard[]): Promise<void>
   upsertDashboard(data: Dashboard): Promise<Dashboard>;
   getDashboard(id: UUID): Promise<Dashboard>;
   /** @deprecated */ updateDomain(id: UUID, hostname: string): Promise<Dashboard>;

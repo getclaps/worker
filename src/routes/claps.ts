@@ -2,10 +2,11 @@ import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { ok, badRequest, notFound } from '@werker/response-creators';
 
-import { DAO } from '../dao';
+import { DAO, Dashboard } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { checkProofOfClap } from '../poc';
 import { mkDNTCookieKey, parseCookie } from './dashboard';
+import { stripeAPI } from './stripe';
 
 const KV_NAMESPACE = 'KV_NAMESPACE';
 const IP_SALT_KEY = 'IP_SALT';
@@ -19,14 +20,32 @@ async function resetIPSalt() {
 //   await getDAO().resetUsage();
 // }
 
+async function checkSubscriptionStatus() {
+  const dashboards = await getDAO().getDashboards();
+  const toCancel: Dashboard[] = [];
+  for (const d of dashboards) {
+    if (d.active && d.subscription) {
+      try {
+        const subscription = await stripeAPI(`/v1/subscriptions/${d.subscription}`);
+        if (subscription && !['active'].includes(subscription.status)) {
+          toCancel.push(d);
+        }
+      } catch { }
+    }
+  }
+  await getDAO().cancelAll(toCancel);
+}
+
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
     const scheduledDate = new Date(e.scheduledTime);
     if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
-      await resetIPSalt();
-      if (scheduledDate.getUTCDay() === 0) {
-        // await resetUsage();
-      }
+      try { await resetIPSalt() } catch { /* TODO */ }
+      try { await checkSubscriptionStatus() } catch { /* TODO */ }
+
+      // if (scheduledDate.getUTCDay() === 0) {
+      //   // await resetUsage();
+      // }
     }
   })());
 });
