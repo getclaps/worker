@@ -3,33 +3,11 @@ import { renderIconSVG } from '@download/blockies';
 import { formatDistance } from 'date-fns';
 import { Base64Encoder } from 'base64-encoding';
 
-import { countries as countriesE } from '../../vendor/countries';
-// import { renderIconSVG } from '../../vendor/blockies';
-import { TimeUnit } from '../../dao.js';
+import { countriesByCode } from '../../vendor/countries';
+import { TimeUnit } from '../../dao';
 import { DashboardArgs } from '../dashboard';
 import { page } from './page';
-
-const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
-
-const pURL = (href?: string|null) => {
-  let url: URL;
-  try { url = new URL(href) } catch { return null }
-  return url;
-}
-
-const noOpener = (href: string) => {
-  const url = pURL(href);
-  return url ? html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
-    <span class="bp3-icon bp3-icon-share"></span>
-  </a>` : '';
-}
-
-const mkRef = (href: string) => {
-  const url = pURL(href);
-  if (!url) return '';
-  url.protocol = 'x:';
-  return url.href.substr(4);
-};
+import { pURL, noOpener, mkRef } from './lib';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
@@ -99,7 +77,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                   ${entry.referrer 
                     ? html`<td title="${pURL(entry.referrer).href}" style="width:32.5%">${mkRef(entry.referrer)}</td>` 
                     : html`<td style="width:32.5%"></td>`}
-                  <td>${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
+                  <td style="width:15%">${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
                   <td style="text-align:right">${entry.claps?.toLocaleString(locale) ?? ''}</td>

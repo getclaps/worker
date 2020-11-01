@@ -1,4 +1,4 @@
-export const countries = [
+const countries = [
   {
     "code": "AD",
     "emoji": "🇦🇩",
@@ -1750,3 +1750,5 @@ export const countries = [
     "title": "flag for Zimbabwe"
   }
 ]
+
+export const countriesByCode = Object.fromEntries(countries.map(x => [x.code, x] as [string, typeof x]));

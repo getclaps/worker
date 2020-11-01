@@ -2,7 +2,7 @@ import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { ok, badRequest, notFound } from '@werker/response-creators';
 
-import { IP_SALT_KEY, KV_NAMESPACE } from '../index';
+import { IP_SALT_KEY, KV_NAMESPACE } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { checkProofOfClap } from '../poc';

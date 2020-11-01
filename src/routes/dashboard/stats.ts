@@ -1,32 +1,10 @@
 import { fallback, html, HTMLContent } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
-import { countries as countriesE } from '../../vendor/countries';
+import { countriesByCode } from '../../vendor/countries';
 import { DashboardArgs } from '../dashboard';
 import { page } from './page';
-
-const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
-
-const pURL = (href?: string|null) => {
-  let url: URL;
-  try { url = new URL(href) } catch { return null }
-  return url;
-};
-
-const noOpener = (href: string) => {
-  let url: URL;
-  try { url = new URL(href) } catch { return '' }
-  return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
-    <span class="bp3-icon bp3-icon-share"></span>
-  </a>`;
-};
-
-const mkRef = (href: string) => {
-  const url = pURL(href);
-  if (!url) return '';
-  url.protocol = 'x:';
-  return url.href.substr(4);
-};
+import { pURL, noOpener, mkRef } from './lib';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 

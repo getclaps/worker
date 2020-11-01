@@ -1,5 +1,5 @@
 import { JSONResponse } from '@werker/json-fetch';
-import { ok, badRequest, notFound } from '@werker/response-creators';
+import { ok, notFound } from '@werker/response-creators';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';

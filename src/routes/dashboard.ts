@@ -2,6 +2,7 @@ import { UUID } from 'uuid-class';
 import { Base64Encoder } from 'base64-encoding';
 import { badRequest, notFound, seeOther } from '@werker/response-creators';
 
+import { WORKER_DOMAIN, NAMESPACE } from '../constants';
 import { RouteArgs } from '../index';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
@@ -10,9 +11,6 @@ import { stripeAPI } from './stripe';
 import * as pages from './dashboard/index';
 
 export { styles } from './dashboard/styles';
-
-const WORKER_DOMAIN = Reflect.get(self, 'WORKER_DOMAIN');
-const NAMESPACE = 'c4e75796-9fe6-ce66-612e-534b709074ef';
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 

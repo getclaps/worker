@@ -1,15 +1,14 @@
 import { UUID } from 'uuid-class';
 import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired } from '@werker/response-creators';
 
-import * as routes from './routes/index';
 import { Dashboard } from './dao';
 import { getDAO } from './dao/get-dao';
+import * as routes from './routes/index';
 import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
 import { stripeAPI } from './routes/stripe';
 
-export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
-export const KV_NAMESPACE = 'KV_NAMESPACE';
-export const IP_SALT_KEY = 'IP_SALT';
+import { DEBUG, KV_NAMESPACE, IP_SALT_KEY } from './constants';
+export { DEBUG, KV_NAMESPACE, IP_SALT_KEY };
 
 const getPath = (pathname: string) => {
   const x = `/${pathname}/`.replace(/\/+/g, '/');
