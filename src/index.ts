@@ -1,10 +1,15 @@
+import { UUID } from 'uuid-class';
 import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired } from '@werker/response-creators';
 
 import * as routes from './routes/index';
+import { Dashboard } from './dao';
 import { getDAO } from './dao/get-dao';
 import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
+import { stripeAPI } from './routes/stripe';
 
 export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
+export const KV_NAMESPACE = 'KV_NAMESPACE';
+export const IP_SALT_KEY = 'IP_SALT';
 
 const getPath = (pathname: string) => {
   const x = `/${pathname}/`.replace(/\/+/g, '/');
@@ -71,3 +76,47 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
     }
   }
 }
+
+async function resetIPSalt() {
+  const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
+  await kv.put(IP_SALT_KEY, UUID.v4().toString());
+}
+
+// async function resetUsage() {
+//   await getDAO().resetUsage();
+// }
+
+async function checkSubscriptionStatus() {
+  const dashboards = await getDAO().getDashboards();
+  const toCancel: Dashboard[] = [];
+  for (const d of dashboards) {
+    if (d.active && d.subscription) {
+      try {
+        const subscription = await stripeAPI(`/v1/subscriptions/${d.subscription}`);
+        if (subscription && !['active'].includes(subscription.status)) {
+          toCancel.push(d);
+        }
+      } catch { }
+    }
+  }
+  await getDAO().cancelAll(toCancel);
+}
+
+async function checkUsage() {
+
+}
+
+self.addEventListener('scheduled', (e: ScheduledEvent) => {
+  e.waitUntil((async () => {
+    const scheduledDate = new Date(e.scheduledTime);
+    if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
+      try { await resetIPSalt() } catch { /* TODO */ }
+      try { await checkSubscriptionStatus() } catch { /* TODO */ }
+      try { await checkUsage() } catch { /* TODO */ }
+
+      // if (scheduledDate.getUTCDay() === 0) {
+      //   // await resetUsage();
+      // }
+    }
+  })());
+});
