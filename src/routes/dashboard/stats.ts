@@ -69,8 +69,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <tbody>
               ${withFallback(x.then(x => x.views.slice(0, 16).map((stat) => html`
                 <tr>
-                  <td>${noOpener(stat.href)}</td>
-                  <td title="${pURL(stat.href)?.href}" style="width:65%">${pURL(stat.href)?.pathname}</td>
+                  <td style="width:30px">${noOpener(stat.href)}</td>
+                  <td title="${pURL(stat.href)?.href}" class="ellipsis" style="width:65%">${pURL(stat.href)?.pathname}</td>
                   <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
@@ -89,8 +89,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <tbody>
               ${withFallback(x.then(x => x.claps.slice(0, 16).map((stat) => html`
                 <tr>
-                  <td>${noOpener(stat.href)}</td>
-                  <td title="${pURL(stat.href)?.href}" style="width:65%">${pURL(stat.href)?.pathname}</td>
+                  <td style="width:30px">${noOpener(stat.href)}</td>
+                  <td title="${pURL(stat.href)?.href}" class="ellipsis" style="width:65%">${pURL(stat.href)?.pathname}</td>
                   <td style="text-align:right">${stat.claps.toLocaleString(locale)} (${stat.clappers.toLocaleString(locale)})</td>
                 </tr>`)))}
             </tbody>
@@ -111,8 +111,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <tbody>
               ${withFallback(x.then(x => x.countries.slice(0, 16).map((stat) => html`
                 <tr>
-                  <td>${countriesByCode[stat.country]?.emoji ??''}</td>
-                  <td style="width:65%">${countriesByCode[stat.country]?.name ?? stat.country}</td>
+                  <td style="width:30px">${countriesByCode[stat.country]?.emoji ??''}</td>
+                  <td class="ellipsis" style="width:65%">${countriesByCode[stat.country]?.name ?? stat.country}</td>
                   <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
@@ -131,8 +131,8 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
             <tbody>
               ${withFallback(x.then(x => x.referrals.slice(0, 16).map((stat) => html`
                 <tr>
-                  <td>${noOpener(stat.referrer)}</td>
-                  <td title="${pURL(stat.referrer)?.href}" style="width:65%">${mkRef(stat.referrer)}</td>
+                  <td style="width:30px">${noOpener(stat.referrer)}</td>
+                  <td title="${pURL(stat.referrer)?.href}" class="ellipsis" style="width:65%">${mkRef(stat.referrer)}</td>
                   <td style="text-align:right">${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>

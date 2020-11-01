@@ -7,10 +7,8 @@ export const styles = css`
   body { padding: 3rem 0; overflow-x: hidden; overflow-y: scroll; }
   body.bp3-dark { color: #ccc; background: #293742; }
   table.stats { width: 100% }
-  table.stats.bp3-html-table-condensed tr > td:first-child { max-width: 0; width: 25px; }
-  table.stats.bp3-html-table-condensed tr > td:nth-child(2),
-  table.stats.bp3-html-table-condensed tr > td:nth-child(3),
-  table.stats.bp3-html-table-condensed tr > td:nth-child(4) { max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  table.stats.bp3-html-table-condensed tr > td { max-width: 0 }
+  .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .opener { color:#bfccd6 }
   @media screen and (min-width: 768px) {
     .row { display:flex; margin:0 -.75rem; }

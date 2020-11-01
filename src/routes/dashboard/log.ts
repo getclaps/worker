@@ -52,6 +52,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
           <tr>
             <th></th>
             <th>Href</th>
+            <th></th>
             <th>Referrer</th>
             <th>Time ago</th>
             <th>Country</th>
@@ -70,12 +71,13 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                 const emoji = countriesByCode[entry.country]?.emoji ?? '';
                 const url = pURL(entry.href);
                 return html`<tr>
-                  <td>${noOpener(entry.href)}</td>
+                  <td style="width:30px">${noOpener(entry.href)}</td>
                   ${url 
-                    ? html`<td title="${url.href}" style="width:40%">${url.pathname + url.hash}</td>` 
+                    ? html`<td title="${url.href}" class="ellipsis" style="width:40%">${url.pathname + url.hash}</td>` 
                     : html`<td style="width:40%"></td>`}
+                  <td style="width:30px">${noOpener(entry.referrer)}</td>
                   ${entry.referrer 
-                    ? html`<td title="${pURL(entry.referrer).href}" style="width:25%">${mkRef(entry.referrer)}</td>` 
+                    ? html`<td title="${pURL(entry.referrer).href}" class="ellipsis" style="width:25%">${mkRef(entry.referrer)}</td>` 
                     : html`<td style="width:25%"></td>`}
                   <td style="width:15%">${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
