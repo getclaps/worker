@@ -36,12 +36,17 @@ async function checkSubscriptionStatus() {
   await getDAO().cancelAll(toCancel);
 }
 
+async function checkUsage() {
+
+}
+
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
     const scheduledDate = new Date(e.scheduledTime);
     if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
       try { await resetIPSalt() } catch { /* TODO */ }
       try { await checkSubscriptionStatus() } catch { /* TODO */ }
+      try { await checkUsage() } catch { /* TODO */ }
 
       // if (scheduledDate.getUTCDay() === 0) {
       //   // await resetUsage();
