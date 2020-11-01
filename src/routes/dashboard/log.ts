@@ -72,11 +72,11 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                 return html`<tr>
                   <td>${noOpener(entry.href)}</td>
                   ${url 
-                    ? html`<td title="${url.href}" style="width:32.5%">${url.pathname + url.hash}</td>` 
-                    : html`<td style="width:32.5%"></td>`}
+                    ? html`<td title="${url.href}" style="width:40%">${url.pathname + url.hash}</td>` 
+                    : html`<td style="width:40%"></td>`}
                   ${entry.referrer 
-                    ? html`<td title="${pURL(entry.referrer).href}" style="width:32.5%">${mkRef(entry.referrer)}</td>` 
-                    : html`<td style="width:32.5%"></td>`}
+                    ? html`<td title="${pURL(entry.referrer).href}" style="width:25%">${mkRef(entry.referrer)}</td>` 
+                    : html`<td style="width:25%"></td>`}
                   <td style="width:15%">${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
