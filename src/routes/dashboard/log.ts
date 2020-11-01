@@ -11,16 +11,22 @@ import { page } from './page';
 
 const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
 
-const noOpener = (href: string) => {
+const pURL = (href?: string|null) => {
   let url: URL;
-  try { url = new URL(href) } catch { return '' }
-  return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
+  try { url = new URL(href) } catch { return null }
+  return url;
+}
+
+const noOpener = (href: string) => {
+  const url = pURL(href);
+  return url ? html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
     <span class="bp3-icon bp3-icon-share"></span>
-  </a>`;
+  </a>` : '';
 }
 
 const mkRef = (href: string) => {
-  const url = new URL(href);
+  const url = pURL(href);
+  if (!url) return '';
   url.protocol = 'x:';
   return url.href.substr(4);
 };
@@ -34,7 +40,7 @@ const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
 </tr>`);
  
 export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: DashboardArgs) {
-  const timeFrame = requestURL.searchParams.get('time') || '2-hours';
+  const timeFrame = requestURL.searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString)
 
@@ -47,11 +53,12 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
           Show data for the last
           <div class="bp3-select" style="margin-right:5px">
             <select name="time">
+              <option ${timeFrame === '1-hour'   ? 'selected' : ''} value="1-hour">1 hour</option>
               <option ${timeFrame === '2-hours'  ? 'selected' : ''} value="2-hours">2 hours</option>
               <option ${timeFrame === '6-hours'  ? 'selected' : ''} value="6-hours">6 hours</option>
               <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
               <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
-              ${!['2-hours', '6-hours', '12-hours', '24-hours'].includes(timeFrame)
+              ${!['1-hour', '2-hours', '6-hours', '12-hours', '24-hours'].includes(timeFrame)
                 ? html`<option selected value="${timeFrame}">---</option>`
                 : ''}
             </select>
@@ -62,7 +69,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
       </form>
-      <table class="bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
+      <table class="stats bp3-html-table bp3-html-table-striped bp3-html-table-condensed" style="margin-bottom:2rem">
         <thead>
           <tr>
             <th></th>
@@ -83,11 +90,15 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
                 const seed = new Base64Encoder().encode(entry.visitor);
                 const img = `data:image/svg+xml;base64,${btoa(renderIconSVG({ seed, size: 8, scale: 2 }))}`;
                 const emoji = countriesByCode[entry.country]?.emoji ?? '';
-                const url = new URL(entry.href);
+                const url = pURL(entry.href);
                 return html`<tr>
                   <td>${noOpener(entry.href)}</td>
-                  <td title="${url.href}">${url.pathname + url.hash}</td>
-                  ${entry.referrer ? html`<td title="${new URL(entry.referrer).href}">${mkRef(entry.referrer)}</td>` : html`<td></td>`}
+                  ${url 
+                    ? html`<td title="${url.href}" style="width:32.5%">${url.pathname + url.hash}</td>` 
+                    : html`<td style="width:32.5%"></td>`}
+                  ${entry.referrer 
+                    ? html`<td title="${pURL(entry.referrer).href}" style="width:32.5%">${mkRef(entry.referrer)}</td>` 
+                    : html`<td style="width:32.5%"></td>`}
                   <td>${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>

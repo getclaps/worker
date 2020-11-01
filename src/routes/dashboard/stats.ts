@@ -7,16 +7,23 @@ import { page } from './page';
 
 const countriesByCode = Object.fromEntries(countriesE.map(x => [x.code, x] as [string, typeof x]));
 
+const pURL = (href?: string|null) => {
+  let url: URL;
+  try { url = new URL(href) } catch { return null }
+  return url;
+};
+
 const noOpener = (href: string) => {
   let url: URL;
   try { url = new URL(href) } catch { return '' }
   return html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
     <span class="bp3-icon bp3-icon-share"></span>
   </a>`;
-}
+};
 
 const mkRef = (href: string) => {
-  const url = new URL(href);
+  const url = pURL(href);
+  if (!url) return '';
   url.protocol = 'x:';
   return url.href.substr(4);
 };
@@ -85,7 +92,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               ${withFallback(x.then(x => x.views.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
-                  <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
+                  <td title="${pURL(stat.href)?.href}" style="width:65%">${pURL(stat.href)?.pathname}</td>
                   <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
@@ -105,7 +112,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               ${withFallback(x.then(x => x.claps.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.href)}</td>
-                  <td title="${new URL(stat.href).href}">${new URL(stat.href).pathname}</td>
+                  <td title="${pURL(stat.href)?.href}" style="width:65%">${pURL(stat.href)?.pathname}</td>
                   <td style="text-align:right">${stat.claps.toLocaleString(locale)} (${stat.clappers.toLocaleString(locale)})</td>
                 </tr>`)))}
             </tbody>
@@ -127,7 +134,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               ${withFallback(x.then(x => x.countries.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${countriesByCode[stat.country]?.emoji ??''}</td>
-                  <td>${countriesByCode[stat.country]?.name ?? stat.country}</td>
+                  <td style="width:65%">${countriesByCode[stat.country]?.name ?? stat.country}</td>
                   <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
@@ -147,7 +154,7 @@ export async function statsPage({ requestURL, dao, isBookmarked, uuid, locale }:
               ${withFallback(x.then(x => x.referrals.slice(0, 16).map((stat) => html`
                 <tr>
                   <td>${noOpener(stat.referrer)}</td>
-                  <td title="${new URL(stat.referrer).href}">${mkRef(stat.referrer)}</td>
+                  <td title="${pURL(stat.referrer)?.href}" style="width:65%">${mkRef(stat.referrer)}</td>
                   <td style="text-align:right">${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
