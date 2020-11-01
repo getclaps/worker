@@ -88,30 +88,49 @@ async function resetIPSalt() {
 async function checkSubscriptionStatus() {
   const dashboards = await getDAO().getDashboards();
   const toCancel: Dashboard[] = [];
+  const toActivate: Dashboard[] = [];
   for (const d of dashboards) {
-    if (d.active && d.subscription) {
+    if (d?.subscription) {
       try {
         const subscription = await stripeAPI(`/v1/subscriptions/${d.subscription}`);
-        if (subscription && !['active'].includes(subscription.status)) {
+        if (!subscription) return;
+        if (!['active'].includes(subscription.status)) {
           toCancel.push(d);
+        } else if (['active'].includes(subscription.status)) {
+          toActivate.push(d);
         }
-      } catch { }
+      } catch (e) { console.error(e) } 
     }
   }
-  await getDAO().cancelAll(toCancel);
+  await getDAO().cancelAll(toCancel, toActivate);
 }
 
 async function checkUsage() {
-
+  const dashboards = await getDAO().getDashboards();
+  const toCancel: Dashboard[] = [];
+  const toActivate: Dashboard[] = [];
+  for (const d of dashboards) {
+    if (d?.hostname?.length) {
+      try {
+        const monthlyViews = await getDAO().monthlyViews(d.hostname[0])
+        if (monthlyViews > 100_000) {
+          toCancel.push(d);
+        } else {
+          toActivate.push(d);
+        }
+      } catch (e) { console.error(e) } 
+    }
+  }
+  await getDAO().cancelAll(toCancel, toActivate);
 }
 
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
     const scheduledDate = new Date(e.scheduledTime);
     if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
-      try { await resetIPSalt() } catch { /* TODO */ }
-      try { await checkSubscriptionStatus() } catch { /* TODO */ }
-      try { await checkUsage() } catch { /* TODO */ }
+      try { await resetIPSalt() } catch (e) { console.error(e) }
+      try { await checkSubscriptionStatus() } catch (e) { console.error(e) }
+      try { await checkUsage() } catch (e) { console.error(e) }
 
       // if (scheduledDate.getUTCDay() === 0) {
       //   // await resetUsage();

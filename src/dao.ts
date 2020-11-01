@@ -3,7 +3,7 @@ import { UUID } from 'uuid-class';
 export interface DAO {
   init(): Promise<void>;
   getDashboards(): Promise<Dashboard[]>;
-  cancelAll(toCancel: Dashboard[]): Promise<void>;
+  cancelAll(toCancel: Dashboard[], toActivate?: Dashboard[]): Promise<void>;
   monthlyViews(hostname: string, date?: Date): Promise<number>;
   upsertDashboard(data: Dashboard): Promise<Dashboard>;
   getDashboard(id: UUID): Promise<Dashboard>;
