@@ -1,5 +1,5 @@
 import { UUID } from 'uuid-class';
-import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired } from '@werker/response-creators';
+import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired, methodNotAllowed } from '@werker/response-creators';
 
 import { Dashboard } from './dao';
 import { getDAO } from './dao/get-dao';
@@ -58,7 +58,12 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
     case '__init': {
       if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return unauthorized();
       if (method === 'POST') return getDAO().init().then(() => ok()).catch(handleError);
-      return ok();
+      return methodNotAllowed();
+    }
+    case '__scheduled': {
+      if (headers.get('Authorization') !== Reflect.get(self, 'AUTH')) return unauthorized();
+      if (method === 'POST') return scheduledDaily().then(() => ok()).catch(handleError)
+      return methodNotAllowed();
     }
     case 'claps': {
       return routes.handleClaps(args).catch(handleError).then(addCORSHeaders(request));
@@ -94,9 +99,9 @@ async function checkSubscriptionStatus() {
       try {
         const subscription = await stripeAPI(`/v1/subscriptions/${d.subscription}`);
         if (!subscription) return;
-        if (!['active'].includes(subscription.status)) {
+        if (!['active'].includes(subscription.status) && d.active === true) {
           toCancel.push(d);
-        } else if (['active'].includes(subscription.status)) {
+        } else if (['active'].includes(subscription.status) && d.active === false) {
           toActivate.push(d);
         }
       } catch (e) { console.error(e) } 
@@ -124,14 +129,17 @@ async function checkUsage() {
   await getDAO().cancelAll(toCancel, toActivate);
 }
 
+async function scheduledDaily() {
+  try { await resetIPSalt() } catch (e) { console.error(e) }
+  try { await checkSubscriptionStatus() } catch (e) { console.error(e) }
+  try { await checkUsage() } catch (e) { console.error(e) }
+}
+
 self.addEventListener('scheduled', (e: ScheduledEvent) => {
   e.waitUntil((async () => {
     const scheduledDate = new Date(e.scheduledTime);
     if (scheduledDate.getUTCMinutes() === 0 && scheduledDate.getUTCHours() === 0) {
-      try { await resetIPSalt() } catch (e) { console.error(e) }
-      try { await checkSubscriptionStatus() } catch (e) { console.error(e) }
-      try { await checkUsage() } catch (e) { console.error(e) }
-
+      await scheduledDaily();
       // if (scheduledDate.getUTCDay() === 0) {
       //   // await resetUsage();
       // }
