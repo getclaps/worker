@@ -1,6 +1,6 @@
 import { UUID } from 'uuid-class';
 import { Base64Encoder } from 'base64-encoding';
-import { badRequest, notFound, seeOther } from '@werker/response-creators';
+import { badRequest, methodNotAllowed, notFound, seeOther } from '@werker/response-creators';
 
 import { WORKER_DOMAIN, NAMESPACE } from '../constants';
 import { RouteArgs } from '../index';
@@ -61,10 +61,10 @@ export async function handleDashboard(params: RouteArgs) {
   const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
 
   if (dir === 'new') {
-    if (method !== 'GET') return notFound();
+    if (method !== 'GET') return methodNotAllowed();
 
     const sessionId = requestURL.searchParams.get('session_id');
-    if (!sessionId) return notFound();
+    if (!sessionId) return badRequest();
 
     const { customer, subscription } = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
 
