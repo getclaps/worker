@@ -62,7 +62,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
             <script>document.querySelectorAll('#switch select').forEach(el => el.addEventListener('change', e => e.target.form.submit()))</script>
             <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
           </form>
-          <a class="bp3-button bp3-icon-log-out" href="/logout">Logout</a>
+          <a class="bp3-button bp3-minimal bp3-icon-log-out" href="/logout">Logout</a>
           <script type="module">
             if ('PasswordCredential' in window) (() => {
               document.querySelectorAll('a[href="/logout"]').forEach(el => el.addEventListener('click', () => {
