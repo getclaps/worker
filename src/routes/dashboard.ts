@@ -116,9 +116,11 @@ export async function handleDashboard(params: RouteArgs) {
   }
 
   else if (dir === 'logout') {
+    const did = cookies.get('did');
+    const ids = cookies.get('ids')?.split(',')?.filter(_ => _ !== did) ?? [];
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
       headers: [
-        ['Set-Cookie', mkLogoutCookie()],
+        ['Set-Cookie', ids.length ? mkLoginCookie(ids[0]) : mkLogoutCookie()],
         ['Set-Cookie', mkLogoutsCookie(cookies, cookies.get('did'))],
       ],
     });
