@@ -31,7 +31,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>${title}</title>
     <meta name="robots" content="noindex">
-    <link href="https://unpkg.com//normalize.css/normalize.css" rel="stylesheet"/>
+    <link href="https://unpkg.com/normalize.css/normalize.css" rel="stylesheet"/>
     <link href="https://unpkg.com/@blueprintjs/icons/lib/css/blueprint-icons.css" rel="stylesheet"/>
     <link href="https://unpkg.com/@blueprintjs/core/lib/css/blueprint.css" rel="stylesheet"/>
     <style>${styles}</style>
@@ -56,12 +56,12 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
           <form id="switch" method="POST" action="/login" autocomplete="off"  style="margin-right:5px">
             <div class="bp3-control-group">
               ${cookies && uuid ? htmlHostnameSelect(cookies, uuid) : ''}
-              <a class="bp3-button" href="/login">Add…</a>
+              <a class="bp3-button bp3-icon-add" title="Add account" href="/login"></a>
             </div>
             <script>document.querySelectorAll('#switch select').forEach(el => el.addEventListener('change', e => e.target.form.submit()))</script>
             <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
           </form>
-          <a class="bp3-button" href="/logout">Logout</a>
+          <a class="bp3-button bp3-icon-log-out" href="/logout">Logout</a>
           <script type="module">
             if ('PasswordCredential' in window) (() => {
               document.querySelectorAll('a[href="/logout"]').forEach(el => el.addEventListener('click', () => {
