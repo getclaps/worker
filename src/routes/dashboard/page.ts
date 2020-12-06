@@ -35,7 +35,7 @@ export const page = ({ title = 'getclaps.dev', isBookmarked = false, headers = [
           <a class="bp3-button bp3-minimal" href="/settings">Settings</a>
           <a class="bp3-button bp3-minimal" href="/log">Log</a>
           <span class="bp3-navbar-divider"></span>
-          <a class="bp3-button bp3-minimal" href="/logout">Logout</a>
+          <a class="bp3-button bp3-minimal" href="/logout">Switch</a>
           <script type="module">
             if ('PasswordCredential' in window) (() => {
               document.querySelectorAll('a[href="/logout"]').forEach(el => el.addEventListener('click', () => {

@@ -2,7 +2,7 @@ import { badRequest } from '@werker/response-creators';
 import { html } from '@werker/html';
 
 import { Dashboard } from '../../dao';
-import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs } from '../dashboard';
+import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs, mkHostnameCookie } from '../dashboard';
 import { page } from './page';
 import { ConflictError } from '../../errors';
 
@@ -209,6 +209,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
         <div></div>
       </div>
       <script>document.cookie = '${mkDNTCookie(dashboard.dnt, dashboard.hostname[0])}';</script>
+      <script>document.cookie = '${mkHostnameCookie(id, dashboard.hostname[0])}';</script>
     `;
   });
 }

@@ -8,6 +8,8 @@ import { TimeUnit } from '../../dao';
 import { DashboardArgs } from '../dashboard';
 import { page } from './page';
 import { pURL, noOpener, mkRef } from './lib';
+import { htmlHostnameSelect, htmlTimeFrameSelect } from './stats';
+import { elongateId } from '../../short-id';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
@@ -17,33 +19,25 @@ const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
 </tr>`);
  
-export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: DashboardArgs) {
+export async function logPage({ dao, isBookmarked, cookies, locale, requestURL }: DashboardArgs) {
   const timeFrame = requestURL.searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString)
 
-  const d = dao.getDashboard(uuid);
+  const selectedUUID = elongateId(requestURL.searchParams.get('host') ?? cookies.get('did'));
+
+  // const d = dao.getDashboard(uuid);
 
   return page({ isBookmarked })(html`
     <div class="bp3-running-text" style="padding-top:40px">
       <form method="GET" action="/log">
         <label class="bp3-label bp3-inline" style="display:inline-block; margin-bottom:2rem">
           Show data for the last
-          <div class="bp3-select" style="margin-right:5px">
-            <select name="time">
-              <option ${timeFrame === '1-hour'   ? 'selected' : ''} value="1-hour">1 hour</option>
-              <option ${timeFrame === '2-hours'  ? 'selected' : ''} value="2-hours">2 hours</option>
-              <option ${timeFrame === '6-hours'  ? 'selected' : ''} value="6-hours">6 hours</option>
-              <option ${timeFrame === '12-hours' ? 'selected' : ''} value="12-hours">12 hours</option>
-              <option ${timeFrame === '24-hours' ? 'selected' : ''} value="24-hours">24 hours</option>
-              ${!['1-hour', '2-hours', '6-hours', '12-hours', '24-hours'].includes(timeFrame)
-                ? html`<option selected value="${timeFrame}">---</option>`
-                : ''}
-            </select>
-          </div>
+          ${htmlTimeFrameSelect(['1-hour', '2-hours', '6-hours', '12-hours', '24-hours'], timeFrame)}
           <span> on </span>
-          <strong>${fallback(d.then(d => d.hostname[0] || 'your-site.com'), html``)}</strong>
+          ${htmlHostnameSelect(cookies, selectedUUID)}
           <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
+          <script>document.querySelector('select[name=host]').addEventListener('change', function(e) { e.target.form.submit() })</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
       </form>
@@ -63,7 +57,7 @@ export async function logPage({ dao, isBookmarked, uuid, locale, requestURL }: D
         <tbody>
           ${async () => {
             try {
-              const logEntries = await dao.getLog(uuid, [Number(value), unit]);
+              const logEntries = await dao.getLog(selectedUUID, [Number(value), unit]);
               const now = new Date();
               return logEntries.filter(x => x && x.href != null).map(entry => withFallback(() => {
                 const seed = new Base64Encoder().encode(entry.visitor);

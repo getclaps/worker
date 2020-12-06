@@ -34,8 +34,25 @@ const mkLoginCookie = (id: string) => {
   return `did=${id}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
 }
 
+const mkLoginsCookie = (cookies: Map<string, string>, id: string) => {
+  const ids = cookies.get('ids')?.split(',') ?? [];
+  if (!ids.includes(id)) ids.push(id);
+  return `ids=${ids.join(',')}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
+}
+
+export const mkHostnameCookieKey = async (id: string) => `hst_${await shortHash(id)}`;
+export const mkHostnameCookie = async (id: string, hostname: string) => {
+  return `${await mkHostnameCookieKey(id)}=${hostname}; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
+}
+
 const mkLogoutCookie = () => {
   return `did=; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
+}
+
+const mkLogoutsCookie = (cookies: Map<string, string>, id: string) => {
+  let ids = cookies.get('ids')?.split(',') ?? [];
+  ids = ids.filter(_ => _ !== id);
+  return `ids=${ids.join(',')}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
 }
 
 export const parseCookie = (cookie: string) => new Map<string, string>(cookie.split(/;\s*/)
@@ -59,6 +76,8 @@ export async function handleDashboard(params: RouteArgs) {
   const dao: DAO = getDAO();
 
   const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
+
+  const cookies = parseCookie(headers.get('cookie') || '');
 
   if (dir === 'new') {
     if (method !== 'GET') return methodNotAllowed();
@@ -88,13 +107,20 @@ export async function handleDashboard(params: RouteArgs) {
     });
 
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
-      headers: [['Set-Cookie', mkLoginCookie(shortenId(id))]],
+      headers: [
+        ['Set-Cookie', mkLoginCookie(shortenId(id))],
+        ['Set-Cookie', mkLoginsCookie(cookies, shortenId(id))],
+        // ['Set-Cookie', mkHostnameCookie(shortenId(id), hostname)],
+      ],
     });
   }
 
   else if (dir === 'logout') {
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
-      headers: [['Set-Cookie', mkLogoutCookie()]]
+      headers: [
+        ['Set-Cookie', mkLogoutCookie()],
+        // ['Set-Cookie', mkLogoutsCookie(cookies, cookies.get('did'))],
+      ],
     });
   }
 
@@ -102,7 +128,7 @@ export async function handleDashboard(params: RouteArgs) {
     if (method === 'POST') {
       const formData = await request.formData()
       const id = formData.get('password').toString();
-      // const hostname = formData.get('id').toString();
+      const hostname = formData.get('id').toString();
       const referrer = formData.get('referrer') || '/';
 
       try {
@@ -116,7 +142,9 @@ export async function handleDashboard(params: RouteArgs) {
       return seeOther(new URL(referrer.toString(), WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
-          ['Set-Cookie', await mkBookmarkedCookie(id)]
+          ['Set-Cookie', mkLoginsCookie(cookies, id)],
+          ['Set-Cookie', await mkHostnameCookie(id, hostname)],
+          ['Set-Cookie', await mkBookmarkedCookie(id)],
         ],
       });
     }
@@ -127,13 +155,15 @@ export async function handleDashboard(params: RouteArgs) {
   else if (/([A-Za-z0-9-_]{22})/.test(dir)) {
     const [, id] = dir.match(/([A-Za-z0-9-_]{22})/);
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
-      headers: [['Set-Cookie', mkLoginCookie(id)]],
+      headers: [
+        ['Set-Cookie', mkLoginCookie(id)],
+        ['Set-Cookie', mkLoginsCookie(cookies, id)],
+      ],
     });
   }
 
   else {
     // if (!(headers.get('accept') || '').includes('text/html')) return r.badRequest();
-    const cookies = parseCookie(headers.get('cookie') || '');
 
     const id = cookies.get('did');
     if (!id) return pages.loginPage();
@@ -173,6 +203,7 @@ export async function handleDashboard(params: RouteArgs) {
     }
 
     res.headers.append('Set-Cookie', mkLoginCookie(id));
+    res.headers.append('Set-Cookie', mkLoginsCookie(cookies, id));
 
     return res;
   }
