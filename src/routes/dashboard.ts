@@ -119,7 +119,7 @@ export async function handleDashboard(params: RouteArgs) {
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
       headers: [
         ['Set-Cookie', mkLogoutCookie()],
-        // ['Set-Cookie', mkLogoutsCookie(cookies, cookies.get('did'))],
+        ['Set-Cookie', mkLogoutsCookie(cookies, cookies.get('did'))],
       ],
     });
   }
@@ -128,28 +128,30 @@ export async function handleDashboard(params: RouteArgs) {
     if (method === 'POST') {
       const formData = await request.formData()
       const id = formData.get('password').toString();
-      const hostname = formData.get('id').toString();
-      const referrer = formData.get('referrer') || '/';
+      const hostname = formData.get('id')?.toString();
+      const referrer = (formData.get('referrer')  || request.headers.get('referer') || '/').toString();
 
       try {
         const uuid = elongateId(id);
         const d = await dao.getDashboard(uuid);
         if (!d) throw Error();
       } catch {
-        return seeOther(new URL(referrer.toString(), WORKER_DOMAIN))
+        return seeOther(new URL(referrer, WORKER_DOMAIN))
       }
 
-      return seeOther(new URL(referrer.toString(), WORKER_DOMAIN), {
+      return seeOther(new URL(referrer, WORKER_DOMAIN), {
         headers: [
           ['Set-Cookie', mkLoginCookie(id)],
           ['Set-Cookie', mkLoginsCookie(cookies, id)],
-          ['Set-Cookie', await mkHostnameCookie(id, hostname)],
           ['Set-Cookie', await mkBookmarkedCookie(id)],
+          ...hostname ? [['Set-Cookie', await mkHostnameCookie(id, hostname)]] : [],
         ],
       });
+    } else if (method === 'GET') {
+      return pages.loginPage({ referrer: '/stats' });
+    } else {
+      return methodNotAllowed();
     }
-
-    return notFound();
   }
 
   else if (/([A-Za-z0-9-_]{22})/.test(dir)) {

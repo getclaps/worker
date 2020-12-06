@@ -3,57 +3,30 @@ import { fallback, html, HTMLContent } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
 import { countriesByCode } from '../../vendor/countries';
-import { DashboardArgs, mkHostnameCookieKey } from '../dashboard';
+import { DashboardArgs } from '../dashboard';
 import { page } from './page';
-import { pURL, noOpener, mkRef } from './lib';
-import { elongateId, shortenId } from '../../short-id';
+import { pURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
+import { elongateId } from '../../short-id';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-export const htmlTimeFrameSelect = (timeFrames: string[], selectedTimeFrame: string) => {
-  return html`
-    <div class="bp3-select" style="margin-right:5px">
-      <select name="time">
-        ${timeFrames.map(tf => html`<option ${tf === selectedTimeFrame ? 'selected' : ''} value="${tf}">${tf.split('-').join(' ')}</option>`)}
-        ${!timeFrames.includes(selectedTimeFrame)
-          ? html`<option selected value="${selectedTimeFrame}">${'---'}</option>`
-          : ''}
-      </select>
-    </div>
-  `;
-}
-
-export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID) => {
-  const shortIds = cookies.get('ids')?.split(',') ?? [];
-  return html`
-    <div class="bp3-select" style="margin-right:5px">
-      <select name="host">
-        ${shortIds.map(async shortId => html`<option ${shortId === shortenId(uuid) ? 'selected' : ''} value="${shortId}">${cookies.get(await mkHostnameCookieKey(shortId)) ?? shortId}</option>`)}
-      </select>
-    </div>`;
-}
-
-export async function statsPage({ requestURL, dao, isBookmarked, locale, cookies }: DashboardArgs) {
+export async function statsPage({ requestURL, dao, isBookmarked, locale, cookies, uuid }: DashboardArgs) {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
-  const [value, unit] = timeFrame.split('-') as [string, TimeUnit];
+  const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
+  const value = Number(valueString);
   const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);
 
-  const selectedUUID = elongateId(requestURL.searchParams.get('host') ?? cookies.get('did'));
-
   // const d = dao.getDashboard(uuid);
-  const x = dao.getStats(selectedUUID, [Number(value), unit]);
+  const x = dao.getStats(uuid, [value, unit]);
 
-  return page({ isBookmarked })(html`
+  return page({ dir: 'stats', isBookmarked, cookies, uuid })(html`
     <div class="bp3-running-text" style="padding-top:40px">
       ${/*<h2>Stats</h2>*/''}
-      <form method="GET" action="/stats">
+      <form id="stats-query" method="GET" action="/stats">
         <label class="bp3-label bp3-inline" style="display:inline-block; margin-bottom:2rem">
           Show data for the last
           ${htmlTimeFrameSelect(['12-hours', '24-hours', '7-days', '30-days'], timeFrame)}
-          <span> on </span>
-          ${htmlHostnameSelect(cookies, selectedUUID)}
-          <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() });</script>
-          <script>document.querySelector('select[name=host]').addEventListener('change', function(e) { e.target.form.submit() });</script>
+          <script>document.querySelectorAll('#stats-query select').forEach(el => el.addEventListener('change', e => e.target.form.submit()))</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
       </form>

@@ -2,10 +2,11 @@ import { html } from '@werker/html';
 
 import { page } from './page';
 
-export function loginPage() {
+export function loginPage({ referrer }: { referrer?: string } = {}) {
   return page()(html`
     <div class="flex-center" style="margin-top:3rem">
       <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
+        ${referrer ? html`<input type="hidden" name="referrer" value="${referrer}" />` : null}
         <div class="bp3-form-group">
           <label class="bp3-label" for="form-group-input">
             Key
@@ -18,7 +19,7 @@ export function loginPage() {
             <div class="bp3-form-helper-text">Input the dashboard key using your password manager.</div>
           </div>
         </div>
-        <div class="bp3-form-group" hidden>
+        <div class="bp3-form-group">
           <label class="bp3-label" for="form-group-input">
             Domain
             <span class="bp3-text-muted">(optional)</span>
@@ -38,11 +39,12 @@ export function loginPage() {
         const cred = await navigator.credentials.get({ password: true });
         if (cred) {
           const { id, password } = cred;
-          const body = new URLSearchParams(Object.entries({ method: 'login', id, password }));
+          const body = new URLSearchParams(Object.entries({ id, password }));
+          const referrer = new FormData(document.getElementById('login')).get('referrer');
           document.getElementById('login').querySelectorAll('input, button').forEach(el => { el.disabled = true });
           const response = await fetch('/login', { method: 'POST', body, redirect: 'manual' });
-          // cookie set, reload page
-          window.location.reload();
+          if (referrer) window.location.assign(referrer);
+          else window.location.reload();
         }
       })();
     </script>

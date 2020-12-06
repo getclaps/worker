@@ -7,8 +7,7 @@ import { countriesByCode } from '../../vendor/countries';
 import { TimeUnit } from '../../dao';
 import { DashboardArgs } from '../dashboard';
 import { page } from './page';
-import { pURL, noOpener, mkRef } from './lib';
-import { htmlHostnameSelect, htmlTimeFrameSelect } from './stats';
+import { pURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
 import { elongateId } from '../../short-id';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
@@ -19,25 +18,20 @@ const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
 </tr>`);
  
-export async function logPage({ dao, isBookmarked, cookies, locale, requestURL }: DashboardArgs) {
+export async function logPage({ dao, isBookmarked, cookies, uuid, locale, requestURL }: DashboardArgs) {
   const timeFrame = requestURL.searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
-  const value = Number(valueString)
-
-  const selectedUUID = elongateId(requestURL.searchParams.get('host') ?? cookies.get('did'));
+  const value = Number(valueString);
 
   // const d = dao.getDashboard(uuid);
 
-  return page({ isBookmarked })(html`
+  return page({ dir: 'log', isBookmarked, cookies, uuid })(html`
     <div class="bp3-running-text" style="padding-top:40px">
-      <form method="GET" action="/log">
+      <form id="log-query" method="GET" action="/log">
         <label class="bp3-label bp3-inline" style="display:inline-block; margin-bottom:2rem">
           Show data for the last
           ${htmlTimeFrameSelect(['1-hour', '2-hours', '6-hours', '12-hours', '24-hours'], timeFrame)}
-          <span> on </span>
-          ${htmlHostnameSelect(cookies, selectedUUID)}
-          <script>document.querySelector('select[name=time]').addEventListener('change', function(e) { e.target.form.submit() })</script>
-          <script>document.querySelector('select[name=host]').addEventListener('change', function(e) { e.target.form.submit() })</script>
+          <script>document.querySelectorAll('#log-query select').forEach(el => el.addEventListener('change', e => e.target.form.submit()))</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
       </form>
@@ -57,7 +51,7 @@ export async function logPage({ dao, isBookmarked, cookies, locale, requestURL }
         <tbody>
           ${async () => {
             try {
-              const logEntries = await dao.getLog(selectedUUID, [Number(value), unit]);
+              const logEntries = await dao.getLog(uuid, [value, unit]);
               const now = new Date();
               return logEntries.filter(x => x && x.href != null).map(entry => withFallback(() => {
                 const seed = new Base64Encoder().encode(entry.visitor);

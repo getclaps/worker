@@ -19,3 +19,16 @@ export const mkRef = (href: string) => {
   url.protocol = 'x:';
   return url.href.substr(4);
 };
+
+export const htmlTimeFrameSelect = (timeFrames: string[], selectedTimeFrame: string) => {
+  return html`
+    <div class="bp3-select" style="margin-right:5px">
+      <select name="time">
+        ${timeFrames.map(tf => html`<option ${tf === selectedTimeFrame ? 'selected' : ''} value="${tf}">${tf.split('-').join(' ')}</option>`)}
+        ${!timeFrames.includes(selectedTimeFrame)
+          ? html`<option selected value="${selectedTimeFrame}">${'---'}</option>`
+          : ''}
+      </select>
+    </div>
+  `;
+}

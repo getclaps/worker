@@ -61,7 +61,7 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
 
   const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
-  return page({ isBookmarked, headers: setHeaders })(async () => {
+  return page({ dir: 'settings', cookies, uuid, isBookmarked, headers: setHeaders })(async () => {
     let dashboard: Dashboard;
     try {
       dashboard = postDashboard || await dao.getDashboard(uuid);
