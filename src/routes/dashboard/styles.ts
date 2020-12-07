@@ -6,6 +6,7 @@ export const styles = css`
   main, nav > div { max-width: 1024px; margin: auto; }
   body { padding: 3rem 0; overflow-x: hidden; overflow-y: scroll; }
   body.bp3-dark { color: #ccc; background: #293742; }
+  body:not(.bp3-dark) h1 > img { -webkit-filter:brightness(0.5); filter:brightness(0.5) }
   table.stats { width: 100% }
   table.stats.bp3-html-table-condensed tr > td { max-width: 0 }
   .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
