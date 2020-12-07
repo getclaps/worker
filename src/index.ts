@@ -75,7 +75,7 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
     }
     case 'stripe': {
       if (!HAS_BILLING) return notFound();
-      const { handleStripe } = await import(/* webpackMode: "eager" */ './billing/stripe');
+      const { handleStripe } = await import(/* webpackMode: "eager" */ './billing');
       return handleStripe(args).catch(handleError);
     }
    default: {
@@ -93,7 +93,7 @@ async function resetIPSalt() {
 async function scheduledDaily() {
   try { await resetIPSalt() } catch (e) { console.error(e) }
   if (HAS_BILLING) {
-    const { checkSubscriptionStatus, checkUsage } = await import(/* webpackMode: "eager" */ './billing/re-new');
+    const { checkSubscriptionStatus, checkUsage } = await import(/* webpackMode: "eager" */ './billing');
     try { await checkSubscriptionStatus() } catch (e) { console.error(e) }
     try { await checkUsage() } catch (e) { console.error(e) }
   }
