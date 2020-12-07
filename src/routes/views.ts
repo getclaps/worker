@@ -5,7 +5,7 @@ import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 
 import { validateURL, extractData } from './claps';
-import { mkDNTCookieKey, parseCookie } from './dashboard';
+import { mkDNTCookieKey, parseCookie } from './mk-cookies';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
