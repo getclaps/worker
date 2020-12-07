@@ -1,5 +1,6 @@
 import { html, HTMLContent, CFWorkersHTMLResponse as HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
+import { HAS_BILLING } from '../../constants';
 import { shortenId } from '../../short-id';
 import { mkHostnameCookieKey } from '../dashboard';
 
@@ -50,8 +51,10 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
           <a class="bp3-button bp3-minimal ${dir === 'stats' ? 'bp3-active': ''}" href="/stats">Stats</a>
           <a class="bp3-button bp3-minimal ${dir === 'log' ? 'bp3-active': ''}" href="/log">Log</a>
           <a class="bp3-button bp3-minimal ${dir === 'settings' ? 'bp3-active': ''}" href="/settings">Settings</a>
-          <span class="bp3-navbar-divider"></span>
-          <a class="bp3-button bp3-minimal ${dir === 'subscription' ? 'bp3-active': ''}" href="/subscription">Subscription</a>
+          ${HAS_BILLING ? html`
+            <span class="bp3-navbar-divider"></span>
+            <a class="bp3-button bp3-minimal ${dir === 'subscription' ? 'bp3-active': ''}" href="/subscription">Subscription</a>
+          ` : ''}
         </div>
         <div class="bp3-navbar-group bp3-align-right unlock ${!isBookmarked ? 'hidden' : ''}">
           <form id="switch" method="POST" action="/login" autocomplete="off"  style="margin-right:5px">

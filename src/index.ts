@@ -1,14 +1,13 @@
 import { UUID } from 'uuid-class';
 import { badRequest, conflict, unauthorized, internalServerError, notFound, ok, paymentRequired, methodNotAllowed } from '@werker/response-creators';
 
-import { Dashboard } from './dao';
 import { getDAO } from './dao/get-dao';
 import * as routes from './routes/index';
 import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
-import { stripeAPI } from './routes/stripe';
 
-import { DEBUG, KV_NAMESPACE, IP_SALT_KEY } from './constants';
-export { DEBUG, KV_NAMESPACE, IP_SALT_KEY };
+import { DEBUG, KV_NAMESPACE, IP_SALT_KEY, HAS_BILLING } from './constants';
+
+export { DEBUG };
 
 const getPath = (pathname: string) => {
   const x = `/${pathname}/`.replace(/\/+/g, '/');
@@ -29,7 +28,7 @@ function handleError(err: any) {
   if (err instanceof ConflictError) return conflict(err.message);
   if (err instanceof BadRequestError) return badRequest(err.message);
   if (DEBUG) throw err;
-  else return internalServerError();
+  return internalServerError();
 }
 
 self.addEventListener('fetch', (event: FetchEvent) => {
@@ -74,6 +73,11 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
     case 'dashboard': {
       return routes.handleDashboard(args).catch(handleError);
     }
+    case 'stripe': {
+      if (!HAS_BILLING) return notFound();
+      const { handleStripe } = await import(/* webpackMode: "eager" */ './billing/stripe');
+      return handleStripe(args).catch(handleError);
+    }
    default: {
       args.path = ['dashboard', ...path];
       return routes.handleDashboard(args).catch(handleError);
@@ -86,53 +90,13 @@ async function resetIPSalt() {
   await kv.put(IP_SALT_KEY, UUID.v4().toString());
 }
 
-// async function resetUsage() {
-//   await getDAO().resetUsage();
-// }
-
-async function checkSubscriptionStatus() {
-  const dashboards = await getDAO().getDashboards();
-  const toCancel: Dashboard[] = [];
-  const toActivate: Dashboard[] = [];
-  for (const d of dashboards) {
-    if (d?.subscription) {
-      try {
-        const subscription = await stripeAPI(`/v1/subscriptions/${d.subscription}`);
-        if (!subscription) return;
-        if (!['active'].includes(subscription.status) && d.active === true) {
-          toCancel.push(d);
-        } else if (['active'].includes(subscription.status) && d.active === false) {
-          toActivate.push(d);
-        }
-      } catch (e) { console.error(e) } 
-    }
-  }
-  await getDAO().cancelAll(toCancel, toActivate);
-}
-
-async function checkUsage() {
-  const dashboards = await getDAO().getDashboards();
-  const toCancel: Dashboard[] = [];
-  const toActivate: Dashboard[] = [];
-  for (const d of dashboards) {
-    if (d?.hostname?.length) {
-      try {
-        const monthlyViews = await getDAO().monthlyViews(d.hostname[0])
-        if (monthlyViews > 100_000) {
-          toCancel.push(d);
-        } else {
-          toActivate.push(d);
-        }
-      } catch (e) { console.error(e) } 
-    }
-  }
-  await getDAO().cancelAll(toCancel, toActivate);
-}
-
 async function scheduledDaily() {
   try { await resetIPSalt() } catch (e) { console.error(e) }
-  try { await checkSubscriptionStatus() } catch (e) { console.error(e) }
-  try { await checkUsage() } catch (e) { console.error(e) }
+  if (HAS_BILLING) {
+    const { checkSubscriptionStatus, checkUsage } = await import(/* webpackMode: "eager" */ './billing/re-new');
+    try { await checkSubscriptionStatus() } catch (e) { console.error(e) }
+    try { await checkUsage() } catch (e) { console.error(e) }
+  }
 }
 
 self.addEventListener('scheduled', (e: ScheduledEvent) => {

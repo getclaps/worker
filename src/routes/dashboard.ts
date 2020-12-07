@@ -1,16 +1,13 @@
 import { UUID } from 'uuid-class';
 import { Base64Encoder } from 'base64-encoding';
-import { badRequest, methodNotAllowed, notFound, seeOther } from '@werker/response-creators';
+import { methodNotAllowed, notFound, seeOther } from '@werker/response-creators';
 
-import { WORKER_DOMAIN, NAMESPACE } from '../constants';
+import { WORKER_DOMAIN, HAS_BILLING } from '../constants';
 import { RouteArgs } from '../index';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { elongateId, shortenId } from '../short-id';
-import { stripeAPI } from './stripe';
 import * as pages from './dashboard/index';
-
-export { styles } from './dashboard/styles';
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
@@ -82,24 +79,16 @@ export async function handleDashboard(params: RouteArgs) {
   if (dir === 'new') {
     if (method !== 'GET') return methodNotAllowed();
 
-    const sessionId = requestURL.searchParams.get('session_id');
-    if (!sessionId) return badRequest();
-
-    const { customer, subscription } = await stripeAPI(`/v1/checkout/sessions/${sessionId}`);
-
-    if (!subscription || !customer) return badRequest();
-
-    const id = await UUID.v5(sessionId, NAMESPACE);
-
-    await stripeAPI(`/v1/subscriptions/${subscription}`, {
-      method: 'POST',
-      data: { 'metadata[dashboard_id]': shortenId(id) },
-    });
+    let props: { id: UUID, [prop: string]: any };
+    if (HAS_BILLING) {
+      const { newProps } = await import(/* webpackMode: "eager" */ '../billing/re-new');
+      props = await newProps(requestURL);
+    } else {
+      props = { id: UUID.v4() };
+    }
 
     await dao.upsertDashboard({
-      id,
-      customer,
-      subscription,
+      ...props,
       active: true,
       dnt: false,
       hostname: [],
@@ -108,9 +97,35 @@ export async function handleDashboard(params: RouteArgs) {
 
     return seeOther(new URL(`/`, WORKER_DOMAIN), {
       headers: [
-        ['Set-Cookie', mkLoginCookie(shortenId(id))],
-        ['Set-Cookie', mkLoginsCookie(cookies, shortenId(id))],
-        // ['Set-Cookie', mkHostnameCookie(shortenId(id), hostname)],
+        ['Set-Cookie', mkLoginCookie(shortenId(props.id))],
+        ['Set-Cookie', mkLoginsCookie(cookies, shortenId(props.id))],
+      ],
+    });
+  }
+  
+  else if (dir === 'renew') {
+    if (method !== 'GET') return methodNotAllowed();
+
+    const id = elongateId(requestURL.searchParams.get('did'));
+    const dashboard = await dao.getDashboard(id);
+
+    let props: { id: UUID, [prop: string]: any };
+    if (HAS_BILLING) {
+      const { renewProps } = await import(/* webpackMode: "eager" */ '../billing/re-new');
+      props = await renewProps(requestURL, dashboard);
+    } else {
+      props = { id };
+    }
+
+    await dao.upsertDashboard({
+      ...props,
+      active: true,
+    });
+
+    return seeOther(new URL(`/subscription`, WORKER_DOMAIN), {
+      headers: [
+        ['Set-Cookie', mkLoginCookie(shortenId(props.id))],
+        ['Set-Cookie', mkLoginsCookie(cookies, shortenId(props.id))],
       ],
     });
   }
@@ -194,6 +209,10 @@ export async function handleDashboard(params: RouteArgs) {
     }
     else if (dir === 'log') {
       res = await pages.logPage(snowball);
+    }
+    else if (dir === 'subscription' && HAS_BILLING) {
+      const { subscriptionPage } = await import(/* webpackMode: "eager" */ '../billing/subscription');
+      res = await subscriptionPage(snowball);
     }
     else if (!dir) {
       if (isBookmarked) {

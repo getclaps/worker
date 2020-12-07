@@ -1,3 +1,6 @@
 [submodule "src/dao"]
 	path = src/dao
 	url = git@github.com:getclaps/worker-dao.git
+[submodule "src/billing"]
+	path = src/billing
+	url = git@github.com:getclaps/worker-billing.git
