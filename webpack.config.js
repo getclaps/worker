@@ -26,4 +26,7 @@ module.exports = {
       },
     ],
   },
+  // plugins: [
+  //   new require('webpack').IgnorePlugin({ resourceRegExp: /\/billing/ }),
+  // ],
 }

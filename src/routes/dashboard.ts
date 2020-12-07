@@ -32,6 +32,7 @@ export async function handleDashboard(params: RouteArgs) {
 
     let props: { id: UUID, [prop: string]: any };
     if (HAS_BILLING) {
+      // @ts-ignore
       const { newProps } = await import(/* webpackMode: "eager" */ '../billing');
       props = await newProps(requestURL);
     } else {
@@ -62,6 +63,7 @@ export async function handleDashboard(params: RouteArgs) {
 
     let props: { id: UUID, [prop: string]: any };
     if (HAS_BILLING) {
+      // @ts-ignore
       const { renewProps } = await import(/* webpackMode: "eager" */ '../billing');
       props = await renewProps(requestURL, dashboard);
     } else {
@@ -162,6 +164,7 @@ export async function handleDashboard(params: RouteArgs) {
       res = await pages.logPage(snowball);
     }
     else if (dir === 'subscription' && HAS_BILLING) {
+      // @ts-ignore
       const { subscriptionPage } = await import(/* webpackMode: "eager" */ '../billing');
       res = await subscriptionPage(snowball);
     }
