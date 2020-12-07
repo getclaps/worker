@@ -2,7 +2,7 @@ import { html, HTMLContent, CFWorkersHTMLResponse as HTMLResponse } from '@werke
 import { UUID } from 'uuid-class';
 import { HAS_BILLING } from '../../constants';
 import { shortenId } from '../../short-id';
-import { mkHostnameCookieKey } from '../dashboard';
+import { mkHostnameCookieKey } from '../mk-cookies';
 
 import { styles } from './styles';
 

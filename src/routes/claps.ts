@@ -6,7 +6,7 @@ import { IP_SALT_KEY, KV_NAMESPACE } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { checkProofOfClap } from '../poc';
-import { mkDNTCookieKey, parseCookie } from './dashboard';
+import { mkDNTCookieKey, parseCookie } from './mk-cookies';
 
 export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');

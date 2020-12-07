@@ -2,9 +2,10 @@ import { badRequest } from '@werker/response-creators';
 import { html } from '@werker/html';
 
 import { Dashboard } from '../../dao';
-import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, DashboardArgs, mkHostnameCookie } from '../dashboard';
-import { page } from './page';
 import { ConflictError } from '../../errors';
+import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, mkHostnameCookie } from '../mk-cookies';
+import { DashboardArgs } from '../dashboard';
+import { page } from './page';
 
 export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardArgs) {
   const setHeaders = new Headers();
