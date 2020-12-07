@@ -1,11 +1,11 @@
 import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { ok, badRequest, notFound } from '@werker/response-creators';
+import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
 import { IP_SALT_KEY, KV_NAMESPACE } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
-import { checkProofOfClap } from '../poc';
 import { mkDNTCookieKey, parseCookie } from './mk-cookies';
 
 export async function extractData(headers: Headers) {
