@@ -18,7 +18,7 @@
   "dependencies": {
     "@download/blockies": "github:qwtel/blockies",
     "@getclaps/proof-of-clap": "^0.3.0",
-    "@werker/html": "^1.1.1",
+    "@werker/html": "^1.1.2",
     "@werker/json-fetch": "^1.0.2",
     "@werker/response-creators": "^1.0.2",
     "@werker/stripe-webhook": "^1.1.0",
