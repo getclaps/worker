@@ -7,7 +7,6 @@ export interface DAO {
   monthlyViews(hostname: string, date?: Date): Promise<number>;
   upsertDashboard(data: Dashboard): Promise<Dashboard>;
   getDashboard(id: UUID): Promise<Dashboard>;
-  /** @deprecated */ updateDomain(id: UUID, hostname: string): Promise<Dashboard>;
   appendDomain(id: UUID, hostname: string): Promise<Dashboard>;
   removeDomain(id: UUID, hostname: string): Promise<Dashboard>;
   relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
@@ -21,13 +20,11 @@ export interface DAO {
 
 export interface Dashboard {
   id: UUID,
-  customer?: string,
-  subscription?: string,
   hostname?: string[],
   active?: boolean,
   ip?: string,
   dnt?: boolean,
-  views?: number,
+  [k: string]: any,
 }
 
 export interface ClapData {
