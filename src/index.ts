@@ -5,7 +5,7 @@ import { getDAO } from './dao/get-dao';
 import * as routes from './routes/index';
 import { BadRequestError, ConflictError, NotFoundError, PaymentRequiredError } from './errors';
 
-import { DEBUG, KV_NAMESPACE, IP_SALT_KEY, HAS_BILLING } from './constants';
+import { DEBUG, IP_SALT_KEY, HAS_BILLING, KV } from './constants';
 
 export { DEBUG };
 
@@ -87,8 +87,7 @@ async function handleRequest(request: Request, requestURL: URL, event: FetchEven
 }
 
 async function resetIPSalt() {
-  const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
-  await kv.put(IP_SALT_KEY, UUID.v4().toString());
+  await KV.put(IP_SALT_KEY, UUID.v4().toString());
 }
 
 async function scheduledDaily() {

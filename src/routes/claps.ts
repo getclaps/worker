@@ -3,15 +3,14 @@ import { JSONResponse } from '@werker/json-fetch';
 import { ok, badRequest, notFound } from '@werker/response-creators';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
-import { IP_SALT_KEY, KV_NAMESPACE } from '../constants';
+import { IP_SALT_KEY, KV } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { mkDNTCookieKey, parseCookie } from './mk-cookies';
 
 export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');
-  const kv = Reflect.get(self, KV_NAMESPACE) as KVNamespace;
-  const ipSalt = await kv.get(IP_SALT_KEY);
+  const ipSalt = await KV.get(IP_SALT_KEY);
   const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', ipSalt);
   return { country, visitor };
 }
