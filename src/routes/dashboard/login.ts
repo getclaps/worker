@@ -1,14 +1,14 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
-import { router } from '../../router';
-import { page } from './page';
-
 import { WORKER_DOMAIN } from '../../constants';
+import { router } from '../../router';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { elongateId } from '../../short-id';
+
 import * as cc from '../cookies';
+import { page } from './common';
 
 router.get('/logout', async ({ headers }) => {
   const cookies = cc.parseCookie(headers.get('cookie') || '');

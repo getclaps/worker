@@ -1,9 +1,41 @@
+import * as re from '@werker/response-creators';
 import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
-import { compressId } from '../../short-id';
-import { mkHostnameCookieKey } from '../cookies';
+
+import { DAO } from '../../dao';
+import { getDAO } from '../../dao/get-dao';
+import { compressId, elongateId } from '../../short-id';
+import { RouteArgs, DashboardArgs } from '../../router';
+
+import * as cc from '../cookies';
 
 import { styles } from './styles';
+
+export async function beforeDashboard(params: RouteArgs): Promise<DashboardArgs> {
+  const { headers, event } = params;
+
+  const dao: DAO = getDAO();
+  const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
+
+  const cookies = cc.parseCookie(headers.get('cookie') || '');
+
+  const id = cookies.get('did');
+  if (!id) throw re.seeOther('/login');
+
+  const uuid = elongateId(id);
+
+  const isBookmarked = cookies.has(await cc.mkBookmarkedCookieKey(id));
+
+  event.waitUntil((async () => {
+    const ip = headers.get('cf-connecting-ip');
+    if (ip != null) {
+      await dao.upsertDashboard({ id: uuid, ip });
+    }
+  })());
+
+  return { ...params, id, uuid, cookies, dao, isBookmarked, locale };
+}
+
 
 export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortIds = cookies.get('ids')?.split(',') ?? [];
@@ -11,7 +43,7 @@ export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID, { m
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
-        ${shortIds.map(async sid => html`<option ${sid === shortId ? 'selected' : ''} value="${sid}">${cookies.get(await mkHostnameCookieKey(sid)) ?? sid}</option>`)}
+        ${shortIds.map(async sid => html`<option ${sid === shortId ? 'selected' : ''} value="${sid}">${cookies.get(await cc.mkHostnameCookieKey(sid)) ?? sid}</option>`)}
       </select>
     </div>`;
 }

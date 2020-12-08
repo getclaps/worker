@@ -4,9 +4,7 @@ import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
-import { beforeDashboard } from '../dashboard';
-
-import { page } from './page';
+import { beforeDashboard, page } from './common';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
