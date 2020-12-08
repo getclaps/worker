@@ -2,7 +2,7 @@ import { notFound, seeOther } from '@werker/response-creators';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
-import { elongateId, shortenId } from '../short-id';
+import { elongateId, compressId } from '../short-id';
 import { mkBookmarkedCookieKey, mkLoginCookie, mkLoginsCookie, parseCookie } from './mk-cookies';
 
 import { router, dashboardRouter } from '../router';

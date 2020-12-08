@@ -1,13 +1,13 @@
 import { html, HTMLContent, CFWorkersHTMLResponse as HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
-import { shortenId } from '../../short-id';
+import { compressId } from '../../short-id';
 import { mkHostnameCookieKey } from '../mk-cookies';
 
 import { styles } from './styles';
 
 export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortIds = cookies.get('ids')?.split(',') ?? [];
-  const shortId = shortenId(uuid);
+  const shortId = compressId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
