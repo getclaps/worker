@@ -1,11 +1,13 @@
 import { JSONResponse } from '@werker/json-fetch';
-import { ok, notFound } from '@werker/response-creators';
+import { ok } from '@werker/response-creators';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
+import { router } from '../router';
 
 import { validateURL, extractData } from './claps';
 import { mkDNTCookieKey, parseCookie } from './mk-cookies';
+import { addCORSHeaders } from './cors';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -19,18 +21,7 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
   }
 }
 
-export async function handleViews({ requestURL, method, path, headers }: {
-  request: Request,
-  requestURL: URL,
-  headers: Headers,
-  method: string,
-  pathname: string,
-  path: string[],
-}) {
-  if (path.length > 1) return notFound();
-  if (method === 'OPTIONS') return ok();
-  if (method !== 'POST') return notFound();
-
+async function handleViews({ headers, requestURL }) {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
@@ -55,3 +46,7 @@ export async function handleViews({ requestURL, method, path, headers }: {
 
   return new JSONResponse(data);
 }
+
+// TODO: Need better way to handle CORS...
+router.options('/views', args => addCORSHeaders(args.request)(ok()))
+router.post('/views', args => handleViews(args).then(addCORSHeaders(args.request)));

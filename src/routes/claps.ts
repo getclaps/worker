@@ -1,12 +1,15 @@
 import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
-import { ok, badRequest, notFound } from '@werker/response-creators';
+import { ok, badRequest } from '@werker/response-creators';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
 import { IP_SALT_KEY, KV } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
+import { router, RouteArgs } from '../router';
+
 import { mkDNTCookieKey, parseCookie } from './mk-cookies';
+import { addCORSHeaders } from './cors';
 
 export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');
@@ -35,63 +38,56 @@ export const validateURL = (url: string) => {
   }
 }
 
-export async function handleClaps({ request, requestURL, method, path, headers }: {
-  request: Request,
-  requestURL: URL,
-  headers: Headers,
-  method: string,
-  pathname: string,
-  path: string[],
-}) {
-  if (path.length > 1) return notFound();
-
-  if (method === 'OPTIONS') return ok();
-
+export async function handlePostClaps({ request, requestURL, headers }: RouteArgs) {
   const dao: DAO = getDAO();
-
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(requestURL.searchParams.get('href') || requestURL.searchParams.get('url'));
+  ///---
 
-  switch (method) {
-    case 'POST': {
-      const { claps, id, nonce } = await request.json();
-      if (!RE_UUID.test(id)) {
-        return badRequest('Malformed id. Needs to be UUID');
-      }
-      if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
-        return badRequest('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER');
-      }
-      if (await checkProofOfClap({ url, claps, id, nonce }) !== true) {
-        return badRequest('Invalid nonce');
-      }
-
-      const { country, visitor } = await extractData(headers);
-
-      const cookies = parseCookie(headers.get('cookie') || '');
-
-      const data = await dao.updateClaps({
-        claps, nonce, country, visitor,
-        id: new UUID(id),
-        hostname: url.hostname,
-        href: url.href,
-        hash: url.hash,
-      }, {
-        originHostname: originURL.hostname,
-        ip: headers.get('cf-connecting-ip'),
-        dnt: cookies.has(mkDNTCookieKey(url.hostname))
-      });
-
-      return new JSONResponse(data);
-    }
-
-    case 'GET': {
-      const data = await dao.getClaps({
-        href: url.href,
-      });
-
-      return new JSONResponse(data);
-    }
-
-    default: return notFound();
+  const { claps, id, nonce } = await request.json();
+  if (!RE_UUID.test(id)) {
+    return badRequest('Malformed id. Needs to be UUID');
   }
+  if (!Number.isInteger(nonce) || nonce < 0 || nonce > Number.MAX_SAFE_INTEGER) {
+    return badRequest('Nonce needs to be integer between 0 and MAX_SAFE_INTEGER');
+  }
+  if (await checkProofOfClap({ url, claps, id, nonce }) !== true) {
+    return badRequest('Invalid nonce');
+  }
+
+  const { country, visitor } = await extractData(headers);
+
+  const cookies = parseCookie(headers.get('cookie') || '');
+
+  const data = await dao.updateClaps({
+    claps, nonce, country, visitor,
+    id: new UUID(id),
+    hostname: url.hostname,
+    href: url.href,
+    hash: url.hash,
+  }, {
+    originHostname: originURL.hostname,
+    ip: headers.get('cf-connecting-ip'),
+    dnt: cookies.has(mkDNTCookieKey(url.hostname))
+  });
+
+  return new JSONResponse(data);
 }
+
+export async function handleGetClaps({ requestURL, headers }: RouteArgs) {
+  const dao: DAO = getDAO();
+  const originURL = validateURL(headers.get('Origin'));
+  const url = validateURL(requestURL.searchParams.get('href') || requestURL.searchParams.get('url'));
+  ///---
+
+  const data = await dao.getClaps({
+    href: url.href,
+  });
+
+  return new JSONResponse(data);
+}
+
+// TODO: Need better way to handle CORS...
+router.options('/claps', args => addCORSHeaders(args.request)(ok()))
+router.post('/claps', args => handlePostClaps(args).then(addCORSHeaders(args.request)));
+router.get('/claps', args => handleGetClaps(args).then(addCORSHeaders(args.request)));

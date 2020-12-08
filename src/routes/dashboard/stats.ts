@@ -1,16 +1,15 @@
-import { UUID } from 'uuid-class';
 import { fallback, html, HTMLContent } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
 import { countriesByCode } from '../../vendor/countries';
-import { DashboardArgs } from '../dashboard';
+import { dashboardRouter } from '../../router';
+
 import { page } from './page';
 import { pURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
-import { elongateId } from '../../short-id';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-export async function statsPage({ requestURL, dao, isBookmarked, locale, cookies, uuid }: DashboardArgs) {
+dashboardRouter.get('/stats', ({ requestURL, dao, isBookmarked, locale, cookies, uuid }) => {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
@@ -140,4 +139,4 @@ export async function statsPage({ requestURL, dao, isBookmarked, locale, cookies
       </div>
     </div>
   `);
-}
+});

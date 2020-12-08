@@ -1,65 +1,22 @@
-import { badRequest } from '@werker/response-creators';
 import { html } from '@werker/html';
 
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
+import { dashboardRouter, DashboardArgs } from '../../router';
+
 import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, mkHostnameCookie } from '../mk-cookies';
-import { DashboardArgs } from '../dashboard';
+
 import { page } from './page';
 
-export async function settingsPage({ method, uuid, id, cookies, request, dao, isBookmarked }: DashboardArgs) {
-  const setHeaders = new Headers();
-
-  let showError = false;
-  let postDashboard: Dashboard;
-  let postCookieDNT: boolean;
-
-  if (method === 'POST') {
-    const fd = await request.formData();
-    switch (fd.get('method')) {
-      case 'domain': {
-        try {
-          postDashboard = await dao.appendDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
-        } catch (err) {
-          if (err instanceof ConflictError) {
-            showError = true;
-          } else throw err;
-        }
-        break;
-      }
-      case 'delete-domain': {
-        try {
-          postDashboard = await dao.removeDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
-        } catch (err) {
-          if (err instanceof ConflictError) {
-            showError = true;
-          } else throw err;
-        }
-        break;
-      }
-      case 'dnt': {
-        postCookieDNT = fd.get('dnt') === 'on'
-        postDashboard = await dao.upsertDashboard({ id: uuid, dnt: postCookieDNT });
-        setHeaders.append('Set-Cookie', mkDNTCookie(postCookieDNT, postDashboard.hostname[0]));
-        break;
-      }
-      // case 'relocate': {
-      //   const oldUUID = elongateId(id);
-      //   const newUUID = UUID.v4();
-      //   const { subscription } = await dao.relocateDashboard(oldUUID, newUUID);
-      //   const newId = shortenId(newUUID);
-      //   await stripeAPI(`/v1/subscriptions/${subscription}`, {
-      //     method: 'POST',
-      //     data: { 'metadata[dashboard_id]': shortenId(newUUID) },
-      //   });
-      //   return redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
-      //     headers: [['Set-Cookie', mkLoginCookie(newId)]],
-      //   });
-      // }
-      default: break;
-    }
-  } else if (method !== 'GET') return badRequest();
-
+async function settingsPage(
+  { uuid, id, cookies, dao, isBookmarked }: DashboardArgs, 
+  { setHeaders = new Headers(), postDashboard, postCookieDNT, showError }: {
+    setHeaders?: Headers, 
+    postDashboard?: Dashboard, 
+    postCookieDNT?: boolean, 
+    showError?: boolean,
+  } = {},
+) {
   const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
   return page({ dir: 'settings', cookies, uuid, isBookmarked, headers: setHeaders })(async () => {
@@ -214,3 +171,59 @@ export async function settingsPage({ method, uuid, id, cookies, request, dao, is
     `;
   });
 }
+
+dashboardRouter.get('/settings', settingsPage)
+dashboardRouter.post('/settings', async (args) => {
+  const { request, dao, uuid } = args;
+
+  const setHeaders = new Headers();
+
+  let showError = false;
+  let postDashboard: Dashboard;
+  let postCookieDNT: boolean;
+
+  const fd = await request.formData();
+  switch (fd.get('method')) {
+    case 'domain': {
+      try {
+        postDashboard = await dao.appendDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+      } catch (err) {
+        if (err instanceof ConflictError) {
+          showError = true;
+        } else throw err;
+      }
+      break;
+    }
+    case 'delete-domain': {
+      try {
+        postDashboard = await dao.removeDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+      } catch (err) {
+        if (err instanceof ConflictError) {
+          showError = true;
+        } else throw err;
+      }
+      break;
+    }
+    case 'dnt': {
+      postCookieDNT = fd.get('dnt') === 'on'
+      postDashboard = await dao.upsertDashboard({ id: uuid, dnt: postCookieDNT });
+      setHeaders.append('Set-Cookie', mkDNTCookie(postCookieDNT, postDashboard.hostname[0]));
+      break;
+    }
+    // case 'relocate': {
+    //   const oldUUID = elongateId(id);
+    //   const newUUID = UUID.v4();
+    //   const { subscription } = await dao.relocateDashboard(oldUUID, newUUID);
+    //   const newId = shortenId(newUUID);
+    //   await stripeAPI(`/v1/subscriptions/${subscription}`, {
+    //     method: 'POST',
+    //     data: { 'metadata[dashboard_id]': shortenId(newUUID) },
+    //   });
+    //   return redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
+    //     headers: [['Set-Cookie', mkLoginCookie(newId)]],
+    //   });
+    // }
+    default: break;
+  }
+  return settingsPage(args, { setHeaders, postDashboard, postCookieDNT, showError });
+})
