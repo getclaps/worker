@@ -1,4 +1,6 @@
+const fs = require('fs');
 const path = require('path')
+const { IgnorePlugin } = require('webpack');
 
 const mode = process.env.NODE_ENV || 'development'
 
@@ -26,7 +28,9 @@ module.exports = {
       },
     ],
   },
-  // plugins: [
-  //   new require('webpack').IgnorePlugin({ resourceRegExp: /\/billing/ }),
-  // ],
+  plugins: [
+    ...fs.existsSync(path.resolve('./src/billing/index.ts'))
+      ? []
+      : [new IgnorePlugin({ resourceRegExp: /\/billing/ })],
+  ],
 }
