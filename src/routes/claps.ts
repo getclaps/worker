@@ -86,6 +86,6 @@ export async function handleGetClaps({ searchParams, headers }: RouteArgs) {
 }
 
 // TODO: Need better way to handle CORS...
-router.options('/claps', args => addCORSHeaders(args.request)(re.ok()))
-router.post('/claps', args => handlePostClaps(args).then(addCORSHeaders(args.request)));
-router.get('/claps', args => handleGetClaps(args).then(addCORSHeaders(args.request)));
+router.options('/claps', args => addCORSHeaders(args)(re.ok()))
+router.post('/claps', args => handlePostClaps(args).then(addCORSHeaders(args)));
+router.get('/claps', args => handleGetClaps(args).then(addCORSHeaders(args)));

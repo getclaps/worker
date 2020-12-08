@@ -2,14 +2,15 @@ import { html, HTMLContent, fallback } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
 import { countriesByCode } from '../../vendor/countries';
-import { dashboardRouter } from '../../router';
+import { router } from '../../router';
 
 import { page } from './page';
 import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
+import { beforeDashboard } from '../dashboard';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-dashboardRouter.get('/stats', ({ requestURL, dao, isBookmarked, locale, cookies, uuid }) => {
+router.get('/stats', args => beforeDashboard(args).then(({ requestURL, dao, isBookmarked, locale, cookies, uuid }) => {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
@@ -139,4 +140,4 @@ dashboardRouter.get('/stats', ({ requestURL, dao, isBookmarked, locale, cookies,
       </div>
     </div>
   `);
-});
+}));

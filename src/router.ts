@@ -1,4 +1,3 @@
-import { HTMLResponse } from '@werker/html';
 import { Router, Method, Params } from 'tiny-request-router';
 import { UUID } from 'uuid-class';
 import { DAO } from './dao';
@@ -23,11 +22,7 @@ export interface DashboardArgs extends RouteArgs {
   locale: string;
 }
 
-type Handler = (args: RouteArgs) => Response | Promise<Response>
+export type Awaitable<T> = T | Promise<T>;
+export type Handler = (args: RouteArgs) => Awaitable<Response>;
+
 export const router = new Router<Handler>();
-
-// type APIHandler = (args: RouteArgs) => Response | Promise<Response>
-// export const apiRouter = new Router<APIHandler>();
-
-type DashboardHandler = (args: DashboardArgs) => HTMLResponse | Promise<HTMLResponse>;
-export const dashboardRouter = new Router<DashboardHandler>();

@@ -4,11 +4,12 @@ import { formatDistance } from 'date-fns';
 import { Base64Encoder } from 'base64-encoding';
 
 import { countriesByCode } from '../../vendor/countries';
-import { dashboardRouter } from '../../router';
+import { router } from '../../router';
 import { TimeUnit } from '../../dao';
 
 import { page } from './page';
 import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
+import { beforeDashboard } from '../dashboard';
 
 const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
@@ -18,7 +19,7 @@ const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
 </tr>`);
 
-dashboardRouter.get('/log', ({ dao, isBookmarked, cookies, uuid, locale, requestURL }) => {
+router.get('/log', args => beforeDashboard(args).then(({ dao, isBookmarked, cookies, uuid, locale, requestURL }) => {
   const timeFrame = requestURL.searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
@@ -85,4 +86,4 @@ dashboardRouter.get('/log', ({ dao, isBookmarked, cookies, uuid, locale, request
       </table>
     </div>
   `);
-});
+}));

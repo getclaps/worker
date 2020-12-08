@@ -48,5 +48,5 @@ async function handleViews({ headers, searchParams }) {
 }
 
 // TODO: Need better way to handle CORS...
-router.options('/views', args => addCORSHeaders(args.request)(re.ok()))
-router.post('/views', args => handleViews(args).then(addCORSHeaders(args.request)));
+router.options('/views', args => addCORSHeaders(args)(re.ok()))
+router.post('/views', args => handleViews(args).then(addCORSHeaders(args)));

@@ -2,8 +2,9 @@ import { html } from '@werker/html';
 
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
-import { dashboardRouter, DashboardArgs } from '../../router';
+import { router, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
+import { beforeDashboard } from '../dashboard';
 
 import { page } from './page';
 
@@ -170,8 +171,8 @@ async function settingsPage(
   });
 }
 
-dashboardRouter.get('/settings', settingsPage)
-dashboardRouter.post('/settings', async (args) => {
+router.get('/settings', args => beforeDashboard(args).then(settingsPage))
+router.post('/settings', args => beforeDashboard(args).then(async (args) => {
   const { request, dao, uuid } = args;
 
   const headers = new Headers();
@@ -220,4 +221,4 @@ dashboardRouter.post('/settings', async (args) => {
     default: break;
   }
   return settingsPage(args, { headers: headers, dashboard: dashboard, cookieDNT: cookieDNT, showError });
-})
+}));
