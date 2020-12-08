@@ -11,20 +11,20 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@cloudflare/workers-types": "^2.1.0",
-    "ts-loader": "^8.0.5",
-    "typescript": "^4.0.3"
+    "ts-loader": "^8.0.11",
+    "typescript": "^4.1.2"
   },
   "dependencies": {
     "@download/blockies": "github:qwtel/blockies",
-    "@getclaps/proof-of-clap": "^0.2.0",
-    "@werker/html": "^1.0.0",
-    "@werker/json-fetch": "^1.0.0",
-    "@werker/response-creators": "^1.0.0",
-    "@werker/stripe-webhook": "^1.0.0",
-    "base64-encoding": "^0.12.0",
+    "@getclaps/proof-of-clap": "^0.3.0",
+    "@werker/html": "^1.1.0",
+    "@werker/json-fetch": "^1.0.2",
+    "@werker/response-creators": "^1.0.2",
+    "@werker/stripe-webhook": "^1.1.0",
+    "base64-encoding": "^0.14.2",
     "date-fns": "^2.16.1",
-    "faunadb": "^3.0.1",
-    "uuid-class": "^0.10.0",
+    "faunadb": "^4.0.0",
+    "uuid-class": "^0.11.0",
     "xss": "^1.0.8"
   }
 }
