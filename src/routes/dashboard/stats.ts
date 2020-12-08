@@ -1,11 +1,11 @@
-import { fallback, html, HTMLContent } from '@werker/html';
+import { html, HTMLContent, fallback } from '@werker/html';
 
 import { TimeUnit } from '../../dao';
 import { countriesByCode } from '../../vendor/countries';
 import { dashboardRouter } from '../../router';
 
 import { page } from './page';
-import { pURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
+import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
@@ -60,7 +60,7 @@ dashboardRouter.get('/stats', ({ requestURL, dao, isBookmarked, locale, cookies,
               ${withFallback(x.then(x => x.views.slice(0, 16).map((stat) => html`
                 <tr>
                   <td style="width:30px">${noOpener(stat.href)}</td>
-                  <td title="${pURL(stat.href)?.href}" class="ellipsis" style="width:65%">${pURL(stat.href)?.pathname}</td>
+                  <td title="${parseURL(stat.href)?.href}" class="ellipsis" style="width:65%">${parseURL(stat.href)?.pathname}</td>
                   <td style="text-align:right">${stat.views.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>
@@ -80,7 +80,7 @@ dashboardRouter.get('/stats', ({ requestURL, dao, isBookmarked, locale, cookies,
               ${withFallback(x.then(x => x.claps.slice(0, 16).map((stat) => html`
                 <tr>
                   <td style="width:30px">${noOpener(stat.href)}</td>
-                  <td title="${pURL(stat.href)?.href}" class="ellipsis" style="width:65%">${pURL(stat.href)?.pathname}</td>
+                  <td title="${parseURL(stat.href)?.href}" class="ellipsis" style="width:65%">${parseURL(stat.href)?.pathname}</td>
                   <td style="text-align:right">${stat.claps.toLocaleString(locale)} (${stat.clappers.toLocaleString(locale)})</td>
                 </tr>`)))}
             </tbody>
@@ -122,7 +122,7 @@ dashboardRouter.get('/stats', ({ requestURL, dao, isBookmarked, locale, cookies,
               ${withFallback(x.then(x => x.referrals.slice(0, 16).map((stat) => html`
                 <tr>
                   <td style="width:30px">${noOpener(stat.referrer)}</td>
-                  <td title="${pURL(stat.referrer)?.href}" class="ellipsis" style="width:65%">${mkRef(stat.referrer)}</td>
+                  <td title="${parseURL(stat.referrer)?.href}" class="ellipsis" style="width:65%">${mkRef(stat.referrer)}</td>
                   <td style="text-align:right">${stat.referrals.toLocaleString(locale)}</td>
                 </tr>`)))}
             </tbody>

@@ -1,7 +1,7 @@
-import { html, HTMLContent, CFWorkersHTMLResponse as HTMLResponse } from '@werker/html';
+import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
 import { compressId } from '../../short-id';
-import { mkHostnameCookieKey } from '../mk-cookies';
+import { mkHostnameCookieKey } from '../cookies';
 
 import { styles } from './styles';
 

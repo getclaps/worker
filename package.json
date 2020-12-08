@@ -2,7 +2,7 @@
   "private": true,
   "name": "@getclaps/worker",
   "version": "1.0.0",
-  "description": "A template for kick starting a Cloudflare Workers project",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0"
@@ -18,7 +18,7 @@
   "dependencies": {
     "@download/blockies": "github:qwtel/blockies",
     "@getclaps/proof-of-clap": "^0.3.0",
-    "@werker/html": "^1.1.0",
+    "@werker/html": "^1.1.1",
     "@werker/json-fetch": "^1.0.2",
     "@werker/response-creators": "^1.0.2",
     "@werker/stripe-webhook": "^1.1.0",
@@ -26,7 +26,6 @@
     "date-fns": "^2.16.1",
     "faunadb": "^4.0.0",
     "tiny-request-router": "^1.2.2",
-    "uuid-class": "^0.11.0",
-    "xss": "^1.0.8"
+    "uuid-class": "^0.11.0"
   }
 }

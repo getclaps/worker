@@ -8,9 +8,9 @@ import { dashboardRouter } from '../../router';
 import { TimeUnit } from '../../dao';
 
 import { page } from './page';
-import { pURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
+import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './lib';
 
-const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
+const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
   <td>Something went wrong: ${err?.message ?? ''}</td>
   <td></td>
@@ -53,11 +53,15 @@ dashboardRouter.get('/log', ({ dao, isBookmarked, cookies, uuid, locale, request
             try {
               const logEntries = await dao.getLog(uuid, [value, unit]);
               const now = new Date();
-              return logEntries.filter(x => x && x.href != null).map(entry => withFallback(() => {
+              return logEntries.filter(x => x?.href != null).map(entry => withRowFallback(() => {
+                const url = parseURL(entry.href);
+
+                const cname = countriesByCode[entry.country]?.name ?? entry.country;
+                const emoji = countriesByCode[entry.country]?.emoji ?? '';
+
                 const seed = new Base64Encoder().encode(entry.visitor);
                 const img = `data:image/svg+xml;base64,${btoa(renderIconSVG({ seed, size: 8, scale: 2 }))}`;
-                const emoji = countriesByCode[entry.country]?.emoji ?? '';
-                const url = pURL(entry.href);
+
                 return html`<tr>
                   <td style="width:30px">${noOpener(entry.href)}</td>
                   ${url 
@@ -65,10 +69,10 @@ dashboardRouter.get('/log', ({ dao, isBookmarked, cookies, uuid, locale, request
                     : html`<td style="width:40%"></td>`}
                   <td style="width:30px">${noOpener(entry.referrer)}</td>
                   ${entry.referrer 
-                    ? html`<td title="${pURL(entry.referrer).href}" class="ellipsis" style="width:25%">${mkRef(entry.referrer)}</td>` 
+                    ? html`<td title="${parseURL(entry.referrer).href}" class="ellipsis" style="width:25%">${mkRef(entry.referrer)}</td>` 
                     : html`<td style="width:25%"></td>`}
                   <td style="width:15%">${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
-                  <td><span title="${countriesByCode[entry.country]?.name ?? entry.country}">${emoji}</span></td>
+                  <td><span title="${cname}">${emoji}</span></td>
                   <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
                   <td style="text-align:right">${entry.claps?.toLocaleString(locale) ?? ''}</td>
                 </tr>`; 

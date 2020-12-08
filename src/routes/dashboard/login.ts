@@ -1,32 +1,31 @@
+import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
 import { router } from '../../router';
 import { page } from './page';
 
-import { seeOther } from '@werker/response-creators';
-
 import { WORKER_DOMAIN } from '../../constants';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { elongateId } from '../../short-id';
-import { mkBookmarkedCookie, mkHostnameCookie, mkLoginCookie, mkLoginsCookie, mkLogoutCookie, mkLogoutsCookie, parseCookie } from '../mk-cookies';
+import * as cc from '../cookies';
 
 router.get('/logout', async ({ headers }) => {
-  const cookies = parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie') || '');
 
   const did = cookies.get('did');
   const ids = cookies.get('ids')?.split(',')?.filter(_ => _ !== did) ?? [];
-  return seeOther(new URL(`/`, WORKER_DOMAIN), {
+  return re.seeOther(new URL(`/`, WORKER_DOMAIN), {
     headers: [
-      ['Set-Cookie', ids.length ? mkLoginCookie(ids[0]) : mkLogoutCookie()],
-      ['Set-Cookie', mkLogoutsCookie(cookies, cookies.get('did'))],
+      ['Set-Cookie', ids.length ? cc.mkLoginCookie(ids[0]) : cc.mkLogoutCookie()],
+      ['Set-Cookie', cc.mkLogoutsCookie(cookies, cookies.get('did'))],
     ],
   });
 })
 
 router.post('/login', async ({ request, headers }) => {
   const dao: DAO = getDAO();
-  const cookies = parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie') || '');
 
   const formData = await request.formData()
   const id = formData.get('password').toString();
@@ -38,15 +37,15 @@ router.post('/login', async ({ request, headers }) => {
     const d = await dao.getDashboard(uuid);
     if (!d) throw Error();
   } catch {
-    return seeOther(new URL(referrer, WORKER_DOMAIN))
+    return re.seeOther(new URL(referrer, WORKER_DOMAIN))
   }
 
-  return seeOther(new URL(referrer, WORKER_DOMAIN), {
+  return re.seeOther(new URL(referrer, WORKER_DOMAIN), {
     headers: [
-      ['Set-Cookie', mkLoginCookie(id)],
-      ['Set-Cookie', mkLoginsCookie(cookies, id)],
-      ['Set-Cookie', await mkBookmarkedCookie(id)],
-      ...hostname ? [['Set-Cookie', await mkHostnameCookie(id, hostname)]] : [],
+      ['Set-Cookie', cc.mkLoginCookie(id)],
+      ['Set-Cookie', cc.mkLoginsCookie(cookies, id)],
+      ['Set-Cookie', await cc.mkBookmarkedCookie(id)],
+      ...hostname ? [['Set-Cookie', await cc.mkHostnameCookie(id, hostname)]] : [],
     ],
   });
 });

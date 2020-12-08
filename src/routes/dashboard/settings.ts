@@ -3,26 +3,24 @@ import { html } from '@werker/html';
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { dashboardRouter, DashboardArgs } from '../../router';
-
-import { mkDNTCookie, mkDNTCookieKey, mkBookmarkedCookie, mkHostnameCookie } from '../mk-cookies';
+import * as cc from '../cookies';
 
 import { page } from './page';
 
+const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
+
 async function settingsPage(
   { uuid, id, cookies, dao, isBookmarked }: DashboardArgs, 
-  { setHeaders = new Headers(), postDashboard, postCookieDNT, showError }: {
-    setHeaders?: Headers, 
-    postDashboard?: Dashboard, 
-    postCookieDNT?: boolean, 
+  { headers = new Headers(), dashboard, cookieDNT, showError }: {
+    headers?: Headers, 
+    dashboard?: Dashboard, 
+    cookieDNT?: boolean, 
     showError?: boolean,
   } = {},
 ) {
-  const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
-
-  return page({ dir: 'settings', cookies, uuid, isBookmarked, headers: setHeaders })(async () => {
-    let dashboard: Dashboard;
+  return page({ dir: 'settings', cookies, uuid, isBookmarked, headers })(async () => {
     try {
-      dashboard = postDashboard || await dao.getDashboard(uuid);
+      dashboard = dashboard || await dao.getDashboard(uuid);
     } catch (e) {
       throw html`<div>Something went wrong.</div>`;
     }
@@ -30,7 +28,7 @@ async function settingsPage(
     // const isMac = (headers.get('user-agent') || '').match(/mac/i);
     // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)
 
-    let cookieDNT = postCookieDNT || cookies.has(mkDNTCookieKey(dashboard.hostname[0]));
+    cookieDNT = cookieDNT || cookies.has(cc.mkDNTCookieKey(dashboard.hostname[0]));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
@@ -119,7 +117,7 @@ async function settingsPage(
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                document.cookie = '${await mkBookmarkedCookie(id)}';
+                document.cookie = '${await cc.mkBookmarkedCookie(id)}';
                 if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
               }));
@@ -166,8 +164,8 @@ async function settingsPage(
         </div>
         <div></div>
       </div>
-      <script>document.cookie = '${mkDNTCookie(dashboard.dnt, dashboard.hostname[0])}';</script>
-      <script>document.cookie = '${mkHostnameCookie(id, dashboard.hostname[0])}';</script>
+      <script>document.cookie = '${cc.mkDNTCookie(dashboard.dnt, dashboard.hostname[0])}';</script>
+      <script>document.cookie = '${cc.mkHostnameCookie(id, dashboard.hostname[0])}';</script>
     `;
   });
 }
@@ -176,38 +174,34 @@ dashboardRouter.get('/settings', settingsPage)
 dashboardRouter.post('/settings', async (args) => {
   const { request, dao, uuid } = args;
 
-  const setHeaders = new Headers();
+  const headers = new Headers();
 
   let showError = false;
-  let postDashboard: Dashboard;
-  let postCookieDNT: boolean;
+  let dashboard: Dashboard;
+  let cookieDNT: boolean;
 
   const fd = await request.formData();
   switch (fd.get('method')) {
     case 'domain': {
       try {
-        postDashboard = await dao.appendDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+        dashboard = await dao.appendDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
       } catch (err) {
-        if (err instanceof ConflictError) {
-          showError = true;
-        } else throw err;
+        if (err instanceof ConflictError) { showError = true } else throw err;
       }
       break;
     }
     case 'delete-domain': {
       try {
-        postDashboard = await dao.removeDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+        dashboard = await dao.removeDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
       } catch (err) {
-        if (err instanceof ConflictError) {
-          showError = true;
-        } else throw err;
+        if (err instanceof ConflictError) { showError = true } else throw err;
       }
       break;
     }
     case 'dnt': {
-      postCookieDNT = fd.get('dnt') === 'on'
-      postDashboard = await dao.upsertDashboard({ id: uuid, dnt: postCookieDNT });
-      setHeaders.append('Set-Cookie', mkDNTCookie(postCookieDNT, postDashboard.hostname[0]));
+      cookieDNT = fd.get('dnt') === 'on'
+      dashboard = await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
+      headers.append('Set-Cookie', cc.mkDNTCookie(cookieDNT, dashboard.hostname[0]));
       break;
     }
     // case 'relocate': {
@@ -225,5 +219,5 @@ dashboardRouter.post('/settings', async (args) => {
     // }
     default: break;
   }
-  return settingsPage(args, { setHeaders, postDashboard, postCookieDNT, showError });
+  return settingsPage(args, { headers: headers, dashboard: dashboard, cookieDNT: cookieDNT, showError });
 })

@@ -1,9 +1,9 @@
-import { notFound, seeOther } from '@werker/response-creators';
+import * as re from '@werker/response-creators';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
-import { elongateId, compressId } from '../short-id';
-import { mkBookmarkedCookieKey, mkLoginCookie, mkLoginsCookie, parseCookie } from './mk-cookies';
+import { elongateId } from '../short-id';
+import * as cc from './cookies';
 
 import { router, dashboardRouter } from '../router';
 
@@ -16,14 +16,14 @@ router.all('/(stats|log|settings|subscription)', async (params) => {
     const dao: DAO = getDAO();
     const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
 
-    const cookies = parseCookie(headers.get('cookie') || '');
+    const cookies = cc.parseCookie(headers.get('cookie') || '');
 
     const id = cookies.get('did');
-    if (!id) return seeOther('/login');
+    if (!id) return re.seeOther('/login');
 
     const uuid = elongateId(id);
 
-    const isBookmarked = cookies.has(await mkBookmarkedCookieKey(id));
+    const isBookmarked = cookies.has(await cc.mkBookmarkedCookieKey(id));
 
     event.waitUntil((async () => {
       const ip = headers.get('cf-connecting-ip');
@@ -34,5 +34,5 @@ router.all('/(stats|log|settings|subscription)', async (params) => {
 
     return match.handler({ ...params, id, uuid, cookies, dao, isBookmarked, locale });
   }
-  return notFound();
+  return re.notFound();
 });

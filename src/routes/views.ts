@@ -1,13 +1,13 @@
+import * as re from '@werker/response-creators';
 import { JSONResponse } from '@werker/json-fetch';
-import { ok } from '@werker/response-creators';
 
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { router } from '../router';
 
 import { validateURL, extractData } from './claps';
-import { mkDNTCookieKey, parseCookie } from './mk-cookies';
 import { addCORSHeaders } from './cors';
+import * as cc from './cookies';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -21,16 +21,16 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
   }
 }
 
-async function handleViews({ headers, requestURL }) {
+async function handleViews({ headers, searchParams }) {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
-  const url = validateURL(requestURL.searchParams.get('href') || requestURL.searchParams.get('url'));
+  const url = validateURL(searchParams.get('href') || searchParams.get('url'));
 
-  const referrer = getReferrer(requestURL.searchParams.get('referrer'), url.hostname);
+  const referrer = getReferrer(searchParams.get('referrer'), url.hostname);
   const { country, visitor } = await extractData(headers);
 
-  const cookies = parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie') || '');
 
   const data = await dao.getClapsAndUpdateViews({
     hostname: url.hostname,
@@ -41,12 +41,12 @@ async function handleViews({ headers, requestURL }) {
   }, {
     originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),
-    dnt: cookies.has(mkDNTCookieKey(url.hostname))
+    dnt: cookies.has(cc.mkDNTCookieKey(url.hostname))
   });
 
   return new JSONResponse(data);
 }
 
 // TODO: Need better way to handle CORS...
-router.options('/views', args => addCORSHeaders(args.request)(ok()))
+router.options('/views', args => addCORSHeaders(args.request)(re.ok()))
 router.post('/views', args => handleViews(args).then(addCORSHeaders(args.request)));
