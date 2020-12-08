@@ -30,7 +30,7 @@ dashboardRouter.get('/log', ({ dao, isBookmarked, cookies, uuid, locale, request
       <form id="log-query" method="GET" action="/log">
         <label class="bp3-label bp3-inline" style="display:inline-block; margin-bottom:2rem">
           Show data for the last
-          ${htmlTimeFrameSelect(['1-hour', '2-hours', '6-hours', '12-hours', '24-hours'], timeFrame)}
+          ${htmlTimeFrameSelect(['1-hour', '3-hours', '6-hours', '12-hours', '24-hours'], timeFrame)}
           <script>document.querySelectorAll('#log-query select').forEach(el => el.addEventListener('change', e => e.target.form.submit()))</script>
           <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
         </label>
