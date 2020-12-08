@@ -13,8 +13,13 @@ import './routes/index';
 // @ts-ignore
 resolveOrNull(import(/* webpackMode: "eager" */ './billing')); 
 
+async function resetIPSalt() {
+  await KV.put(IP_SALT_KEY, new UUID().id);
+}
+
 router.post('/__init', async ({ headers }) => {
   if (headers.get('Authorization') !== AUTH) return re.unauthorized();
+  await resetIPSalt();
   await getDAO().init();
   return re.ok();
 });
@@ -58,10 +63,6 @@ async function handleRequest(event: FetchEvent) {
     }
   }
   return re.notFound();
-}
-
-async function resetIPSalt() {
-  await KV.put(IP_SALT_KEY, UUID.v4().toString());
 }
 
 async function handleScheduled(scheduledDate: Date) {

@@ -47,6 +47,5 @@ async function handleViews({ headers, searchParams }) {
   return new JSONResponse(data);
 }
 
-// TODO: Need better way to handle CORS...
 router.options('/views', args => addCORSHeaders(args)(re.ok()))
 router.post('/views', args => handleViews(args).then(addCORSHeaders(args)));
