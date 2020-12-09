@@ -21,7 +21,7 @@ router.get('/__init', async ({ headers }) => {
   if (headers.get('Authorization') !== AUTH) return re.unauthorized();
   await resetIPSalt();
   await getDAO().init();
-  return re.ok();
+  return re.ok('Init success');
 });
 
 router.get('/', async ({ headers }) => {
