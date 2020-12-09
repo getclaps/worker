@@ -17,7 +17,7 @@ async function resetIPSalt() {
   await KV.put(IP_SALT_KEY, new UUID().id);
 }
 
-router.post('/__init', async ({ headers }) => {
+router.get('/__init', async ({ headers }) => {
   if (headers.get('Authorization') !== AUTH) return re.unauthorized();
   await resetIPSalt();
   await getDAO().init();

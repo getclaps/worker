@@ -20,7 +20,7 @@
     "@getclaps/proof-of-clap": "^0.3.0",
     "@werker/html": "^1.1.2",
     "@werker/json-fetch": "^1.0.2",
-    "@werker/response-creators": "^1.0.2",
+    "@werker/response-creators": "^1.0.3",
     "@werker/stripe-webhook": "^1.1.0",
     "base64-encoding": "^0.14.2",
     "date-fns": "^2.16.1",
