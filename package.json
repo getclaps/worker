@@ -25,6 +25,7 @@
     "base64-encoding": "^0.14.2",
     "date-fns": "^2.16.1",
     "faunadb": "^4.0.0",
+    "ipaddr.js": "^2.0.0",
     "tiny-request-router": "^1.2.2",
     "uuid-class": "^0.11.0"
   }

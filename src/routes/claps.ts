@@ -2,6 +2,7 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
+import * as ipAddr from 'ipaddr.js';
 
 import { IP_SALT_KEY, KV } from '../constants';
 import { DAO } from '../dao';
@@ -11,10 +12,22 @@ import { router, RouteArgs } from '../router';
 import * as cc from './cookies';
 import { addCORSHeaders } from './cors';
 
+async function getVisitor(ip: string) {
+  if (!ip) return null;
+  try {
+    const ipSalt = await KV.get(IP_SALT_KEY);
+    const ipBase = new Uint8Array(ipAddr.parse(ip).toByteArray());
+    return await UUID.v5(ipBase, ipSalt);
+  } catch {
+    return null;
+  }
+}
+
 export async function extractData(headers: Headers) {
   const country = headers.get('cf-ipcountry');
-  const ipSalt = await KV.get(IP_SALT_KEY);
-  const visitor = await UUID.v5(headers.get('cf-connecting-ip') || '', ipSalt);
+
+  const visitor = await getVisitor(headers.get('cf-connecting-ip'));
+
   return { country, visitor };
 }
 
