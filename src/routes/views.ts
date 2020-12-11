@@ -28,7 +28,7 @@ async function handleViews({ headers, searchParams }) {
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
 
   const referrer = getReferrer(searchParams.get('referrer'), url.hostname);
-  const { country, visitor } = await extractData(headers);
+  const extractedData = await extractData(headers);
 
   const cookies = cc.parseCookie(headers.get('cookie') || '');
 
@@ -36,8 +36,7 @@ async function handleViews({ headers, searchParams }) {
     hostname: url.hostname,
     href: url.href,
     referrer,
-    country,
-    visitor,
+    ...extractedData
   }, {
     originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),

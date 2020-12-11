@@ -3,6 +3,7 @@ import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 import * as ipAddr from 'ipaddr.js';
+import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 
 import { IP_SALT_KEY, KV } from '../constants';
 import { DAO } from '../dao';
@@ -28,7 +29,13 @@ export async function extractData(headers: Headers) {
 
   const visitor = await getVisitor(headers.get('cf-connecting-ip'));
 
-  return { country, visitor };
+  let device: DeviceDetectorResult
+  try {
+    const deviceDetector = new DeviceDetector({ skipBotDetection: true });
+    device = deviceDetector.parse(headers.get('user-agent'));
+  } catch (err) {}
+
+  return { country, visitor, device };
 }
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
@@ -67,12 +74,14 @@ export async function handlePostClaps({ request, headers, searchParams }: RouteA
     return re.badRequest('Invalid nonce');
   }
 
-  const { country, visitor } = await extractData(headers);
+  const extractedData = await extractData(headers);
 
   const cookies = cc.parseCookie(headers.get('cookie') || '');
 
   const data = await dao.updateClaps({
-    claps, nonce, country, visitor,
+    claps, 
+    nonce,
+    ...extractedData,
     id: new UUID(id),
     hostname: url.hostname,
     href: url.href,

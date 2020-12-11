@@ -1,4 +1,5 @@
 import { UUID } from 'uuid-class';
+import { DeviceDetectorResult } from 'device-detector-js';
 
 export interface DAO {
   init(): Promise<void>;
@@ -27,22 +28,22 @@ export interface Dashboard {
   [k: string]: any,
 }
 
-export interface ClapData {
+interface ViewDataLike {
   hostname: string,
   href: string,
-  hash: string,
-  id: UUID,
-  visitor: UUID,
-  claps: number,
-  nonce: number,
   country: string,
+  visitor: UUID,
+  device: DeviceDetectorResult,
 }
 
-export interface ViewData {
-  hostname: string,
-  href: string,
-  country: string,
-  visitor: UUID,
+export interface ClapData extends ViewDataLike {
+  hash: string,
+  id: UUID,
+  claps: number,
+  nonce: number,
+}
+
+export interface ViewData extends ViewDataLike {
   referrer: string,
 }
 
