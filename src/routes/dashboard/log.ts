@@ -43,7 +43,6 @@ router.get('/log', args => beforeDashboard(args).then(({ dao, isBookmarked, cook
             <th></th>
             <th>Referrer</th>
             <th>Time ago</th>
-            <th>Country</th>
             <th>Visitor</th>
             <th style="text-align:right">Claps</th>
           </tr>
@@ -72,8 +71,7 @@ router.get('/log', args => beforeDashboard(args).then(({ dao, isBookmarked, cook
                     ? html`<td title="${parseURL(entry.referrer).href}" class="ellipsis" style="width:25%">${mkRef(entry.referrer)}</td>` 
                     : html`<td style="width:25%"></td>`}
                   <td style="width:15%">${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
-                  <td><span title="${cname}">${emoji}</span></td>
-                  <td><img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
+                  <td><span title="${cname}">${emoji}</span> <img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>
                   <td style="text-align:right">${entry.claps?.toLocaleString(locale) ?? ''}</td>
                 </tr>`; 
               }));

@@ -53,6 +53,6 @@ export const styles = css`
   .unlock.hidden { display: none }
   .identicon {
     border-radius: 8px; 
-    display: inline-block;
-    margin-top: 2px }
+    position: relative;
+    bottom: -2px }
 `;
