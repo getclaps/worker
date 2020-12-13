@@ -1,3 +1,2 @@
-import './claps';
-import './views';
+import './api';
 import './dashboard';

@@ -3,14 +3,14 @@ import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
-import { DAO } from '../dao';
-import { getDAO } from '../dao/get-dao';
-import { router, RouteArgs } from '../router';
+import { DAO } from '../../dao';
+import { getDAO } from '../../dao/get-dao';
+import { router, RouteArgs } from '../../router';
 
-import * as cc from './cookies';
-import { addCORSHeaders } from './cors';
-import { validateURL } from './validate';
-import { extractData } from './extract';
+import * as cc from '../cookies';
+import { addCORSHeaders } from '../cors';
+import { validateURL } from '../validate';
+import { extractData } from '../extract';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 

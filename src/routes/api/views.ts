@@ -1,14 +1,14 @@
 import * as re from '@werker/response-creators';
 import { JSONResponse } from '@werker/json-fetch';
 
-import { DAO } from '../dao';
-import { getDAO } from '../dao/get-dao';
-import { router } from '../router';
+import { DAO } from '../../dao';
+import { getDAO } from '../../dao/get-dao';
+import { router } from '../../router';
 
-import { addCORSHeaders } from './cors';
-import * as cc from './cookies';
-import { validateURL } from './validate';
-import { extractData } from './extract';
+import { addCORSHeaders } from '../cors';
+import * as cc from '../cookies';
+import { validateURL } from '../validate';
+import { extractData } from '../extract';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
