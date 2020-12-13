@@ -78,7 +78,7 @@ export async function handlePostClaps({ request, headers, searchParams }: RouteA
 
   const extractedData = await extractData(headers);
 
-  const cookies = cc.parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const data = await dao.updateClaps({
     claps, 

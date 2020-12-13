@@ -25,7 +25,7 @@ router.get('/__init', async ({ headers }) => {
 });
 
 router.get('/', async ({ headers }) => {
-  const cookies = cc.parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const id = cookies.get('did');
   if (!id) return re.seeOther('/login');

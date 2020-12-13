@@ -11,7 +11,7 @@ import * as cc from '../cookies';
 import { page } from './common';
 
 router.get('/logout', async ({ headers }) => {
-  const cookies = cc.parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const did = cookies.get('did');
   const ids = cookies.get('ids')?.split(',')?.filter(_ => _ !== did) ?? [];
@@ -25,7 +25,7 @@ router.get('/logout', async ({ headers }) => {
 
 router.post('/login', async ({ request, headers }) => {
   const dao: DAO = getDAO();
-  const cookies = cc.parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const formData = await request.formData()
   const id = formData.get('password').toString();

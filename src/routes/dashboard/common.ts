@@ -17,7 +17,7 @@ export async function beforeDashboard(params: RouteArgs): Promise<DashboardArgs>
   const dao: DAO = getDAO();
   const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
 
-  const cookies = cc.parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const id = cookies.get('did');
   if (!id) throw re.seeOther('/login');

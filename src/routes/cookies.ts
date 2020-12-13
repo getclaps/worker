@@ -1,7 +1,7 @@
 import { Base64Encoder } from "base64-encoding";
 import { WORKER_DOMAIN } from "../constants";
 
-export const parseCookie = (cookie: string) => new Map<string, string>(cookie.split(/;\s*/)
+export const parseCookie = (cookie: string) => new Map<string, string>(cookie?.split(/;\s*/)
   .map(x => x.split('='))
   .map(([k, v]) => [k, v] as [string, string])
   .filter(([k]) => !!k)

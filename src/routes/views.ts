@@ -30,7 +30,7 @@ async function handleViews({ headers, searchParams }) {
   const referrer = getReferrer(searchParams.get('referrer'), url.hostname);
   const extractedData = await extractData(headers);
 
-  const cookies = cc.parseCookie(headers.get('cookie') || '');
+  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const data = await dao.getClapsAndUpdateViews({
     hostname: url.hostname,
