@@ -2,63 +2,17 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
-import * as ipAddr from 'ipaddr.js';
-import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 
-import { DEBUG, IP_SALT_KEY, KV } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { router, RouteArgs } from '../router';
 
 import * as cc from './cookies';
 import { addCORSHeaders } from './cors';
+import { validateURL } from './validate';
+import { extractData } from './extract';
 
-async function getVisitor(ip: string) {
-  if (!ip) return null;
-  try {
-    const ipSalt = await KV.get(IP_SALT_KEY);
-    const ipBase = new Uint8Array(ipAddr.parse(ip).toByteArray());
-    return await UUID.v5(ipBase, ipSalt);
-  } catch {
-    return null;
-  }
-}
-
-export async function extractData(headers: Headers) {
-  const country = headers.get('cf-ipcountry');
-
-  const visitor = await getVisitor(headers.get('cf-connecting-ip'));
-
-  let device: DeviceDetectorResult = null;
-  if (!DEBUG) {
-    try {
-      const deviceDetector = new DeviceDetector({ skipBotDetection: true });
-      device = deviceDetector.parse(headers.get('user-agent'));
-    } catch (err) {}
-  }
-
-  return { country, visitor, device };
-}
-
-const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
-
-// A non-empty scheme component followed by a colon (:),
-// consisting of a sequence of characters beginning with a letter and 
-// followed by any combination of letters, digits, plus (+), period (.), or hyphen (-).
-const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
-
-export const validateURL = (url: string) => {
-  try {
-    if (!url) throw re.badRequest('No url provided')
-    if (url.length > 4096) throw re.badRequest('URL too long. 4096 characters max.');
-    const withProtocol = url.match(RE_PROTOCOL) ? url : `https://${url}`;
-    const targetURL = new URL(withProtocol);
-    targetURL.search = '';
-    return targetURL;
-  } catch {
-    throw re.badRequest('Invalid or missing URL');
-  }
-}
+const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
 export async function handlePostClaps({ request, headers, searchParams }: RouteArgs) {
   const dao: DAO = getDAO();
