@@ -5,7 +5,7 @@ import { checkProofOfClap } from '@getclaps/proof-of-clap';
 import * as ipAddr from 'ipaddr.js';
 import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 
-import { IP_SALT_KEY, KV } from '../constants';
+import { DEBUG, IP_SALT_KEY, KV } from '../constants';
 import { DAO } from '../dao';
 import { getDAO } from '../dao/get-dao';
 import { router, RouteArgs } from '../router';
@@ -29,11 +29,13 @@ export async function extractData(headers: Headers) {
 
   const visitor = await getVisitor(headers.get('cf-connecting-ip'));
 
-  let device: DeviceDetectorResult
-  try {
-    const deviceDetector = new DeviceDetector({ skipBotDetection: true });
-    device = deviceDetector.parse(headers.get('user-agent'));
-  } catch (err) {}
+  let device: DeviceDetectorResult = null;
+  if (!DEBUG) {
+    try {
+      const deviceDetector = new DeviceDetector({ skipBotDetection: true });
+      device = deviceDetector.parse(headers.get('user-agent'));
+    } catch (err) {}
+  }
 
   return { country, visitor, device };
 }

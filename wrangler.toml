@@ -3,8 +3,6 @@ type = "webpack"
 account_id = "efb289061241436254219b424fcea4cf"
 workers_dev = true
 webpack_config = "webpack.config.js"
-# route = ""
-# zone_id = ""
 kv_namespaces = [ 
   { binding = "KV_NAMESPACE", id = "13cc39b5283e4b3f9910ba08cc87d2c3", preview_id = "13cc39b5283e4b3f9910ba08cc87d2c3" }
 ]
@@ -27,13 +25,13 @@ kv_namespaces = [
   ]
 
   [env.staging.vars]
-    DEBUG = 'true'
     WORKER_DOMAIN = 'https://worker.getclaps.dev'
     STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
     STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.production]
   name = "clap-worker"
+  # TODO:
   # route = "https://worker.getclaps.dev/*"
   # zone_id = "a0f647422a7f0fba9b734898e8a7883f"
   # kv_namespaces = [
@@ -41,7 +39,6 @@ kv_namespaces = [
   # ]
 
   [env.production.vars]
-    DEBUG = 'false'
     WORKER_DOMAIN = 'https://worker.getclaps.net'
-    STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
-    STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+    STRIPE_PRICE_ID = "TODO"
+    STRIPE_PUBLISHABLE_KEY = "TODO"
