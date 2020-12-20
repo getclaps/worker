@@ -36,7 +36,7 @@ router.get('/', async ({ headers }) => {
   return re.seeOther('/stats')
 });
 
-function handleError(err: any) {
+export function handleError(err: any) {
   if (err instanceof Response) return err;
   if (err instanceof er.NotFoundError) return re.notFound(err.message);
   if (err instanceof er.PaymentRequiredError) return re.paymentRequired(err.message);

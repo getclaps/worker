@@ -11,6 +11,7 @@ import * as cc from '../cookies';
 import { addCORSHeaders } from '../cors';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { handleError } from '../..';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -64,5 +65,5 @@ export async function handleGetClaps({ searchParams, headers }: RouteArgs) {
 }
 
 router.options('/claps', args => addCORSHeaders(args)(re.ok()))
-router.post('/claps', args => handlePostClaps(args).then(addCORSHeaders(args)));
-router.get('/claps', args => handleGetClaps(args).then(addCORSHeaders(args)));
+router.post('/claps', args => handlePostClaps(args).catch(handleError).then(addCORSHeaders(args)));
+router.get('/claps', args => handleGetClaps(args).catch(handleError).then(addCORSHeaders(args)));

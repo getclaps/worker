@@ -9,6 +9,7 @@ import { addCORSHeaders } from '../cors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { handleError } from '../..';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -48,4 +49,4 @@ async function handleViews({ headers, searchParams }) {
 }
 
 router.options('/views', args => addCORSHeaders(args)(re.ok()))
-router.post('/views', args => handleViews(args).then(addCORSHeaders(args)));
+router.post('/views', args => handleViews(args).catch(handleError).then(addCORSHeaders(args)));
