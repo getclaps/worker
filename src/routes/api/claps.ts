@@ -30,7 +30,7 @@ export async function handlePostClaps({ request, headers, searchParams }: RouteA
     return re.badRequest('Invalid nonce');
   }
 
-  const extractedData = await extractData(headers);
+  const extractedData = await extractData(headers, originURL.hostname);
 
   const cookies = cc.parseCookie(headers.get('cookie'));
 

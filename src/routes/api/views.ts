@@ -29,7 +29,7 @@ async function handleViews({ headers, searchParams }) {
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
 
   const referrer = getReferrer(searchParams.get('referrer'), url.hostname);
-  const extractedData = await extractData(headers);
+  const extractedData = await extractData(headers, originURL.hostname);
 
   const cookies = cc.parseCookie(headers.get('cookie'));
 
