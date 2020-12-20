@@ -18,27 +18,27 @@ kv_namespaces = [
 
 [env.staging]
   name = "clap-worker-stage"
-  route = "https://worker.getclaps.dev/*"
+  route = "https://stage-worker.getclaps.dev/*"
   zone_id = "a0f647422a7f0fba9b734898e8a7883f"
   kv_namespaces = [
     { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
   ]
 
   [env.staging.vars]
-    WORKER_DOMAIN = 'https://worker.getclaps.dev'
+    WORKER_DOMAIN = 'https://stage-worker.getclaps.dev'
     STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
     STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.production]
   name = "clap-worker"
+  route = "https://worker.getclaps.dev/*"
+  zone_id = "a0f647422a7f0fba9b734898e8a7883f"
   # TODO:
-  # route = "https://worker.getclaps.dev/*"
-  # zone_id = "a0f647422a7f0fba9b734898e8a7883f"
   # kv_namespaces = [
   #   { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
   # ]
 
   [env.production.vars]
     WORKER_DOMAIN = 'https://worker.getclaps.net'
-    STRIPE_PRICE_ID = "TODO"
-    STRIPE_PUBLISHABLE_KEY = "TODO"
+    STRIPE_PRICE_ID = "price_1I0K7OJ61lhnKf1rSWycIXdZ"
+    STRIPE_PUBLISHABLE_KEY = "pk_live_51HGcLVJ61lhnKf1r2Ic1uZGgvsexTk8aGpJvMB7cqIav7kvO7Fk9639sWNescJ4tQJekG4ACRPmrJGaEWTBSnKJZ00wJw7qbkN"
