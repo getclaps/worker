@@ -33,10 +33,9 @@ kv_namespaces = [
   name = "clap-worker-production"
   route = "https://worker.getclaps.dev/*"
   zone_id = "a0f647422a7f0fba9b734898e8a7883f"
-  # TODO:
-  # kv_namespaces = [
-  #   { binding = "KV_NAMESPACE", id = "1b7502d1fe76494b84eb0330dd31f58b" }
-  # ]
+  kv_namespaces = [
+    { binding = "KV_NAMESPACE", id = "b4a2fe0155804185a6493e257b993f0b" }
+  ]
 
   [env.production.vars]
     WORKER_DOMAIN = 'https://worker.getclaps.dev'
