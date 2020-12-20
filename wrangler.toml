@@ -39,6 +39,6 @@ kv_namespaces = [
   # ]
 
   [env.production.vars]
-    WORKER_DOMAIN = 'https://worker.getclaps.net'
+    WORKER_DOMAIN = 'https://worker.getclaps.dev'
     STRIPE_PRICE_ID = "price_1I0K7OJ61lhnKf1rSWycIXdZ"
     STRIPE_PUBLISHABLE_KEY = "pk_live_51HGcLVJ61lhnKf1r2Ic1uZGgvsexTk8aGpJvMB7cqIav7kvO7Fk9639sWNescJ4tQJekG4ACRPmrJGaEWTBSnKJZ00wJw7qbkN"
