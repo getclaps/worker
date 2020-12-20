@@ -30,7 +30,7 @@ kv_namespaces = [
     STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
 [env.production]
-  name = "clap-worker"
+  name = "clap-worker-production"
   route = "https://worker.getclaps.dev/*"
   zone_id = "a0f647422a7f0fba9b734898e8a7883f"
   # TODO:
