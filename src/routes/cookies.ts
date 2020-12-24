@@ -49,3 +49,7 @@ export const mkLogoutsCookie = (cookies: Map<string, string>, id: string) => {
   ids = ids.filter(_ => _ !== id);
   return `ids=${ids.join(',')}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
 }
+
+export const mkSessionCookie = (name: string, ssid: string) => {
+  return `${name}=${ssid}; Path=/; SameSite=Lax; ${Secure} HttpOnly`;
+}
