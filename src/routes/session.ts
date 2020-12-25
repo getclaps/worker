@@ -1,13 +1,10 @@
 import { UUID } from 'uuid-class';
+
+import { JSONObject } from '../vendor/json-types';
 import { KV as database } from '../constants';
 import { compressId, elongateId } from '../short-id';
-import * as cc from './cookies';
 
-type JSONable = { toJSON: () => JSONValue }
-type JSONPrimitive = string | number | boolean | null;
-type JSONValue = JSONPrimitive | JSONObject | JSONArray | JSONable;
-type JSONObject = { [k: string]: JSONValue };
-type JSONArray = JSONValue[];
+import * as cc from './cookies';
 
 // TODO: make configurable: key, KV database, duration
 const SESSION_KEY = 'ASP.NET_SessionId';
