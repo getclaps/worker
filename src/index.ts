@@ -6,8 +6,8 @@ import { AUTH, DEBUG, IP_SALT_KEY, KV } from './constants';
 import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
-import * as er from './errors';
 import * as cc from './routes/cookies';
+import { withCookies } from './routes/session';
 
 import './routes/index';
 // @ts-ignore
@@ -24,9 +24,7 @@ router.get('/__init', async ({ headers }) => {
   return re.ok('Init success');
 });
 
-router.get('/', async ({ headers }) => {
-  const cookies = cc.parseCookie(headers.get('cookie'));
-
+router.get('/', withCookies(async ({ cookies }) => {
   const id = cookies.get('did');
   if (!id) return re.seeOther('/login');
 
@@ -34,17 +32,7 @@ router.get('/', async ({ headers }) => {
   if (!isBookmarked) return re.seeOther('/settings')
 
   return re.seeOther('/stats')
-});
-
-export function handleError(err: any) {
-  if (err instanceof Response) return err;
-  if (err instanceof er.NotFoundError) return re.notFound(err.message);
-  if (err instanceof er.PaymentRequiredError) return re.paymentRequired(err.message);
-  if (err instanceof er.ConflictError) return re.conflict(err.message);
-  if (err instanceof er.BadRequestError) return re.badRequest(err.message);
-  if (DEBUG) throw err;
-  return re.internalServerError();
-}
+}));
 
 async function handleRequest(event: FetchEvent) {
   const { request } = event;
@@ -59,7 +47,7 @@ async function handleRequest(event: FetchEvent) {
     try {
       return match.handler(args);
     } catch (err) {
-      return handleError(err);
+      return re.internalServerError(err.message);
     }
   }
   return re.notFound();

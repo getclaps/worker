@@ -5,19 +5,18 @@ import { UUID } from 'uuid-class';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { compressId, elongateId } from '../../short-id';
-import { RouteArgs, DashboardArgs } from '../../router';
+import { RouteArgs, DashboardArgs, Awaitable } from '../../router';
 
 import * as cc from '../cookies';
 
 import { styles } from './styles';
+import { withCookies } from '../session';
 
-export async function beforeDashboard(params: RouteArgs): Promise<DashboardArgs> {
-  const { headers, event } = params;
+export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Response>) => withCookies<RouteArgs>(async (args): Promise<Response> => {
+  const { headers, event, cookies } = args;
 
   const dao: DAO = getDAO();
   const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
-
-  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const id = cookies.get('did');
   if (!id) throw re.seeOther('/login');
@@ -26,6 +25,8 @@ export async function beforeDashboard(params: RouteArgs): Promise<DashboardArgs>
 
   const isBookmarked = cookies.has(await cc.mkBookmarkedCookieKey(id));
 
+  const response = await handler({ ...args, id, uuid, cookies, dao, isBookmarked, locale });
+
   event.waitUntil((async () => {
     const ip = headers.get('cf-connecting-ip');
     if (ip != null) {
@@ -33,9 +34,8 @@ export async function beforeDashboard(params: RouteArgs): Promise<DashboardArgs>
     }
   })());
 
-  return { ...params, id, uuid, cookies, dao, isBookmarked, locale };
-}
-
+  return response;
+});
 
 export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortIds = cookies.get('ids')?.split(',') ?? [];

@@ -5,17 +5,20 @@ import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
-import { router, RouteArgs } from '../../router';
-
+import { router } from '../../router';
+ 
+import { withCORS } from '../cors';
+import { withErrors }from '../errors';
+import { withCookies } from '../session';
 import * as cc from '../cookies';
-import { addCORSHeaders } from '../cors';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
-import { handleError } from '../..';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
-export async function handlePostClaps({ request, headers, searchParams }: RouteArgs) {
+router.options('/claps', withCORS(() => re.ok()))
+
+router.post('/claps', withCORS(withErrors(withCookies(async ({ request, headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -33,8 +36,6 @@ export async function handlePostClaps({ request, headers, searchParams }: RouteA
 
   const extractedData = await extractData(headers, originURL.hostname);
 
-  const cookies = cc.parseCookie(headers.get('cookie'));
-
   const data = await dao.updateClaps({
     claps, 
     nonce,
@@ -50,9 +51,9 @@ export async function handlePostClaps({ request, headers, searchParams }: RouteA
   });
 
   return new JSONResponse(data);
-}
+}))));
 
-export async function handleGetClaps({ searchParams, headers }: RouteArgs) {
+router.get('/claps', withCORS(withErrors(async ({ searchParams }) => {
   const dao: DAO = getDAO();
   // const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -62,8 +63,4 @@ export async function handleGetClaps({ searchParams, headers }: RouteArgs) {
   });
 
   return new JSONResponse(data);
-}
-
-router.options('/claps', args => addCORSHeaders(args)(re.ok()))
-router.post('/claps', args => handlePostClaps(args).catch(handleError).then(addCORSHeaders(args)));
-router.get('/claps', args => handleGetClaps(args).catch(handleError).then(addCORSHeaders(args)));
+})));

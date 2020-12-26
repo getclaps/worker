@@ -4,7 +4,7 @@ import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
-import { beforeDashboard, page } from './common';
+import { withDashboard, page } from './common';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
@@ -169,8 +169,8 @@ async function settingsPage(
   });
 }
 
-router.get('/settings', args => beforeDashboard(args).then(settingsPage))
-router.post('/settings', args => beforeDashboard(args).then(async (args) => {
+router.get('/settings', withDashboard(settingsPage))
+router.post('/settings', withDashboard(async (args) => {
   const { request, dao, uuid } = args;
 
   const headers = new Headers();

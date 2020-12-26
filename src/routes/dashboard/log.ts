@@ -8,7 +8,7 @@ import { router } from '../../router';
 import { TimeUnit } from '../../dao';
 
 import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './components';
-import { beforeDashboard, page } from './common';
+import { page, withDashboard } from './common';
 
 const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
@@ -18,7 +18,7 @@ const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
 </tr>`);
 
-router.get('/log', args => beforeDashboard(args).then(({ dao, isBookmarked, cookies, uuid, locale, requestURL }) => {
+router.get('/log', withDashboard(({ dao, isBookmarked, cookies, uuid, locale, requestURL }) => {
   const timeFrame = requestURL.searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);

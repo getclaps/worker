@@ -8,24 +8,23 @@ import { getDAO } from '../../dao/get-dao';
 import { elongateId } from '../../short-id';
 
 import * as cc from '../cookies';
+import { withCookies } from '../session';
 import { page } from './common';
 
-router.get('/logout', async ({ headers }) => {
-  const cookies = cc.parseCookie(headers.get('cookie'));
-
+router.get('/logout', withCookies(async ({ cookies }) => {
   const did = cookies.get('did');
   const ids = cookies.get('ids')?.split(',')?.filter(_ => _ !== did) ?? [];
+
   return re.seeOther(new URL(`/`, WORKER_DOMAIN), {
     headers: [
       ['Set-Cookie', ids.length ? cc.mkLoginCookie(ids[0]) : cc.mkLogoutCookie()],
       ['Set-Cookie', cc.mkLogoutsCookie(cookies, cookies.get('did'))],
     ],
   });
-})
+}))
 
-router.post('/login', async ({ request, headers }) => {
+router.post('/login', withCookies(async ({ request, cookies }) => {
   const dao: DAO = getDAO();
-  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const formData = await request.formData()
   const id = formData.get('password').toString();
@@ -48,7 +47,7 @@ router.post('/login', async ({ request, headers }) => {
       ...hostname ? [['Set-Cookie', await cc.mkHostnameCookie(id, hostname)]] : [],
     ],
   });
-});
+}));
 
 router.get('/login', ({ headers }) => {
   const referrer = headers.get('referer');

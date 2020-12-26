@@ -5,11 +5,12 @@ import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
 
-import { addCORSHeaders } from '../cors';
+import { withCORS } from '../cors';
+import { withErrors }from '../errors';
+import { withCookies } from '../session';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
-import { handleError } from '../..';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -23,7 +24,9 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
   }
 }
 
-async function handleViews({ headers, searchParams }) {
+router.options('/views', withCORS(() => re.ok()))
+
+router.post('/views', withCORS(withErrors(withCookies(async ({ headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
@@ -31,8 +34,6 @@ async function handleViews({ headers, searchParams }) {
 
   const referrer = getReferrer(searchParams.get('referrer'), url.hostname);
   const extractedData = await extractData(headers, originURL.hostname);
-
-  const cookies = cc.parseCookie(headers.get('cookie'));
 
   const data = await dao.getClapsAndUpdateViews({
     hostname: url.hostname,
@@ -46,7 +47,4 @@ async function handleViews({ headers, searchParams }) {
   });
 
   return new JSONResponse(data);
-}
-
-router.options('/views', args => addCORSHeaders(args)(re.ok()))
-router.post('/views', args => handleViews(args).catch(handleError).then(addCORSHeaders(args)));
+}))));

@@ -5,11 +5,11 @@ import { countriesByCode } from '../../vendor/countries';
 import { router } from '../../router';
 
 import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './components';
-import { beforeDashboard, page } from './common';
+import { page, withDashboard } from './common';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-router.get('/stats', args => beforeDashboard(args).then(({ requestURL, dao, isBookmarked, locale, cookies, uuid }) => {
+router.get('/stats', withDashboard(({ requestURL, dao, isBookmarked, locale, cookies, uuid }) => {
   const timeFrame = requestURL.searchParams.get('time') || '24-hours';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
