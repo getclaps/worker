@@ -16,27 +16,25 @@ const getSessionObj = async (cookies: Map<string, string>): Promise<[UUID, JSONO
 }
 
 export const withSession = <T extends { event: FetchEvent, cookies: Cookies }>(handler: (args: T & { session: JSONObject }) => Promise<Response>) => async (args: T): Promise<Response> => {
-  const [sid, session] = await getSessionObj(args.cookies);
+  const [sid, sessionObj] = await getSessionObj(args.cookies);
 
-  try {
-    const response = await handler({ ...args, session });
+  let tid: number;
+  const session = new Proxy(sessionObj, {
+    set(target, prop, v) {
+      Reflect.set(target, prop, v);
 
-    // FIXME: Do full combination of responses!!!
-    const { body, headers, status, statusText } = response;
-    return new Response(body, {
-      status, statusText,
-      headers: [
-        ...headers, 
-        ['Set-Cookie', cc.mkSessionCookie(SESSION_KEY, compressId(sid))],
-      ],
-    });
-  } finally {
-    args.event.waitUntil(
-      database.put( sid.id, JSON.stringify(session), { 
-        expirationTtl: 5 * 60 
-      }),
-    );
-  }
+      clearInterval(tid);
+      tid = setTimeout(() => args.event.waitUntil(
+        database.put(sid.id, JSON.stringify(target), { expirationTtl: 5 * 60 })
+      ), 10);
+
+      return true;
+    }
+  })
+
+  const response = await handler({ ...args, session });
+  response.headers.append('set-cookie', cc.mkSessionCookie(SESSION_KEY, compressId(sid)));
+  return response;
 }
 
 export type Cookies = Map<string, string>;
