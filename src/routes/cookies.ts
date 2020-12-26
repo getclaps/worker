@@ -1,11 +1,14 @@
 import { Base64Encoder } from "base64-encoding";
 import { WORKER_DOMAIN } from "../constants";
 
-export const parseCookie = (cookie: string) => new Map<string, string>(cookie?.split(/;\s*/)
-  .map(x => x.split('='))
-  .map(([k, v]) => [k, v] as [string, string])
-  .filter(([k]) => !!k)
-);
+export class Cookies extends Map<string, string> {
+  constructor(headers: Headers) {
+    super(headers.get('cookie')?.split(/;\s*/)
+      .map(x => x.split('='))
+      .map(([k, v]) => [k, v] as [string, string])
+      .filter(([k]) => !!k))
+  }
+}
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 

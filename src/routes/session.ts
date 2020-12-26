@@ -4,7 +4,7 @@ import { JSONObject } from '../vendor/json-types';
 import { KV as database } from '../constants';
 import { compressId, elongateId } from '../short-id';
 
-import * as cc from './cookies';
+import { Cookies, mkSessionCookie } from './cookies';
 
 // TODO: make configurable: key, KV database, duration
 const SESSION_KEY = 'ASP.NET_SessionId';
@@ -33,12 +33,11 @@ export const withSession = <T extends { event: FetchEvent, cookies: Cookies }>(h
   })
 
   const response = await handler({ ...args, session });
-  response.headers.append('set-cookie', cc.mkSessionCookie(SESSION_KEY, compressId(sid)));
+  response.headers.append('set-cookie', mkSessionCookie(SESSION_KEY, compressId(sid)));
   return response;
 }
 
-export type Cookies = Map<string, string>;
 export const withCookies = <T extends { event: FetchEvent }>(handler: (args: T & { cookies: Cookies }) => Promise<Response>) => (args: T): Promise<Response> => {
-  const cookies = cc.parseCookie(args.event.request.headers.get('cookie'));
+  const cookies = new Cookies(args.event.request.headers);
   return handler({ ...args, cookies });
 }
