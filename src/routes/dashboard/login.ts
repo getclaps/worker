@@ -8,10 +8,9 @@ import { getDAO } from '../../dao/get-dao';
 import { elongateId } from '../../short-id';
 
 import * as cc from '../cookies';
-import { withCookies } from '../session';
 import { page } from './common';
 
-router.get('/logout', withCookies(async ({ cookies }) => {
+router.get('/logout', cc.withCookies(async ({ cookies }) => {
   const did = cookies.get('did');
   const ids = cookies.get('ids')?.split(',')?.filter(_ => _ !== did) ?? [];
 
@@ -23,7 +22,7 @@ router.get('/logout', withCookies(async ({ cookies }) => {
   });
 }))
 
-router.post('/login', withCookies(async ({ request, cookies }) => {
+router.post('/login', cc.withCookies(async ({ request, cookies }) => {
   const dao: DAO = getDAO();
 
   const formData = await request.formData()
@@ -80,21 +79,30 @@ router.get('/login', ({ headers }) => {
           </div>
         </div>
         <button class="bp3-button" type="submit">Login</button>
+        <button class="bp3-button" hidden>Open Credentials Manager</button>
       </form>
     </div>
     <script type="module">
-      if ('PasswordCredential' in window) (async () => {
-        const cred = await navigator.credentials.get({ password: true });
-        if (cred) {
-          const { id, password } = cred;
-          const body = new URLSearchParams(Object.entries({ id, password }));
-          const referrer = new FormData(document.getElementById('login')).get('referrer');
-          document.getElementById('login').querySelectorAll('input, button').forEach(el => { el.disabled = true });
-          const response = await fetch('/login', { method: 'POST', body, redirect: 'manual' });
-          if (referrer) window.location.assign(referrer);
-          else window.location.reload();
+      if ('PasswordCredential' in window) {
+        async function openCredentialsManager(e) {
+          if (e) e.preventDefault();
+          const cred = await navigator.credentials.get({ password: true });
+          if (cred) {
+            const { id, password } = cred;
+            const body = new URLSearchParams(Object.entries({ id, password }));
+            const referrer = new FormData(form).get('referrer');
+            document.getElementById('login').querySelectorAll('input, button').forEach(el => { el.disabled = true });
+            const response = await fetch('/login', { method: 'POST', body, redirect: 'manual' });
+            if (referrer) window.location.assign(referrer);
+            else window.location.reload();
+          }
         }
-      })();
+        openCredentialsManager();
+        const form = document.getElementById('login');
+        const btn2 = form.querySelector('button[hidden]');
+        btn2.hidden = false;
+        btn2.addEventListener('click', openCredentialsManager);
+      }
     </script>
   `);
 });

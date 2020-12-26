@@ -36,8 +36,3 @@ export const withSession = <T extends { event: FetchEvent, cookies: Cookies }>(h
   response.headers.append('set-cookie', mkSessionCookie(SESSION_KEY, compressId(sid)));
   return response;
 }
-
-export const withCookies = <T extends { event: FetchEvent }>(handler: (args: T & { cookies: Cookies }) => Promise<Response>) => (args: T): Promise<Response> => {
-  const cookies = new Cookies(args.event.request.headers);
-  return handler({ ...args, cookies });
-}

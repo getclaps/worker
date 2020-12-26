@@ -8,17 +8,18 @@ import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
  
 import { withCORS } from '../cors';
-import { withErrors }from '../errors';
-import { withCookies } from '../session';
+import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { withContentNegotiation } from '../content-negotiation';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
-router.options('/claps', withCORS(() => re.ok()))
+const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 
-router.post('/claps', withCORS(withErrors(withCookies(async ({ request, headers, cookies, searchParams }) => {
+router.options('/claps', withCORS(() => re.ok()))
+router.post('/claps', withCORS(withErrors(cc.withCookies(acceptJSON(async ({ request, headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -51,9 +52,9 @@ router.post('/claps', withCORS(withErrors(withCookies(async ({ request, headers,
   });
 
   return new JSONResponse(data);
-}))));
+})))));
 
-router.get('/claps', withCORS(withErrors(async ({ searchParams }) => {
+router.get('/claps', withCORS(withErrors(acceptJSON(async ({ searchParams }) => {
   const dao: DAO = getDAO();
   // const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -63,4 +64,4 @@ router.get('/claps', withCORS(withErrors(async ({ searchParams }) => {
   });
 
   return new JSONResponse(data);
-})));
+}))));

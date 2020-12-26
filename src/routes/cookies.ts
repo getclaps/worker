@@ -10,6 +10,11 @@ export class Cookies extends Map<string, string> {
   }
 }
 
+export const withCookies = <T extends { event: FetchEvent }>(handler: (args: T & { cookies: Cookies }) => Promise<Response>) => (args: T): Promise<Response> => {
+  const cookies = new Cookies(args.event.request.headers);
+  return handler({ ...args, cookies });
+}
+
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
 const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);

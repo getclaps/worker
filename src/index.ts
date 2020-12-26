@@ -7,7 +7,6 @@ import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
 import * as cc from './routes/cookies';
-import { withCookies } from './routes/session';
 
 import './routes/index';
 // @ts-ignore
@@ -24,7 +23,7 @@ router.get('/__init', async ({ headers }) => {
   return re.ok('Init success');
 });
 
-router.get('/', withCookies(async ({ cookies }) => {
+router.get('/', cc.withCookies(async ({ cookies }) => {
   const id = cookies.get('did');
   if (!id) return re.seeOther('/login');
 

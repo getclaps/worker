@@ -10,13 +10,14 @@ import { RouteArgs, DashboardArgs, Awaitable } from '../../router';
 import * as cc from '../cookies';
 
 import { styles } from './styles';
-import { withCookies } from '../session';
+import { withContentNegotiation } from '../content-negotiation';
 
-export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Response>) => withCookies<RouteArgs>(async (args): Promise<Response> => {
+const acceptHTML = withContentNegotiation({ types: ['text/html'] });
+
+export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Response>) => cc.withCookies<RouteArgs>(acceptHTML(async (args): Promise<Response> => {
   const { headers, event, cookies } = args;
 
   const dao: DAO = getDAO();
-  const [[locale]] = (headers.get('accept-language') || 'en-US').split(',').map(_ => _.split(';'));
 
   const id = cookies.get('did');
   if (!id) throw re.seeOther('/login');
@@ -25,7 +26,8 @@ export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Respon
 
   const isBookmarked = cookies.has(await cc.mkBookmarkedCookieKey(id));
 
-  const response = await handler({ ...args, id, uuid, cookies, dao, isBookmarked, locale });
+  const [locale] = args.language?.split('-') ?? ['en'];
+  const response = await handler({ ...args, locale, id, uuid, cookies, dao, isBookmarked });
 
   event.waitUntil((async () => {
     const ip = headers.get('cf-connecting-ip');
@@ -35,7 +37,7 @@ export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Respon
   })());
 
   return response;
-});
+}));
 
 export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortIds = cookies.get('ids')?.split(',') ?? [];

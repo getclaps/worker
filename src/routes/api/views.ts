@@ -6,11 +6,11 @@ import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
 
 import { withCORS } from '../cors';
-import { withErrors }from '../errors';
-import { withCookies } from '../session';
+import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { withContentNegotiation } from '../content-negotiation';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -24,9 +24,10 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
   }
 }
 
-router.options('/views', withCORS(() => re.ok()))
+const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 
-router.post('/views', withCORS(withErrors(withCookies(async ({ headers, cookies, searchParams }) => {
+router.options('/views', withCORS(() => re.ok()))
+router.post('/views', withCORS(withErrors(cc.withCookies(acceptJSON(async ({ headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
@@ -47,4 +48,4 @@ router.post('/views', withCORS(withErrors(withCookies(async ({ headers, cookies,
   });
 
   return new JSONResponse(data);
-}))));
+})))));

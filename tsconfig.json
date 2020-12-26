@@ -12,9 +12,9 @@
     "types": ["@cloudflare/workers-types"]
   },
   "include": [
+    "./typings/*.d.ts",
     "./src/*.ts",
     "./src/**/*.ts",
-    "./typings/*.d.ts",
   ],
   "exclude": [
     "node_modules/",
