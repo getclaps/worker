@@ -1,7 +1,8 @@
 import { Router, Method, Params } from 'tiny-request-router';
 import { UUID } from 'uuid-class';
 import { DAO } from './dao';
-import { CookieStore } from './routes/cookie-store';
+import { Awaitable } from './vendor/common-types';
+import { CookieStore } from './vendor/middleware/cookie-store';
 
 export interface RouteArgs {
   event: FetchEvent;
@@ -23,7 +24,6 @@ export interface DashboardArgs extends RouteArgs {
   locale: string;
 }
 
-export type Awaitable<T> = T | Promise<T>;
 export type Handler = (args: RouteArgs) => Awaitable<Response>;
 
 export const router = new Router<Handler>();

@@ -1,6 +1,6 @@
 import * as re from '@werker/response-creators';
+import { Awaitable } from './vendor/common-types';
 import { DEBUG } from './constants';
-import { Awaitable } from './router';
 
 export function handleError(err: any) {
   if (err instanceof Response) return err;

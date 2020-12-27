@@ -1,8 +1,8 @@
 import { UUID } from 'uuid-class';
+import { Awaitable } from '../common-types';
 
-import { JSONValue } from '../vendor/json-types';
-import { shortenId, parseUUID } from '../vendor/short-id';
-import { Awaitable } from '../router';
+import { JSONValue } from '../json-types';
+import { shortenId, parseUUID } from '../short-id';
 
 import { CookieStore } from './cookie-store';
 

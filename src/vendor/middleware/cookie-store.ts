@@ -1,4 +1,4 @@
-import { Awaitable } from "../router";
+import { Awaitable } from "../common-types";
 import { CookieStore, CookieListItem, CookieList, CookieInit } from "./cookie-store-types";
 
 type WithCookiesHandler<T> = (args: T & { cookies: RequestCookieStore }) => Awaitable<Response>;

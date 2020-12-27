@@ -1,5 +1,5 @@
 import { Base64Encoder } from "base64-encoding";
-import { CookieInit, CookieStore } from "./cookie-store";
+import { CookieInit, CookieStore } from "../vendor/middleware/cookie-store";
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 

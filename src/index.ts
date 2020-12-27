@@ -7,7 +7,7 @@ import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
 import * as cc from './routes/cookies';
-import { withCookies } from './routes/cookie-store';
+import { withCookies } from './vendor/middleware/cookie-store';
 
 import './routes/index';
 // @ts-ignore

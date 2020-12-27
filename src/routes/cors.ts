@@ -1,4 +1,4 @@
-import { Awaitable } from "../router";
+import { Awaitable } from "../vendor/common-types";
 
 const ORIGIN = 'origin';
 const METHOD = 'access-control-request-method';

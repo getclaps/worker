@@ -5,13 +5,14 @@ import { UUID } from 'uuid-class';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { shortenId, parseUUID } from '../../vendor/short-id';
-import { RouteArgs, DashboardArgs, Awaitable } from '../../router';
+import { RouteArgs, DashboardArgs } from '../../router';
 
 import * as cc from '../cookies';
 
 import { styles } from './styles';
-import { CookieStore, withCookies } from '../cookie-store';
-import { withContentNegotiation } from '../content-negotiation';
+import { Awaitable } from '../../vendor/common-types';
+import { withCookies, CookieStore } from '../../vendor/middleware/cookie-store';
+import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 

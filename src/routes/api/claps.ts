@@ -12,8 +12,8 @@ import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
-import { withContentNegotiation } from '../content-negotiation';
-import { withCookies } from '../cookie-store';
+import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
+import { withCookies } from '../../vendor/middleware/cookie-store';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 

@@ -3,7 +3,7 @@ import { html } from '@werker/html';
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
-import { toSetCookie } from '../cookie-store';
+import { toSetCookie } from '../../vendor/middleware/cookie-store';
 import * as cc from '../cookies';
 import { withDashboard, page } from './common';
 
