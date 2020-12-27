@@ -1,7 +1,6 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
-import { WORKER_DOMAIN } from '../../constants';
 import { router } from '../../router';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
@@ -18,7 +17,7 @@ router.get('/logout', withCookies(async ({ cookies }) => {
   if (ids.length) cookies.set(cc.loginCookie(ids[0])); else cookies.delete('did');
   cookies.set(cc.logoutsCookie(cookies));
 
-  return re.seeOther(new URL(`/`, WORKER_DOMAIN));
+  return re.seeOther('/');
 }));
 
 router.post('/login', withCookies(async ({ request, cookies }) => {
@@ -34,7 +33,7 @@ router.post('/login', withCookies(async ({ request, cookies }) => {
     const d = await dao.getDashboard(uuid);
     if (!d) throw Error();
   } catch {
-    return re.seeOther(new URL(referrer, WORKER_DOMAIN))
+    return re.seeOther(referrer)
   }
 
   cookies.set(cc.loginCookie(id))
@@ -42,7 +41,7 @@ router.post('/login', withCookies(async ({ request, cookies }) => {
   cookies.set(await cc.bookmarkedCookie(id));
   if (hostname) cookies.set(await cc.hostnameCookie(id, hostname));
 
-  return re.seeOther(new URL(referrer, WORKER_DOMAIN));
+  return re.seeOther(referrer);
 }));
 
 router.get('/login', ({ headers }) => {

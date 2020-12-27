@@ -215,10 +215,8 @@ router.post('/settings', withDashboard(async (args) => {
     //     method: 'POST',
     //     data: { 'metadata[dashboard_id]': shortenId(newUUID) },
     //   });
-    //   return redirect(new URL(`/dashboard`, WORKER_DOMAIN), {
-    //     headers: [['Set-Cookie', mkLoginCookie(newId)]],
-    //   });
-    // }
+    //   cookies.set(cc.loginCookie(newId));
+    //   return re.seeOther(`/dashboard`);
     default: break;
   }
   return settingsPage(args, { headers: headers, dashboard: dashboard, cookieDNT: cookieDNT, showError });
