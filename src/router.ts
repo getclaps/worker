@@ -1,7 +1,7 @@
 import { Router, Method, Params } from 'tiny-request-router';
 import { UUID } from 'uuid-class';
 import { DAO } from './dao';
-import { Cookies } from './routes/cookies';
+import { CookieStore } from './routes/cookie-store';
 
 export interface RouteArgs {
   event: FetchEvent;
@@ -17,7 +17,7 @@ export interface RouteArgs {
 export interface DashboardArgs extends RouteArgs {
   id: string;
   uuid: UUID;
-  cookies: Cookies
+  cookies: CookieStore
   dao: DAO;
   isBookmarked: boolean;
   locale: string;

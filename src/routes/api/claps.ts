@@ -13,13 +13,14 @@ import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
 import { withContentNegotiation } from '../content-negotiation';
+import { withCookies } from '../cookie-store';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
 const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 
 router.options('/claps', withCORS(() => re.ok()))
-router.post('/claps', withCORS(withErrors(cc.withCookies(acceptJSON(async ({ request, headers, cookies, searchParams }) => {
+router.post('/claps', withCORS(withErrors(withCookies(acceptJSON(async ({ request, headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -48,7 +49,7 @@ router.post('/claps', withCORS(withErrors(cc.withCookies(acceptJSON(async ({ req
   }, {
     originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),
-    dnt: cookies.has(cc.mkDNTCookieKey(url.hostname))
+    dnt: !!(await cookies.get(cc.mkDNTCookieKey(url.hostname))),
   });
 
   return new JSONResponse(data);

@@ -3,6 +3,7 @@ import { html } from '@werker/html';
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
+import { toSetCookie } from '../cookie-store';
 import * as cc from '../cookies';
 import { withDashboard, page } from './common';
 
@@ -27,7 +28,8 @@ async function settingsPage(
     // const isMac = (headers.get('user-agent') || '').match(/mac/i);
     // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)
 
-    cookieDNT = cookieDNT || cookies.has(cc.mkDNTCookieKey(dashboard.hostname[0]));
+    const hn = dashboard.hostname[0]
+    cookieDNT = cookieDNT || !!(await cookies.get(cc.mkDNTCookieKey(hn)));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
@@ -116,7 +118,7 @@ async function settingsPage(
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                document.cookie = '${await cc.mkBookmarkedCookie(id)}';
+                document.cookie = '${toSetCookie(await cc.bookmarkedCookie(id))}';
                 if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
               }));
@@ -163,15 +165,15 @@ async function settingsPage(
         </div>
         <div></div>
       </div>
-      <script>document.cookie = '${cc.mkDNTCookie(dashboard.dnt, dashboard.hostname[0])}';</script>
-      <script>document.cookie = '${cc.mkHostnameCookie(id, dashboard.hostname[0])}';</script>
+      <script>document.cookie = '${toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
+      <script>document.cookie = '${toSetCookie(await cc.hostnameCookie(id, dashboard.hostname[0]))}';</script>
     `;
   });
 }
 
 router.get('/settings', withDashboard(settingsPage))
 router.post('/settings', withDashboard(async (args) => {
-  const { request, dao, uuid } = args;
+  const { request, dao, uuid, cookies } = args;
 
   const headers = new Headers();
 
@@ -200,7 +202,8 @@ router.post('/settings', withDashboard(async (args) => {
     case 'dnt': {
       cookieDNT = fd.get('dnt') === 'on'
       dashboard = await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
-      headers.append('Set-Cookie', cc.mkDNTCookie(cookieDNT, dashboard.hostname[0]));
+      const hn = dashboard.hostname[0];
+      cookies.set(cc.dntCookie(cookieDNT, hn));
       break;
     }
     // case 'relocate': {

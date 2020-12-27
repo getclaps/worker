@@ -2,11 +2,11 @@ import { UUID } from 'uuid-class';
 
 import { JSONValue } from '../vendor/json-types';
 import { compressId, elongateId } from '../short-id';
-
-import { Cookies, mkSessionCookie } from './cookies';
 import { Awaitable } from '../router';
 
-type Args = { event: FetchEvent, cookies: Cookies };
+import { CookieStore } from './cookie-store';
+
+type Args = { event: FetchEvent, cookies: CookieStore };
 type WithSessionHandler<T> = (args: T & { session: Session }) => Awaitable<Response>
 
 interface SessionOptions {
@@ -27,7 +27,7 @@ export class Session extends Map<string, JSONValue> {
   private expirationTtl: number;
 
   private static async [create]({ event, cookies }: Args, { kv, sessionKey, expirationTtl }: SessionOptions) {
-    let sid = new UUID(elongateId(cookies.get(sessionKey)));
+    let sid = new UUID(elongateId((await cookies.get(sessionKey))?.value));
     const obj = await kv.get(sid.id, 'json') as any;
     sid = obj != null ? sid : new UUID();
     return new Session(create, obj ?? {}, sid, event, { kv, expirationTtl });
@@ -66,6 +66,11 @@ export const withSession = ({ kv, sessionKey = 'sid', expirationTtl = 5 * 60 }: 
     async (args: T): Promise<Response> => {
       const session = await Session[create](args, { kv, sessionKey, expirationTtl })
       const response = await handler({ ...args, session });
-      response.headers.append('set-cookie', mkSessionCookie(sessionKey, compressId(session.id)));
+      args.cookies.set({
+        name: sessionKey,
+        value: compressId(session.id),
+        sameSite: 'lax',
+        httpOnly: true,
+      });
       return response;
     };

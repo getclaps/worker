@@ -8,21 +8,20 @@ import { getDAO } from '../../dao/get-dao';
 import { elongateId } from '../../short-id';
 
 import * as cc from '../cookies';
+import { withCookies } from '../cookie-store';
 import { page } from './common';
 
-router.get('/logout', cc.withCookies(async ({ cookies }) => {
-  const did = cookies.get('did');
-  const ids = cookies.get('ids')?.split(',')?.filter(_ => _ !== did) ?? [];
+router.get('/logout', withCookies(async ({ cookies }) => {
+  const did = (await cookies.get('did'))?.value;
+  const ids = (await cookies.get('ids'))?.value.split(',').filter(_ => _ !== did) ?? [];
 
-  return re.seeOther(new URL(`/`, WORKER_DOMAIN), {
-    headers: [
-      ['Set-Cookie', ids.length ? cc.mkLoginCookie(ids[0]) : cc.mkLogoutCookie()],
-      ['Set-Cookie', cc.mkLogoutsCookie(cookies, cookies.get('did'))],
-    ],
-  });
-}))
+  if (ids.length) cookies.set(cc.loginCookie(ids[0])); else cookies.delete('did');
+  cookies.set(await cc.logoutsCookie(cookies));
 
-router.post('/login', cc.withCookies(async ({ request, cookies }) => {
+  return re.seeOther(new URL(`/`, WORKER_DOMAIN));
+}));
+
+router.post('/login', withCookies(async ({ request, cookies }) => {
   const dao: DAO = getDAO();
 
   const formData = await request.formData()
@@ -38,14 +37,12 @@ router.post('/login', cc.withCookies(async ({ request, cookies }) => {
     return re.seeOther(new URL(referrer, WORKER_DOMAIN))
   }
 
-  return re.seeOther(new URL(referrer, WORKER_DOMAIN), {
-    headers: [
-      ['Set-Cookie', cc.mkLoginCookie(id)],
-      ['Set-Cookie', cc.mkLoginsCookie(cookies, id)],
-      ['Set-Cookie', await cc.mkBookmarkedCookie(id)],
-      ...hostname ? [['Set-Cookie', await cc.mkHostnameCookie(id, hostname)]] : [],
-    ],
-  });
+  cookies.set(cc.loginCookie(id))
+  cookies.set(await cc.loginsCookie(cookies, id));
+  cookies.set(await cc.bookmarkedCookie(id));
+  if (hostname) cookies.set(await cc.hostnameCookie(id, hostname));
+
+  return re.seeOther(new URL(referrer, WORKER_DOMAIN));
 }));
 
 router.get('/login', ({ headers }) => {

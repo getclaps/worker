@@ -10,21 +10,24 @@ import { RouteArgs, DashboardArgs, Awaitable } from '../../router';
 import * as cc from '../cookies';
 
 import { styles } from './styles';
+import { CookieStore, withCookies } from '../cookie-store';
 import { withContentNegotiation } from '../content-negotiation';
+
+type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
 const acceptHTML = withContentNegotiation({ types: ['text/html'] });
 
-export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Response>) => cc.withCookies<RouteArgs>(acceptHTML(async (args): Promise<Response> => {
+export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArgs>(acceptHTML(async (args): Promise<Response> => {
   const { headers, event, cookies } = args;
 
   const dao: DAO = getDAO();
 
-  const id = cookies.get('did');
+  const id = (await cookies.get('did'))?.value;
   if (!id) throw re.seeOther('/login');
 
   const uuid = elongateId(id);
 
-  const isBookmarked = cookies.has(await cc.mkBookmarkedCookieKey(id));
+  const isBookmarked = !!(await cookies.get(await cc.mkBookmarkedCookieKey(id)));
 
   const [locale] = args.language?.split('-') ?? ['en'];
   const response = await handler({ ...args, locale, id, uuid, cookies, dao, isBookmarked });
@@ -39,13 +42,17 @@ export const withDashboard = (handler: (args: DashboardArgs) => Awaitable<Respon
   return response;
 }));
 
-export const htmlHostnameSelect = (cookies: Map<string, string>, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
-  const shortIds = cookies.get('ids')?.split(',') ?? [];
+export const htmlHostnameSelect = async (cookies: CookieStore, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
+  const shortIds = (await cookies.get('ids'))?.value.split(',') ?? [];
   const shortId = compressId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
-        ${shortIds.map(async sid => html`<option ${sid === shortId ? 'selected' : ''} value="${sid}">${cookies.get(await cc.mkHostnameCookieKey(sid)) ?? sid}</option>`)}
+        ${shortIds.map(async sid => html`
+          <option value="${sid}" ${sid === shortId ? 'selected' : ''}>
+            ${(await cookies.get(await cc.mkHostnameCookieKey(sid)))?.value ?? sid}
+          </option>
+        `)}
       </select>
     </div>`;
 }
@@ -55,7 +62,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
   title?: string,
   isBookmarked?: boolean,
   headers?: HeadersInit,
-  cookies?: Map<string, string>,
+  cookies?: CookieStore,
   uuid?: UUID,
 } = {}) => (content: HTMLContent) => new HTMLResponse(html`
 <!DOCTYPE html>

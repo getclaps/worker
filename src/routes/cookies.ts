@@ -1,63 +1,62 @@
 import { Base64Encoder } from "base64-encoding";
-import { WORKER_DOMAIN } from "../constants";
-
-export class Cookies extends Map<string, string> {
-  constructor(headers: Headers) {
-    super(headers.get('cookie')?.split(/;\s*/)
-      .map(x => x.split('='))
-      .map(([k, v]) => [k, v] as [string, string])
-      .filter(([k]) => !!k))
-  }
-}
-
-export const withCookies = <T extends { event: FetchEvent }>(handler: (args: T & { cookies: Cookies }) => Promise<Response>) => (args: T): Promise<Response> => {
-  const cookies = new Cookies(args.event.request.headers);
-  return handler({ ...args, cookies });
-}
+import { CookieInit, CookieStore } from "./cookie-store";
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
 const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
 
-const Secure = WORKER_DOMAIN.includes('localhost') ? '' : 'Secure;';
-
 export const mkDNTCookieKey = (hostname: string) => `dnt_${encodeURIComponent(hostname)}`;
-export const mkDNTCookie = (dnt: boolean, hostname: string) => {
-  return dnt
-    ? `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure} Expires=${oneYearFromNow().toUTCString()}`
-    : `${mkDNTCookieKey(hostname)}=; Path=/; SameSite=None; ${Secure} Expires=Thu, 01 Jan 1970 00:00:01 GMT;`
-}
+
+export const dntCookie = (dnt: boolean, hostname: string): CookieInit => ({
+  name: mkDNTCookieKey(hostname),
+  sameSite: 'none',
+  expires: dnt ? oneYearFromNow() : new Date(0),
+})
 
 export const mkBookmarkedCookieKey = async (id: string) => `bkd_${await shortHash(id)}`;
-export const mkBookmarkedCookie = async (id: string) => {
-  return `${await mkBookmarkedCookieKey(id)}=; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
-}
+export const bookmarkedCookie = async (id: string): Promise<CookieInit> => ({
+  name: await mkBookmarkedCookieKey(id),
+  sameSite: 'lax',
+  expires: oneYearFromNow(),
+})
 
-export const mkLoginCookie = (id: string) => {
-  return `did=${id}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
-}
+export const loginCookie = (id: string): CookieInit => ({
+  name: 'did',
+  value: id,
+  sameSite: 'lax',
+  httpOnly: true,
+  expires: oneYearFromNow(),
+})
 
-export const mkLoginsCookie = (cookies: Map<string, string>, id: string) => {
-  const ids = cookies.get('ids')?.split(',') ?? [];
-  if (!ids.includes(id)) ids.push(id);
-  return `ids=${ids.join(',')}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
+export const loginsCookie = async (cookies: CookieStore, id: string): Promise<CookieInit> => {
+  const ids = (await cookies.get('ids'))?.value.split(',') ?? [];
+  if (id && !ids.includes(id)) ids.push(id);
+  return {
+    name: 'ids',
+    value: ids.join(),
+    sameSite: 'lax',
+    httpOnly: true,
+    expires: oneYearFromNow(),
+  }
 }
 
 export const mkHostnameCookieKey = async (id: string) => `hst_${await shortHash(id)}`;
-export const mkHostnameCookie = async (id: string, hostname: string) => {
-  return `${await mkHostnameCookieKey(id)}=${hostname}; Path=/; SameSite=Lax; ${Secure} Expires=${oneYearFromNow().toUTCString()}`;
-}
+export const hostnameCookie = async (id: string, hostname: string): Promise<CookieInit> => ({
+  name: await mkHostnameCookieKey(id),
+  value: hostname,
+  sameSite: 'lax',
+  expires: oneYearFromNow(),
+});
 
-export const mkLogoutCookie = () => {
-  return `did=; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=Thu, 01 Jan 1970 00:00:01 GMT;`;
-}
-
-export const mkLogoutsCookie = (cookies: Map<string, string>, id: string) => {
-  let ids = cookies.get('ids')?.split(',') ?? [];
+export const logoutsCookie = async (cookies: CookieStore): Promise<CookieInit> => {
+  const id = (await cookies.get('id'))?.value;
+  let ids = (await cookies.get('ids'))?.value.split(',') ?? [];
   ids = ids.filter(_ => _ !== id);
-  return `ids=${ids.join(',')}; Path=/; SameSite=Lax; ${Secure} HttpOnly; Expires=${oneYearFromNow().toUTCString()}`;
-}
-
-export const mkSessionCookie = (name: string, ssid: string) => {
-  return `${name}=${ssid}; Path=/; SameSite=Lax; ${Secure} HttpOnly`;
+  return {
+    name: 'ids',
+    value: ids.join(),
+    sameSite: 'lax',
+    httpOnly: true,
+    expires: oneYearFromNow(),
+  }
 }

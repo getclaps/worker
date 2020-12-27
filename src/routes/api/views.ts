@@ -11,6 +11,7 @@ import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
 import { withContentNegotiation } from '../content-negotiation';
+import { withCookies } from '../cookie-store';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -27,7 +28,7 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
 const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 
 router.options('/views', withCORS(() => re.ok()))
-router.post('/views', withCORS(withErrors(cc.withCookies(acceptJSON(async ({ headers, cookies, searchParams }) => {
+router.post('/views', withCORS(withErrors(withCookies(acceptJSON(async ({ headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
@@ -44,7 +45,7 @@ router.post('/views', withCORS(withErrors(cc.withCookies(acceptJSON(async ({ hea
   }, {
     originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),
-    dnt: cookies.has(cc.mkDNTCookieKey(url.hostname))
+    dnt: !!(await cookies.get(cc.mkDNTCookieKey(url.hostname)))
   });
 
   return new JSONResponse(data);
