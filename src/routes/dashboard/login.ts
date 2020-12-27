@@ -5,7 +5,7 @@ import { WORKER_DOMAIN } from '../../constants';
 import { router } from '../../router';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
-import { elongateId } from '../../short-id';
+import { parseUUID } from '../../vendor/short-id';
 
 import * as cc from '../cookies';
 import { withCookies } from '../cookie-store';
@@ -30,7 +30,7 @@ router.post('/login', withCookies(async ({ request, cookies }) => {
   const referrer = (formData.get('referrer') || request.headers.get('referer') || '/').toString();
 
   try {
-    const uuid = elongateId(id);
+    const uuid = parseUUID(id);
     const d = await dao.getDashboard(uuid);
     if (!d) throw Error();
   } catch {

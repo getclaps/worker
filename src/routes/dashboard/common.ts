@@ -4,7 +4,7 @@ import { UUID } from 'uuid-class';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
-import { compressId, elongateId } from '../../short-id';
+import { shortenId, parseUUID } from '../../vendor/short-id';
 import { RouteArgs, DashboardArgs, Awaitable } from '../../router';
 
 import * as cc from '../cookies';
@@ -25,7 +25,7 @@ export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArg
   const id = cookies.get('did')?.value;
   if (!id) throw re.seeOther('/login');
 
-  const uuid = elongateId(id);
+  const uuid = parseUUID(id);
 
   const isBookmarked = !!cookies.get(await cc.mkBookmarkedCookieKey(id));
 
@@ -44,7 +44,7 @@ export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArg
 
 export const htmlHostnameSelect = (cookies: CookieStore, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortIds = cookies.get('ids')?.value.split(',') ?? [];
-  const shortId = compressId(uuid);
+  const shortId = shortenId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
