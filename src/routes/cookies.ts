@@ -2,20 +2,18 @@ import { Base64Encoder } from "base64-encoding";
 import { CookieInit, CookieStore } from "../vendor/middleware/cookie-store";
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
-
 const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
 
-export const mkDNTCookieKey = (hostname: string) => `dnt_${encodeURIComponent(hostname)}`;
-
+export const dntCookieKey = (hostname: string) => `dnt_${encodeURIComponent(hostname)}`;
 export const dntCookie = (dnt: boolean, hostname: string): CookieInit => ({
-  name: mkDNTCookieKey(hostname),
+  name: dntCookieKey(hostname),
   sameSite: 'none',
   expires: dnt ? oneYearFromNow() : new Date(0),
 })
 
-export const mkBookmarkedCookieKey = async (id: string) => `bkd_${await shortHash(id)}`;
+export const bookmarkedCookieKey = async (id: string) => `bkd_${await shortHash(id)}`;
 export const bookmarkedCookie = async (id: string): Promise<CookieInit> => ({
-  name: await mkBookmarkedCookieKey(id),
+  name: await bookmarkedCookieKey(id),
   sameSite: 'lax',
   expires: oneYearFromNow(),
 })
@@ -40,9 +38,9 @@ export const loginsCookie = (cookies: CookieStore, id: string): CookieInit => {
   }
 }
 
-export const mkHostnameCookieKey = async (id: string) => `hst_${await shortHash(id)}`;
+export const hostnameCookieKey = async (id: string) => `hst_${await shortHash(id)}`;
 export const hostnameCookie = async (id: string, hostname: string): Promise<CookieInit> => ({
-  name: await mkHostnameCookieKey(id),
+  name: await hostnameCookieKey(id),
   value: hostname,
   sameSite: 'lax',
   expires: oneYearFromNow(),

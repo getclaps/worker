@@ -3,6 +3,9 @@ import { UUID } from 'uuid-class';
 import { JSONResponse } from '@werker/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
+import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
+import { withCookies } from '../../vendor/middleware/cookie-store';
+
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
@@ -12,8 +15,6 @@ import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
-import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
-import { withCookies } from '../../vendor/middleware/cookie-store';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -49,7 +50,7 @@ router.post('/claps', withCORS(withErrors(withCookies(acceptJSON(async ({ reques
   }, {
     originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),
-    dnt: !!cookies.get(cc.mkDNTCookieKey(url.hostname)),
+    dnt: !!cookies.get(cc.dntCookieKey(url.hostname)),
   });
 
   return new JSONResponse(data);

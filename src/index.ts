@@ -2,12 +2,13 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
+import { withCookies } from './vendor/middleware/cookie-store';
+
 import { AUTH, DEBUG, IP_SALT_KEY, KV } from './constants';
 import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
 import * as cc from './routes/cookies';
-import { withCookies } from './vendor/middleware/cookie-store';
 
 import './routes/index';
 // @ts-ignore
@@ -28,7 +29,7 @@ router.get('/', withCookies(async ({ cookies }) => {
   const id = cookies.get('did')?.value;
   if (!id) return re.seeOther('/login');
 
-  const isBookmarked = !!cookies.get(await cc.mkBookmarkedCookieKey(id))
+  const isBookmarked = !!cookies.get(await cc.bookmarkedCookieKey(id))
   if (!isBookmarked) return re.seeOther('/settings')
 
   return re.seeOther('/stats')

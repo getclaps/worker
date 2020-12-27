@@ -2,6 +2,10 @@ import * as re from '@werker/response-creators';
 import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
 
+import { Awaitable } from '../../vendor/common-types';
+import { withCookies, CookieStore } from '../../vendor/middleware/cookie-store';
+import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
+
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { shortenId, parseUUID } from '../../vendor/short-id';
@@ -10,9 +14,6 @@ import { RouteArgs, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
 
 import { styles } from './styles';
-import { Awaitable } from '../../vendor/common-types';
-import { withCookies, CookieStore } from '../../vendor/middleware/cookie-store';
-import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
@@ -28,7 +29,7 @@ export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArg
 
   const uuid = parseUUID(id);
 
-  const isBookmarked = !!cookies.get(await cc.mkBookmarkedCookieKey(id));
+  const isBookmarked = !!cookies.get(await cc.bookmarkedCookieKey(id));
 
   const [locale] = args.language?.split('-') ?? ['en'];
   const response = await handler({ ...args, locale, id, uuid, cookies, dao, isBookmarked });
@@ -51,7 +52,7 @@ export const htmlHostnameSelect = (cookies: CookieStore, uuid: UUID, { modifiers
       <select name="password">
         ${shortIds.map(async sid => html`
           <option value="${sid}" ${sid === shortId ? 'selected' : ''}>
-            ${cookies.get(await cc.mkHostnameCookieKey(sid))?.value ?? sid}
+            ${cookies.get(await cc.hostnameCookieKey(sid))?.value ?? sid}
           </option>
         `)}
       </select>

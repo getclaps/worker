@@ -1,13 +1,14 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
+import { withCookies } from '../../vendor/middleware/cookie-store';
+
 import { router } from '../../router';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 
 import * as cc from '../cookies';
-import { withCookies } from '../../vendor/middleware/cookie-store';
 import { page } from './common';
 
 router.post('/login', withCookies(async ({ request, cookies }) => {

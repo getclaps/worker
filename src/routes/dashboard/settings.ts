@@ -1,9 +1,10 @@
 import { html } from '@werker/html';
 
+import { toSetCookie } from '../../vendor/middleware/cookie-store';
+
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
-import { toSetCookie } from '../../vendor/middleware/cookie-store';
 import * as cc from '../cookies';
 import { withDashboard, page } from './common';
 
@@ -26,7 +27,7 @@ async function settingsPage(
     }
 
     const hn = dashboard.hostname[0];
-    cookieDNT = cookieDNT || !!cookies.get(cc.mkDNTCookieKey(hn));
+    cookieDNT = cookieDNT || !!cookies.get(cc.dntCookieKey(hn));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
