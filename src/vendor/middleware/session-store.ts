@@ -4,9 +4,9 @@ import { Awaitable } from '../common-types';
 import { shortenId, parseUUID } from '../short-id';
 import { StorageArea } from '../storage-area';
 
-import { CookieStore } from './cookie-store';
+import { CookieStore, SyncCookieStore } from './cookie-store-types';
 
-type Args = { event: FetchEvent, cookies: CookieStore };
+type Args = { event: FetchEvent, cookies: CookieStore | SyncCookieStore };
 type WithSessionHandler<T> = (args: T & { session: SessionStore }) => Awaitable<Response>;
 
 interface SessionOptions {
