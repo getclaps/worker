@@ -25,17 +25,13 @@ async function settingsPage(
       throw html`<div>Something went wrong.</div>`;
     }
 
-    // const isMac = (headers.get('user-agent') || '').match(/mac/i);
-    // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)
-
-    const hn = dashboard.hostname[0]
+    const hn = dashboard.hostname[0];
     cookieDNT = cookieDNT || !!cookies.get(cc.mkDNTCookieKey(hn));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
     <div class="bp3-running-text">
       <div class="row">
-    
         <div>
           <h3>Domain</h3>
           ${dashboard.hostname.length ? '' : html`

@@ -49,9 +49,8 @@ export const hostnameCookie = async (id: string, hostname: string): Promise<Cook
 });
 
 export const logoutsCookie = (cookies: CookieStore): CookieInit => {
-  const id = cookies.get('id')?.value;
-  let ids = cookies.get('ids')?.value.split(',') ?? [];
-  ids = ids.filter(_ => _ !== id);
+  const did = cookies.get('did')?.value;
+  const ids = cookies.get('ids')?.value.split(',').filter(_ => _ !== did)
   return {
     name: 'ids',
     value: ids.join(),

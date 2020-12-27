@@ -10,16 +10,6 @@ import * as cc from '../cookies';
 import { withCookies } from '../cookie-store';
 import { page } from './common';
 
-router.get('/logout', withCookies(async ({ cookies }) => {
-  const did = cookies.get('did')?.value;
-  const ids = cookies.get('ids')?.value.split(',').filter(_ => _ !== did) ?? [];
-
-  if (ids.length) cookies.set(cc.loginCookie(ids[0])); else cookies.delete('did');
-  cookies.set(cc.logoutsCookie(cookies));
-
-  return re.seeOther('/');
-}));
-
 router.post('/login', withCookies(async ({ request, cookies }) => {
   const dao: DAO = getDAO();
 
@@ -36,13 +26,25 @@ router.post('/login', withCookies(async ({ request, cookies }) => {
     return re.seeOther(referrer)
   }
 
-  cookies.set(cc.loginCookie(id))
   cookies.set(cc.loginsCookie(cookies, id));
+  cookies.set(cc.loginCookie(id))
   cookies.set(await cc.bookmarkedCookie(id));
   if (hostname) cookies.set(await cc.hostnameCookie(id, hostname));
 
   return re.seeOther(referrer);
 }));
+
+// TODO: make POST
+router.get('/logout', withCookies(async ({ cookies }) => {
+  const did = cookies.get('did')?.value;
+  const ids = cookies.get('ids')?.value.split(',').filter(_ => _ !== did) ?? [];
+
+  cookies.set(cc.logoutsCookie(cookies));
+  if (ids.length) cookies.set(cc.loginCookie(ids[0])); else cookies.delete('did');
+
+  return re.seeOther('/');
+}));
+
 
 router.get('/login', ({ headers }) => {
   const referrer = headers.get('referer');

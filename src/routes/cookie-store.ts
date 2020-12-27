@@ -1,6 +1,5 @@
 import { Awaitable } from "../router";
 import { CookieStore, CookieListItem, CookieList, CookieInit } from "./cookie-store-types";
-import { validateURL } from "./validate";
 
 type WithCookiesHandler<T> = (args: T & { cookies: RequestCookieStore }) => Awaitable<Response>;
 
@@ -12,10 +11,10 @@ class RequestCookieStore implements CookieStore {
   #setMap: Map<string, string[][]> = new Map();
 
   constructor(request: Request) {
-    const origin = request.headers.get('host');
+    const origin = request.headers.get('origin');
     const cookie = request.headers.get('cookie');
 
-    this.#origin = (origin && validateURL(origin)) || null;
+    this.#origin = (origin && new URL(origin)) || null;
 
     // TODO: replace with spec-compliant parser!?
     this.#cookie = new Map(cookie?.split(/;\s*/)
@@ -98,7 +97,7 @@ function setCookie(options: string | CookieInit, value?: string, origin?: URL) {
 
     attrs.push(['Path', path]);
 
-    if (this.origin.hostname !== 'localhost') 
+    if (origin && origin.hostname !== 'localhost') 
       attrs.push(['Secure']);
 
     if (options.httpOnly)
@@ -116,12 +115,16 @@ function setCookie(options: string | CookieInit, value?: string, origin?: URL) {
 
 export const withCookies = <T extends { event: FetchEvent }>(handler: WithCookiesHandler<T>) => async (args: T): Promise<Response> => {
   const cookies = new RequestCookieStore(args.event.request);
-  const result = await handler({ ...args, cookies });
-  for (const [, cookie] of cookies.headers()) 
-    // NOTE that this does not work in service workers, because the implement Headers according to spec,
-    // which cannot represent multiple set-cookie headers (per design).
-    result.headers.append('Set-Cookie', cookie);
-  return result;
+  const { status, statusText, body, headers } = await handler({ ...args, cookies });
+  const response = new Response(body, {
+    status,
+    statusText,
+    headers: [
+      ...headers,
+      ...cookies.headers(),
+    ],
+  });
+  return response;
 }
 
 /**
