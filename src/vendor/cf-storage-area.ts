@@ -10,7 +10,7 @@ const encodeKey = (key: StorageAreaKey) => JSON.stringify(TSON.encapsulate(key))
 const decodeKey = (key: string) => TSON.revive(JSON.parse(key));
 
 // TODO: options to use BSON or other binary rep instead of JSON.stringify...
-const setValue = (kv: KVNamespace, key: string, value: any, options?: CFSetOptions) =>
+const setValue = <T>(kv: KVNamespace, key: string, value: T, options?: CFSetOptions) =>
   kv.put(key, JSON.stringify(TSON.encapsulate(value)), options);
 
 const getValue = async (kv: KVNamespace, key: string) =>
@@ -31,7 +31,7 @@ export interface CFSetOptions {
   expirationTtl?: string | number;
 }
 
-export class CFStorageArea implements StorageArea {
+export class CFStorageArea implements StorageArea<KVNamespace> {
   #kv: KVNamespace;
 
   constructor(name: string | KVNamespace) {
@@ -41,12 +41,12 @@ export class CFStorageArea implements StorageArea {
     if (!this.#kv) throw Error('KV binding missing. Consult CF Workers documentation for details')
   }
 
-  async get(key: StorageAreaKey): Promise<any> {
+  async get<T>(key: StorageAreaKey): Promise<T> {
     throwForDisallowedKey(key);
     return getValue(this.#kv, encodeKey(key));
   }
 
-  async set(key: StorageAreaKey, value: any, options?: CFSetOptions): Promise<void> {
+  async set<T>(key: StorageAreaKey, value: T, options?: CFSetOptions): Promise<void> {
     throwForDisallowedKey(key);
     await setValue(this.#kv, encodeKey(key), value, options);
   }
@@ -62,19 +62,19 @@ export class CFStorageArea implements StorageArea {
     }
   }
 
-  async *keys(): AsyncGenerator<StorageAreaKey> {
+  async *keys<K extends StorageAreaKey = StorageAreaKey>(): AsyncGenerator<K> {
     for await (const key of paginationHelper(this.#kv)) {
       yield decodeKey(key);
     }
   }
 
-  async *values(): AsyncGenerator<any> {
+  async *values<T>(): AsyncGenerator<T> {
     for await (const key of paginationHelper(this.#kv)) {
       yield getValue(this.#kv, key);
     }
   }
 
-  async *entries(): AsyncGenerator<[StorageAreaKey, any]> {
+  async *entries<T, K extends StorageAreaKey = StorageAreaKey>(): AsyncGenerator<[K, T]> {
     for await (const key of paginationHelper(this.#kv)) {
       yield [decodeKey(key), await getValue(this.#kv, key)];
     }

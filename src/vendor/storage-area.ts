@@ -7,17 +7,17 @@ declare var StorageArea: {
     new(name: string): StorageArea;
 };
 
-export interface StorageArea {
-  set(key: StorageAreaKey, value: any, opts?: Record<string, any>): Promise<void> ;
-  get(key: StorageAreaKey, opts?: Record<string, any>): Promise<any> ;
+export interface StorageArea<BS = any> {
+  set<T>(key: StorageAreaKey, value: T, opts?: Record<string, any>): Promise<void> ;
+  get<T>(key: StorageAreaKey, opts?: Record<string, any>): Promise<T> ;
   delete(key: StorageAreaKey): Promise<void> ;
   clear(): Promise<void> ;
 
   keys(): AsyncIterableIterator<StorageAreaKey>;
-  values(): AsyncIterableIterator<any>;
-  entries(): AsyncIterableIterator<[StorageAreaKey, any]>;
+  values<T>(): AsyncIterableIterator<T>;
+  entries<T>(): AsyncIterableIterator<[StorageAreaKey, T]>;
 
-  backingStore(): any;
+  backingStore(): BS;
 };
 
 export function throwForDisallowedKey(key: StorageAreaKey) {
