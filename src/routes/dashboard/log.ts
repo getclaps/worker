@@ -7,8 +7,8 @@ import { countriesByCode } from '../../vendor/countries';
 import { router } from '../../router';
 import { TimeUnit } from '../../dao';
 
-import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './components';
-import { page, withDashboard } from './common';
+import { page, parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './components';
+import { withDashboard } from './with-dashboard';
 
 const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>

@@ -4,8 +4,8 @@ import { TimeUnit } from '../../dao';
 import { countriesByCode } from '../../vendor/countries';
 import { router } from '../../router';
 
-import { parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './components';
-import { page, withDashboard } from './common';
+import { page, parseURL, noOpener, mkRef, htmlTimeFrameSelect } from './components';
+import { withDashboard } from './with-dashboard';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 

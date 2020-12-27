@@ -9,7 +9,7 @@ import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 
 import * as cc from '../cookies';
-import { page } from './common';
+import { page } from './components';
 
 router.post('/login', withCookies(async ({ request, cookies }) => {
   const dao: DAO = getDAO();
