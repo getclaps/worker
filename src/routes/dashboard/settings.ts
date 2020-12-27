@@ -29,7 +29,7 @@ async function settingsPage(
     // const customer = await stripeAPI(`/v1/customers/${dashboard.customer}`)
 
     const hn = dashboard.hostname[0]
-    cookieDNT = cookieDNT || !!(await cookies.get(cc.mkDNTCookieKey(hn)));
+    cookieDNT = cookieDNT || !!cookies.get(cc.mkDNTCookieKey(hn));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`

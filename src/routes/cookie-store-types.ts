@@ -1,30 +1,16 @@
 export interface CookieStore extends EventTarget {
-  get(name?: string): Promise<CookieListItem | null>;
-  // get(options?: CookieStoreGetOptions): Promise<CookieListItem | null>;
+  get(name?: string): CookieListItem | null;
+  // get(options?: CookieStoreGetOptions): CookieListItem | null;
 
-  getAll(name: string): Promise<CookieList>;
-  // getAll(options?: CookieStoreGetOptions): Promise<CookieList>;
+  getAll(name: string): CookieList;
+  // getAll(options?: CookieStoreGetOptions): CookieList;
 
-  set(name: string, value: string): Promise<void>;
-  set(options: CookieInit): Promise<void>;
+  set(name: string, value: string): void;
+  set(options: CookieInit): void;
 
-  delete(name: string): Promise<void>;
-  // delete(options: CookieStoreDeleteOptions): Promise<void>;
+  delete(name: string): void;
+  // delete(options: CookieStoreDeleteOptions): void;
 }
-
-// export interface CookieStoreSync extends EventTarget {
-//   get(name?: string): CookieListItem | null;
-//   // get(options?: CookieStoreGetOptions): CookieListItem | null;
-
-//   getAll(name: string): CookieList;
-//   // getAll(options?: CookieStoreGetOptions): CookieList;
-
-//   set(name: string, value: string): void;
-//   set(options: CookieInit): void;
-
-//   delete(name: string): void;
-//   // delete(options: CookieStoreDeleteOptions): void;
-// }
 
 export interface CookieStoreGetOptions {
   name?: string;

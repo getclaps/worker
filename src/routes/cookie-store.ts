@@ -2,7 +2,7 @@ import { Awaitable } from "../router";
 import { CookieStore, CookieListItem, CookieList, CookieInit } from "./cookie-store-types";
 import { validateURL } from "./validate";
 
-type WithCookiesHandler<T> = (args: T & { cookies: CookieStore }) => Awaitable<Response>;
+type WithCookiesHandler<T> = (args: T & { cookies: RequestCookieStore }) => Awaitable<Response>;
 
 const attrsToSetCookie = (attrs: string[][]) => attrs.map(as => as.join('=')).join('; ');
 
@@ -24,31 +24,31 @@ class RequestCookieStore implements CookieStore {
       .filter(([k]) => !!k));
   }
 
-  get(name: string): Promise<CookieListItem | null>;
-  // get(options?: CookieStoreGetOptions): Promise<CookieListItem | null>;
-  async get(options: string) {
+  get(name: string): CookieListItem | null;
+  // get(options?: CookieStoreGetOptions): CookieListItem | null;
+  get(options: string) {
     return this.#cookie.has(options) 
       ? { name: options, value: this.#cookie.get(options) } 
       : null;
   }
 
-  getAll(name: string): Promise<CookieList>;
-  // getAll(options?: CookieStoreGetOptions): Promise<CookieList>;
-  async getAll() {
+  getAll(name: string): CookieList;
+  // getAll(options?: CookieStoreGetOptions): CookieList;
+  getAll() {
     return [...this.#cookie.entries()].map(([name, value]) => ({ name, value }))
   }
 
-  set(name: string, value: string): Promise<void>;
-  set(options: CookieInit): Promise<void>;
-  async set(options: string | CookieInit, value?: string) {
+  set(name: string, value: string): void;
+  set(options: CookieInit): void;
+  set(options: string | CookieInit, value?: string) {
     const [name, val, attributes, expires] = setCookie(options, value, this.#origin);
     this.#setMap.set(name, attributes);
     if (expires < new Date()) this.#cookie.delete(name); else this.#cookie.set(name, val);
   }
 
-  delete(name: string): Promise<void>;
-  // delete(options: CookieStoreDeleteOptions): Promise<void>;
-  async delete(options: string) {
+  delete(name: string): void;
+  // delete(options: CookieStoreDeleteOptions): void;
+  delete(options: string) {
     const expires = new Date(0);
     const value = '';
     const sameSite = 'strict';

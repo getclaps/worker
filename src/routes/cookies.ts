@@ -28,8 +28,8 @@ export const loginCookie = (id: string): CookieInit => ({
   expires: oneYearFromNow(),
 })
 
-export const loginsCookie = async (cookies: CookieStore, id: string): Promise<CookieInit> => {
-  const ids = (await cookies.get('ids'))?.value.split(',') ?? [];
+export const loginsCookie = (cookies: CookieStore, id: string): CookieInit => {
+  const ids = cookies.get('ids')?.value.split(',') ?? [];
   if (id && !ids.includes(id)) ids.push(id);
   return {
     name: 'ids',
@@ -48,9 +48,9 @@ export const hostnameCookie = async (id: string, hostname: string): Promise<Cook
   expires: oneYearFromNow(),
 });
 
-export const logoutsCookie = async (cookies: CookieStore): Promise<CookieInit> => {
-  const id = (await cookies.get('id'))?.value;
-  let ids = (await cookies.get('ids'))?.value.split(',') ?? [];
+export const logoutsCookie = (cookies: CookieStore): CookieInit => {
+  const id = cookies.get('id')?.value;
+  let ids = cookies.get('ids')?.value.split(',') ?? [];
   ids = ids.filter(_ => _ !== id);
   return {
     name: 'ids',

@@ -22,12 +22,12 @@ export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArg
 
   const dao: DAO = getDAO();
 
-  const id = (await cookies.get('did'))?.value;
+  const id = cookies.get('did')?.value;
   if (!id) throw re.seeOther('/login');
 
   const uuid = elongateId(id);
 
-  const isBookmarked = !!(await cookies.get(await cc.mkBookmarkedCookieKey(id)));
+  const isBookmarked = !!cookies.get(await cc.mkBookmarkedCookieKey(id));
 
   const [locale] = args.language?.split('-') ?? ['en'];
   const response = await handler({ ...args, locale, id, uuid, cookies, dao, isBookmarked });
@@ -42,15 +42,15 @@ export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArg
   return response;
 }));
 
-export const htmlHostnameSelect = async (cookies: CookieStore, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
-  const shortIds = (await cookies.get('ids'))?.value.split(',') ?? [];
+export const htmlHostnameSelect = (cookies: CookieStore, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
+  const shortIds = cookies.get('ids')?.value.split(',') ?? [];
   const shortId = compressId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
         ${shortIds.map(async sid => html`
           <option value="${sid}" ${sid === shortId ? 'selected' : ''}>
-            ${(await cookies.get(await cc.mkHostnameCookieKey(sid)))?.value ?? sid}
+            ${cookies.get(await cc.mkHostnameCookieKey(sid))?.value ?? sid}
           </option>
         `)}
       </select>

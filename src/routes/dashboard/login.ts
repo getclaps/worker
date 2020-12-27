@@ -12,11 +12,11 @@ import { withCookies } from '../cookie-store';
 import { page } from './common';
 
 router.get('/logout', withCookies(async ({ cookies }) => {
-  const did = (await cookies.get('did'))?.value;
-  const ids = (await cookies.get('ids'))?.value.split(',').filter(_ => _ !== did) ?? [];
+  const did = cookies.get('did')?.value;
+  const ids = cookies.get('ids')?.value.split(',').filter(_ => _ !== did) ?? [];
 
   if (ids.length) cookies.set(cc.loginCookie(ids[0])); else cookies.delete('did');
-  cookies.set(await cc.logoutsCookie(cookies));
+  cookies.set(cc.logoutsCookie(cookies));
 
   return re.seeOther(new URL(`/`, WORKER_DOMAIN));
 }));
@@ -38,7 +38,7 @@ router.post('/login', withCookies(async ({ request, cookies }) => {
   }
 
   cookies.set(cc.loginCookie(id))
-  cookies.set(await cc.loginsCookie(cookies, id));
+  cookies.set(cc.loginsCookie(cookies, id));
   cookies.set(await cc.bookmarkedCookie(id));
   if (hostname) cookies.set(await cc.hostnameCookie(id, hostname));
 
