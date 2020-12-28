@@ -19,7 +19,7 @@ const symbols = {
   create: Symbol('Session.create'),
 }
 
-export class SessionStore implements Map<string, any> {
+export class SessionStore {
   #map: Map<string, any>;
   #id: UUID;
   #event: FetchEvent;
@@ -28,8 +28,8 @@ export class SessionStore implements Map<string, any> {
 
   static async [symbols.create]({ event, cookies }: Args, { storage, sessionKey, expirationTtl }: SessionOptions) {
     let sid = parseUUID((await cookies.get(sessionKey))?.value);
-    const map = await storage.get<Map<string, any>>(sid);
-    sid = map != null ? sid : new UUID();
+    const map = sid && await storage.get<Map<string, any>>(sid);
+    sid = map ? sid : new UUID();
     return new SessionStore(symbols.create, map ?? new Map(), sid, { event, cookies }, { storage, expirationTtl });
   }
 
@@ -53,7 +53,7 @@ export class SessionStore implements Map<string, any> {
     this.#event.waitUntil((async () => {
       await new Promise(r => setTimeout(r)); // await end of microtask
       if (capturedNr === this.#nr) { // no other invocations since
-        await this.#storage.set(this.#id, new Map(this), this.#opts);
+        await this.#storage.set(this.#id, this.#map, this.#opts);
       } 
     })());
   }
@@ -75,12 +75,7 @@ export class SessionStore implements Map<string, any> {
     this.#persist();
   }
 
-  get [Symbol.toStringTag]() { return 'SessionStore' }
-
   // Pass-along implementations...
-  forEach<T>(callbackfn: (value: T, key: string, map: Map<string, T>) => void, thisArg?: any): void {
-    this.#map.forEach(callbackfn, thisArg);
-  }
   get<T>(key: string): T {
     return this.#map.get(key);
   }

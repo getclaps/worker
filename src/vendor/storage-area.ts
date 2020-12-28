@@ -1,6 +1,4 @@
-import { Repeatable } from "./common-types";
-
-export type StorageAreaKey = Repeatable<number | string | Date | BufferSource>
+export type Key = any;
 
 declare var StorageArea: {
     prototype: StorageArea;
@@ -8,25 +6,25 @@ declare var StorageArea: {
 };
 
 export interface StorageArea<BS = any> {
-  set<T>(key: StorageAreaKey, value: T, opts?: Record<string, any>): Promise<void> ;
-  get<T>(key: StorageAreaKey, opts?: Record<string, any>): Promise<T> ;
-  delete(key: StorageAreaKey): Promise<void> ;
+  set<T>(key: Key, value: T, opts?: Record<string, any>): Promise<void> ;
+  get<T>(key: Key, opts?: Record<string, any>): Promise<T> ;
+  delete(key: Key): Promise<void> ;
   clear(): Promise<void> ;
 
-  keys(): AsyncIterableIterator<StorageAreaKey>;
+  keys(): AsyncIterableIterator<Key>;
   values<T>(): AsyncIterableIterator<T>;
-  entries<T>(): AsyncIterableIterator<[StorageAreaKey, T]>;
+  entries<T>(): AsyncIterableIterator<[Key, T]>;
 
   backingStore(): BS;
 };
 
-export function throwForDisallowedKey(key: StorageAreaKey) {
+export function throwForDisallowedKey(key: any) {
   if (!isAllowedAsAKey(key)) {
-    throw Error('kv-storage: The given value is not allowed as a key');
+    throw Error('kv-storage: The given value is not allowed as a key: ' + key);
   }
 }
 
-function isAllowedAsAKey(value: StorageAreaKey) {
+function isAllowedAsAKey(value: any) {
   if (typeof value === 'number' || typeof value === 'string') {
     return true;
   }

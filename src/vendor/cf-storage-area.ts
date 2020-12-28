@@ -1,13 +1,11 @@
 import Typeson from 'typeson';
 import structuredCloningThrowing from 'typeson-registry/dist/presets/structured-cloning-throwing';
+import { encodeKey, decodeKey } from './cf-storage-area-keys';
 
-import { StorageAreaKey, StorageArea, throwForDisallowedKey } from './storage-area';
+import { Key, StorageArea, throwForDisallowedKey } from './storage-area';
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
 const TSON = new Typeson().register(structuredCloningThrowing);
-
-const encodeKey = (key: StorageAreaKey) => JSON.stringify(TSON.encapsulate(key));
-const decodeKey = (key: string) => TSON.revive(JSON.parse(key));
 
 // TODO: options to use BSON or other binary rep instead of JSON.stringify...
 const setValue = <T>(kv: KVNamespace, key: string, value: T, options?: CFSetOptions) =>
@@ -41,17 +39,20 @@ export class CFStorageArea implements StorageArea<KVNamespace> {
     if (!this.#kv) throw Error('KV binding missing. Consult CF Workers documentation for details')
   }
 
-  async get<T>(key: StorageAreaKey): Promise<T> {
+  async get<T>(key: Key): Promise<T> {
     throwForDisallowedKey(key);
     return getValue(this.#kv, encodeKey(key));
   }
 
-  async set<T>(key: StorageAreaKey, value: T, options?: CFSetOptions): Promise<void> {
-    throwForDisallowedKey(key);
-    await setValue(this.#kv, encodeKey(key), value, options);
+  async set<T>(key: Key, value: T | undefined, options?: CFSetOptions): Promise<void> {
+    if (value === undefined) await this.#kv.delete(encodeKey(key));
+    else {
+      throwForDisallowedKey(key);
+      await setValue(this.#kv, encodeKey(key), value, options);
+    }
   }
 
-  async delete(key: StorageAreaKey) {
+  async delete(key: Key) {
     throwForDisallowedKey(key);
     return this.#kv.delete(encodeKey(key));
   }
@@ -62,7 +63,7 @@ export class CFStorageArea implements StorageArea<KVNamespace> {
     }
   }
 
-  async *keys<K extends StorageAreaKey = StorageAreaKey>(): AsyncGenerator<K> {
+  async *keys<K extends Key = Key>(): AsyncGenerator<K> {
     for await (const key of paginationHelper(this.#kv)) {
       yield decodeKey(key);
     }
@@ -74,7 +75,7 @@ export class CFStorageArea implements StorageArea<KVNamespace> {
     }
   }
 
-  async *entries<T, K extends StorageAreaKey = StorageAreaKey>(): AsyncGenerator<[K, T]> {
+  async *entries<T, K extends Key = Key>(): AsyncGenerator<[K, T]> {
     for await (const key of paginationHelper(this.#kv)) {
       yield [decodeKey(key), await getValue(this.#kv, key)];
     }
@@ -83,5 +84,4 @@ export class CFStorageArea implements StorageArea<KVNamespace> {
   backingStore() {
     return this.#kv;
   }
-
 }
