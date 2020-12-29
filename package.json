@@ -27,6 +27,7 @@
     "device-detector-js": "^2.2.5",
     "faunadb": "^4.0.0",
     "ipaddr.js": "^2.0.0",
+    "msgpack-lite": "^0.1.26",
     "negotiated": "^1.0.0",
     "tiny-request-router": "^1.2.2",
     "typed-array-utils": "^0.1.0",
