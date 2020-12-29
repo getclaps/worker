@@ -7,95 +7,47 @@ import { StorageArea } from '../storage-area';
 import { CookieStore, SyncCookieStore } from './cookie-store-types';
 
 type Args = { event: FetchEvent, cookies: CookieStore | SyncCookieStore };
-type WithSessionHandler<T> = (args: T & { session: Promise<SessionStore> }) => Awaitable<Response>;
+type WithSessionHandler<T, S> = (args: T & { session: Promise<S> }) => Awaitable<Response>;
 
 interface SessionOptions {
   storage?: StorageArea,
-  sessionKey?: string,
+  cookieName?: string,
   expirationTtl?: number,
 }
 
-const symbols = {
-  create: Symbol('Session.create'),
-}
+type HasId = { id: UUID };
+type DefaultSession = { id: UUID, [k: string]: any };
 
-export class SessionStore {
-  #map: Map<string, any>;
-  #id: UUID;
-  #event: FetchEvent;
-  #storage: StorageArea;
-  #opts: Record<string, any>;
+async function getSessionObject<S extends HasId = DefaultSession>(sessionId: UUID, event: FetchEvent, { storage, cookieName, expirationTtl }: SessionOptions): Promise<S> {
+  const obj = (await storage.get<S>(sessionId)) || <S>{ id: sessionId };
 
-  static async [symbols.create]({ event, cookies }: Args, { storage, sessionKey, expirationTtl }: SessionOptions) {
-    let sid = parseUUID((await cookies.get(sessionKey))?.value);
-    const map = sid && await storage.get<Map<string, any>>(sid);
-    sid = map ? sid : new UUID();
-    return new SessionStore(symbols.create, map ?? new Map(), sid, { event, cookies }, { storage, expirationTtl });
-  }
-
-  private constructor(caller: symbol, map: Map<string, any>, id: UUID, { event }: Args, { storage, expirationTtl }: SessionOptions) {
-    if (caller !== symbols.create) throw Error('Illegal constructor');
-    this.#map = map;
-    this.#id = id;
-    this.#event = event;
-    this.#storage = storage;
-    this.#opts = { expirationTtl };
-  }
-
-  get id() {
-    return this.#id;
-  }
-
-  #nr = 0;
+  let nr = 0;
   /** Batch calls within the same micro task */
-  #persist = () => {
-    const capturedNr = ++this.#nr;
-    this.#event.waitUntil((async () => {
+  const persist = () => {
+    const capturedNr = ++nr;
+    event.waitUntil((async () => {
       await new Promise(r => setTimeout(r)); // await end of microtask
-      if (capturedNr === this.#nr) { // no other invocations since
-        await this.#storage.set(this.#id, this.#map, this.#opts);
-      } 
+      if (capturedNr === nr) { // no other invocations since
+        await storage.set(sessionId, obj, { expirationTtl });
+      }
     })());
   }
 
-  set<T>(key: string, value: T): this {
-    this.#map.set(key, value);
-    this.#persist();
-    return this;
-  }
+  return new Proxy(obj, {
+    set(target, prop, value) {
+      target[prop] = value;
+      persist();
+      return true;
+    },
 
-  delete(key: string): boolean {
-    const ret = this.#map.delete(key);
-    this.#persist();
-    return ret;
-  }
-
-  clear(): void {
-    this.#map.clear();
-    this.#persist();
-  }
-
-  // Pass-along implementations...
-  get<T>(key: string): T {
-    return this.#map.get(key);
-  }
-  has(key: string): boolean {
-    return this.#map.has(key);
-  }
-  get size() { return this.#map.size }
-  [Symbol.iterator]<T>(): IterableIterator<[string, T]> {
-    return this.#map[Symbol.iterator]();
-  }
-  entries<T>(): IterableIterator<[string, T]> {
-    return this.#map.entries();
-  }
-  keys(): IterableIterator<string> {
-    return this.#map.keys();
-  }
-  values<T>(): IterableIterator<T> {
-    return this.#map.values();
-  }
+    deleteProperty(target, prop) {
+      delete target[prop];
+      persist();
+      return true;
+    }
+  });
 }
+
 
 /**
  * Session middleware for worker environments.
@@ -106,14 +58,16 @@ export class SessionStore {
  * The session object is provided as a promise, so that users have full control over when to await for the database request to finish.
  * (when serving streaming responses via @werker/html you might not want to wait for a db request to finish before sending initial response data)
  */
-export const withSession = ({ storage, sessionKey = 'sid', expirationTtl = 5 * 60 }: SessionOptions) => 
-  <T extends Args>(handler: WithSessionHandler<T>) => 
+export const withSession = <S extends HasId = DefaultSession>({ storage, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
+  <T extends Args>(handler: WithSessionHandler<T, S>) =>
     async (args: T): Promise<Response> => {
-      const session = SessionStore[symbols.create](args, { storage, sessionKey, expirationTtl });
+      const { cookies, event } = args;
+      const sessionId = parseUUID((await cookies.get(cookieName))?.value) ?? new UUID();
+      const session = getSessionObject<S>(sessionId, event, { storage, cookieName, expirationTtl });
       const response = await handler({ ...args, session });
-      args.cookies.set({
-        name: sessionKey,
-        value: shortenId(session.id),
+      cookies.set({
+        name: cookieName,
+        value: shortenId(sessionId),
         sameSite: 'lax',
         httpOnly: true,
         expires: null, // session cookie
