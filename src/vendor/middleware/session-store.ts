@@ -7,7 +7,7 @@ import { StorageArea } from '../storage-area';
 import { CookieStore, SyncCookieStore } from './cookie-store-types';
 
 type Args = { event: FetchEvent, cookies: CookieStore | SyncCookieStore };
-type WithSessionHandler<T> = (args: T & { session: SessionStore }) => Awaitable<Response>;
+type WithSessionHandler<T> = (args: T & { session: Promise<SessionStore> }) => Awaitable<Response>;
 
 interface SessionOptions {
   storage?: StorageArea,
@@ -97,10 +97,19 @@ export class SessionStore {
   }
 }
 
+/**
+ * Session middleware for worker environments.
+ * 
+ * Users need to provide a `StorageArea` to persist the session between requests. 
+ * There are implementations for both browsers (IndexedDB-backed) and Cloudflare Workers (KV storage backed) available.
+ * 
+ * The session object is provided as a promise, so that users have full control over when to await for the database request to finish.
+ * (when serving streaming responses via @werker/html you might not want to wait for a db request to finish before sending initial response data)
+ */
 export const withSession = ({ storage, sessionKey = 'sid', expirationTtl = 5 * 60 }: SessionOptions) => 
   <T extends Args>(handler: WithSessionHandler<T>) => 
     async (args: T): Promise<Response> => {
-      const session = await SessionStore[symbols.create](args, { storage, sessionKey, expirationTtl });
+      const session = SessionStore[symbols.create](args, { storage, sessionKey, expirationTtl });
       const response = await handler({ ...args, session });
       args.cookies.set({
         name: sessionKey,
