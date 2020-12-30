@@ -3,12 +3,12 @@ import { JSONResponse } from '@werker/json-fetch';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookies } from '../../vendor/middleware/cookie-store';
+import { withCORS } from '../../vendor/middleware/cors';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
 
-import { withCORS } from '../cors';
 import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
@@ -27,9 +27,10 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
 }
 
 const acceptJSON = withContentNegotiation({ types: ['application/json'] });
+const cors = withCORS({ credentials: true });
 
-router.options('/views', withCORS(() => re.ok()))
-router.post('/views', withCORS(withErrors(withCookies(acceptJSON(async ({ headers, cookies, searchParams }) => {
+router.options('/views', cors(() => re.ok()))
+router.post('/views', cors(withErrors(withCookies(acceptJSON(async ({ headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
