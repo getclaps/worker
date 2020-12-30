@@ -1,8 +1,7 @@
 import { BaseArg, Handler } from ".";
 import { Awaitable } from "../common-types";
-import { CookieStore } from "./cookie-store-types";
-import { FetchCookieStore } from "./fetch-cookie-store";
-import { SignedCookieStore } from "./signed-cookie-store";
+import { CookieStore, FetchCookieStore } from "../fetch-cookie-store";
+import { SignedCookieStore } from "../signed-cookie-store";
 
 export type WithCookiesDeps = BaseArg;
 export type WithCookiesArgs = { cookieStore: CookieStore, cookies: RequestCookies }
@@ -10,19 +9,19 @@ export type WithCookiesHandler<A extends WithCookiesDeps> = (args: A & WithCooki
 
 export type RequestCookies = ReadonlyMap<string, string>;
 
-export interface CookieOptions {
+export interface WithCookieOptions {
   secret: string | BufferSource
   salt?: BufferSource
 }
 
-export const withSignedCookies = (opts: CookieOptions) => {
+export const withSignedCookies = (opts: WithCookieOptions) => {
   const cryptoKeyPromise = SignedCookieStore.deriveCryptoKey(opts);
 
   return <A extends WithCookiesDeps>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
     const fetchCookieStore = new FetchCookieStore(args.event.request);
     const cookieStore = new SignedCookieStore(fetchCookieStore, await cryptoKeyPromise);
 
-    // Parse cookies into a map for convenience. This allows looking up
+    // Parse cookies into a map for convenience. This allows looking up values synchronously.
     const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
 
     const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
@@ -55,6 +54,4 @@ export const withCookies = <A extends WithCookiesDeps>(handler: WithCookiesHandl
   return response;
 }
 
-
-export { toSetCookie } from './fetch-cookie-store';
-export * from './cookie-store-types';
+export * from '../fetch-cookie-store';

@@ -2,8 +2,7 @@ import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
-import { CookieInit, CookieList, CookieListItem, CookieStore } from "./cookie-store-types";
-import { CookieOptions } from "./cookie-store";
+import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "../fetch-cookie-store/cookie-store-interface";
 import { Awaitable } from "../common-types";
 
 /** 
@@ -16,16 +15,25 @@ const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 
   ? new TextEncoder().encode(secret)
   : bufferSourceToUint8Array(secret);
 
+/**
+ * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
+ * that transparently signs and verifies cookies via the Web Cryptography API. 
+ * 
+ * This is likely only useful in server-side implementations, but the code is written in a platform-agnostic way.
+ * 
+ * It was written to be used in @werker/middleware, but published here as a standalone module for use elsewhere.
+ */
 export class SignedCookieStore implements CookieStore {
-  static async deriveCryptoKey(opts: CookieOptions) {
+  static async deriveCryptoKey(opts: { secret: string | BufferSource, salt?: BufferSource }) {
     if (!opts.secret) throw Error('Secret missing');
+
     const passphraseKey = await crypto.subtle.importKey('raw', secretToUint8Array(opts.secret), 'PBKDF2', false, ['deriveKey']);
     const salt = (opts.salt && bufferSourceToUint8Array(opts.salt)) ?? new UUID('a3491c45-b769-447f-87fd-64333c8d36f0');
     return await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', iterations: 100, hash: 'SHA-256', salt },
+      { name: 'PBKDF2', iterations: 999, hash: 'SHA-256', salt },
       passphraseKey,
       { name: 'HMAC', hash: 'SHA-256', length: 128 },
-      true,
+      false,
       ['sign', 'verify'],
     );
   }
@@ -47,7 +55,9 @@ export class SignedCookieStore implements CookieStore {
     }
   }
 
-  async get(name?: string): Promise<CookieListItem | null> {
+  async get(name: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
+    if (typeof name !== 'string') throw Error('Overload not implemented.');
+
     const cookie = await this.#store.get(name);
     if (!cookie) return null;
 
@@ -59,7 +69,9 @@ export class SignedCookieStore implements CookieStore {
     return cookie;
   }
 
-  async getAll(name?: string): Promise<CookieList> {
+  async getAll(name?: string | CookieStoreGetOptions): Promise<CookieList> {
+    if (typeof name !== 'string') throw Error('Overload not implemented.');
+
     const all = await this.#store.getAll(name);
     const cookies = all.filter(x => !x.name.startsWith(PREFIX));
     const sigCookies = new Map(all.filter(x => x.name.startsWith(PREFIX)).map(x => [x.name, x]));
@@ -73,8 +85,6 @@ export class SignedCookieStore implements CookieStore {
     return cookies;
   }
 
-  set(name: string, value: string): Promise<void>;
-  set(options: CookieInit): Promise<void>;
   async set(options: string | CookieInit, value?: string) {
     const [name, val] = typeof options === 'string'
       ? [options, value]
@@ -101,7 +111,9 @@ export class SignedCookieStore implements CookieStore {
 
   }
 
-  async delete(name: string): Promise<void> {
+  async delete(name: string | CookieStoreDeleteOptions): Promise<void> {
+    if (typeof name !== 'string') throw Error('Overload not implemented.');
+     
     this.#store.delete(name);
     this.#store.delete(`${PREFIX}${name}`);
   }
@@ -111,3 +123,4 @@ export class SignedCookieStore implements CookieStore {
   removeEventListener(type: string, callback: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void { throw new Error("Method not implemented.") }
 }
 
+export * from "../fetch-cookie-store/cookie-store-interface"

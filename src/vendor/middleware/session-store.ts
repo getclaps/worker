@@ -52,7 +52,6 @@ async function getSessionObject<S extends AnyRec = AnyRec>(sessionId: UUID, even
   });
 }
 
-
 /**
  * Session middleware for worker environments.
  * 

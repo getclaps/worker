@@ -1,15 +1,18 @@
+/**
+ * Verbatim translation of <https://wicg.github.io/cookie-store/#CookieStore>
+ */
 export interface CookieStore extends EventTarget {
   get(name?: string): Promise<CookieListItem | null>;
-  // get(options?: CookieStoreGetOptions): CookieListItem | null;
+  get(options?: CookieStoreGetOptions): Promise<CookieListItem | null>;
 
   getAll(name?: string): Promise<CookieList>;
-  // getAll(options?: CookieStoreGetOptions): CookieList;
+  getAll(options?: CookieStoreGetOptions): Promise<CookieList>;
 
   set(name: string, value: string): Promise<void>;
   set(options: CookieInit): Promise<void>;
 
   delete(name: string): Promise<void>;
-  // delete(options: CookieStoreDeleteOptions): void;
+  delete(options: CookieStoreDeleteOptions): Promise<void>;
 }
 
 export interface CookieStoreGetOptions {
