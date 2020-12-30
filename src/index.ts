@@ -4,7 +4,7 @@ import { Method } from 'tiny-request-router'
 
 import { withSignedCookies } from './vendor/middleware/cookie-store';
 
-import { AUTH, DEBUG, IP_SALT_KEY, KV } from './constants';
+import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
@@ -15,7 +15,7 @@ import './routes/index';
 resolveOrNull(import(/* webpackMode: "eager" */ './billing')); 
 
 async function resetIPSalt() {
-  await KV.put(IP_SALT_KEY, new UUID().id);
+  await storage.set(IP_SALT_KEY, new UUID());
 }
 
 router.get('/__init', async ({ headers }) => {

@@ -1,9 +1,10 @@
+import { KVStorageArea } from '@werker/cloudflare-kv-storage';
 import { UUID } from 'uuid-class';
 import * as ipAddr from 'ipaddr.js';
 import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 import { concatBufferSources } from 'typed-array-utils';
 
-import { DEBUG, IP_SALT_KEY, KV } from '../constants';
+import { DEBUG, IP_SALT_KEY, storage } from '../constants';
 
 async function getVisitor(ip: string, userAgent: string, hostname: string) {
   if (!ip) return null;
@@ -13,7 +14,7 @@ async function getVisitor(ip: string, userAgent: string, hostname: string) {
       new TextEncoder().encode(userAgent),
       new TextEncoder().encode(hostname), 
     );
-    const dailyIPSalt = await KV.get(IP_SALT_KEY);
+    const dailyIPSalt = new UUID(await storage.get(IP_SALT_KEY));
     return await UUID.v5(base, dailyIPSalt);
   } catch {
     return null;
