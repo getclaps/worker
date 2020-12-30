@@ -50,7 +50,7 @@ router.post('/claps', withCORS(withErrors(withCookies(acceptJSON(async ({ reques
   }, {
     originHostname: originURL.hostname,
     ip: headers.get('cf-connecting-ip'),
-    dnt: !!cookies.get(cc.dntCookieKey(url.hostname)),
+    dnt: cookies.has(cc.dntCookieKey(url.hostname)),
   });
 
   return new JSONResponse(data);

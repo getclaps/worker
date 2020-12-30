@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
-import { withCookies } from '../../vendor/middleware/cookie-store';
+import { withSignedCookies } from '../../vendor/middleware/cookie-store';
 
 import { router } from '../../router';
 import { DAO } from '../../dao';
@@ -11,7 +11,9 @@ import { parseUUID } from '../../vendor/short-id';
 import * as cc from '../cookies';
 import { page } from './components';
 
-router.post('/login', withCookies(async ({ request, cookies }) => {
+const withCookies = withSignedCookies({ secret: 'foobar' });
+
+router.post('/login', withCookies(async ({ request, cookies, cookieStore }) => {
   const dao: DAO = getDAO();
 
   const formData = await request.formData()
@@ -27,27 +29,27 @@ router.post('/login', withCookies(async ({ request, cookies }) => {
     return re.seeOther(referrer)
   }
 
-  cookies.set(cc.loginsCookie(cookies, id));
-  cookies.set(cc.loginCookie(id))
-  cookies.set(await cc.bookmarkedCookie(id));
-  if (hostname) cookies.set(await cc.hostnameCookie(id, hostname));
+  cookieStore.set(cc.loginsCookie(cookies, id));
+  cookieStore.set(cc.loginCookie(id))
+  cookieStore.set(await cc.bookmarkedCookie(id));
+  if (hostname) cookieStore.set(await cc.hostnameCookie(id, hostname));
 
   return re.seeOther(referrer);
 }));
 
 // TODO: make POST
-router.get('/logout', withCookies(async ({ cookies }) => {
-  const did = cookies.get('did')?.value;
-  const ids = cookies.get('ids')?.value.split(',').filter(_ => _ !== did) ?? [];
+router.get('/logout', withCookies(async ({ cookies, cookieStore }) => {
+  const did = cookies.get('did');
+  const ids = cookies.get('ids').split(',').filter(_ => _ !== did) ?? [];
 
-  cookies.set(cc.logoutsCookie(cookies));
-  if (ids.length) cookies.set(cc.loginCookie(ids[0])); else cookies.delete('did');
+  cookieStore.set(cc.logoutsCookie(cookies));
+  if (ids.length) cookieStore.set(cc.loginCookie(ids[0])); else cookieStore.delete('did');
 
   return re.seeOther('/');
 }));
 
 
-router.get('/login', ({ headers }) => {
+router.get('/login', withCookies(({ headers }) => {
   const referrer = headers.get('referer');
   return page()(html`
     <div class="flex-center" style="margin-top:3rem">
@@ -104,4 +106,4 @@ router.get('/login', ({ headers }) => {
       }
     </script>
   `);
-});
+}));

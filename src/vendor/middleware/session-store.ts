@@ -4,9 +4,9 @@ import { Awaitable } from '../common-types';
 import { shortenId, parseUUID } from '../short-id';
 import { StorageArea } from '../storage-area';
 
-import { CookieStore, SyncCookieStore } from './cookie-store-types';
+import { CookieStore } from './cookie-store-types';
 
-type Args = { event: FetchEvent, cookies: CookieStore | SyncCookieStore };
+type Args = { event: FetchEvent, cookieStore: CookieStore };
 type WithSessionHandler<T, S> = (args: T & { session: Promise<S> }) => Awaitable<Response>;
 
 interface SessionOptions {
@@ -61,11 +61,11 @@ async function getSessionObject<S extends HasId = DefaultSession>(sessionId: UUI
 export const withSession = <S extends HasId = DefaultSession>({ storage, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
   <T extends Args>(handler: WithSessionHandler<T, S>) =>
     async (args: T): Promise<Response> => {
-      const { cookies, event } = args;
-      const sessionId = parseUUID((await cookies.get(cookieName))?.value) ?? new UUID();
+      const { cookieStore, event } = args;
+      const sessionId = parseUUID((await cookieStore.get(cookieName))?.value) ?? new UUID();
       const session = getSessionObject<S>(sessionId, event, { storage, cookieName, expirationTtl });
       const response = await handler({ ...args, session });
-      cookies.set({
+      cookieStore.set({
         name: cookieName,
         value: shortenId(sessionId),
         sameSite: 'lax',

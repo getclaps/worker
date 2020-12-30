@@ -1,5 +1,5 @@
 import { Base64Encoder } from "base64-encoding";
-import { CookieInit, SyncCookieStore } from "../vendor/middleware/cookie-store";
+import { CookieInit, RequestCookies } from "../vendor/middleware/cookie-store";
 
 const oneYearFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 365);
 const shortHash = async (text: string) => new Base64Encoder().encode(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 7);
@@ -26,8 +26,8 @@ export const loginCookie = (id: string): CookieInit => ({
   expires: oneYearFromNow(),
 })
 
-export const loginsCookie = (cookies: SyncCookieStore, id: string): CookieInit => {
-  const ids = cookies.get('ids')?.value.split(',') ?? [];
+export const loginsCookie = (cookies: RequestCookies, id: string): CookieInit => {
+  const ids = cookies.get('ids')?.split(',') ?? [];
   if (id && !ids.includes(id)) ids.push(id);
   return {
     name: 'ids',
@@ -46,9 +46,9 @@ export const hostnameCookie = async (id: string, hostname: string): Promise<Cook
   expires: oneYearFromNow(),
 });
 
-export const logoutsCookie = (cookies: SyncCookieStore): CookieInit => {
-  const did = cookies.get('did')?.value;
-  const ids = cookies.get('ids')?.value.split(',').filter(_ => _ !== did)
+export const logoutsCookie = (cookies: RequestCookies): CookieInit => {
+  const did = cookies.get('did');
+  const ids = cookies.get('ids')?.split(',').filter(_ => _ !== did)
   return {
     name: 'ids',
     value: ids.join(),

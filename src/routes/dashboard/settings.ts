@@ -28,7 +28,7 @@ async function settingsPage(
     }
 
     const hn = dashboard.hostname[0];
-    cookieDNT = cookieDNT || !!cookies.get(cc.dntCookieKey(hn));
+    cookieDNT = cookieDNT || cookies.has(cc.dntCookieKey(hn));
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
@@ -171,7 +171,7 @@ async function settingsPage(
 
 router.get('/settings', withDashboard(settingsPage))
 router.post('/settings', withDashboard(async (args) => {
-  const { request, dao, uuid, cookies } = args;
+  const { request, dao, uuid, cookieStore } = args;
 
   const headers = new Headers();
 
@@ -201,7 +201,7 @@ router.post('/settings', withDashboard(async (args) => {
       cookieDNT = fd.get('dnt') === 'on'
       dashboard = await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
       const hn = dashboard.hostname[0];
-      cookies.set(cc.dntCookie(cookieDNT, hn));
+      cookieStore.set(cc.dntCookie(cookieDNT, hn));
       break;
     }
     // case 'relocate': {

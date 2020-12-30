@@ -26,10 +26,10 @@ router.get('/__init', async ({ headers }) => {
 });
 
 router.get('/', withCookies(async ({ cookies }) => {
-  const id = cookies.get('did')?.value;
+  const id = cookies.get('did');
   if (!id) return re.seeOther('/login');
 
-  const isBookmarked = !!cookies.get(await cc.bookmarkedCookieKey(id))
+  const isBookmarked = cookies.has(await cc.bookmarkedCookieKey(id))
   if (!isBookmarked) return re.seeOther('/settings')
 
   return re.seeOther('/stats')

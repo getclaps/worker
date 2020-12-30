@@ -1,7 +1,7 @@
 import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
 
-import { SyncCookieStore } from '../../vendor/middleware/cookie-store';
+import { RequestCookies } from '../../vendor/middleware/cookie-store';
 import { shortenId } from '../../vendor/short-id';
 
 import * as cc from '../cookies';
@@ -12,7 +12,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
   title?: string,
   isBookmarked?: boolean,
   headers?: HeadersInit,
-  cookies?: SyncCookieStore,
+  cookies?: RequestCookies,
   uuid?: UUID,
 } = {}) => (content: HTMLContent) => new HTMLResponse(html`
 <!DOCTYPE html>
@@ -83,15 +83,15 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
   ],
 });
 
-export const htmlHostnameSelect = (cookies: SyncCookieStore, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
-  const shortIds = cookies.get('ids')?.value.split(',') ?? [];
+export const htmlHostnameSelect = (cookies: RequestCookies, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
+  const shortIds = cookies.get('ids').split(',') ?? [];
   const shortId = shortenId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
         ${shortIds.map(async sid => html`
           <option value="${sid}" ${sid === shortId ? 'selected' : ''}>
-            ${cookies.get(await cc.hostnameCookieKey(sid))?.value ?? sid}
+            ${cookies.get(await cc.hostnameCookieKey(sid)) ?? sid}
           </option>
         `)}
       </select>

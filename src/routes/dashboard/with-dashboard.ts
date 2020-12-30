@@ -20,12 +20,12 @@ export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArg
 
   const dao: DAO = getDAO();
 
-  const id = cookies.get('did')?.value;
+  const id = cookies.get('did');
   if (!id) throw re.seeOther('/login');
 
   const uuid = parseUUID(id);
 
-  const isBookmarked = !!cookies.get(await cc.bookmarkedCookieKey(id));
+  const isBookmarked = cookies.has(await cc.bookmarkedCookieKey(id));
 
   const [locale] = args.language?.split('-') ?? ['en'];
   const response = await handler({ ...args, locale, id, uuid, cookies, dao, isBookmarked });
