@@ -40,7 +40,7 @@ export const withSignedCookies = (opts: CookieOptions) => {
 }
 
 /** @deprecated Use signed cookies instead */
-export const withCookies = (_ = {}) => <T extends Args>(handler: WithCookiesHandler<T>) => async (args: T): Promise<Response> => {
+export const withCookies = <T extends Args>(handler: WithCookiesHandler<T>) => async (args: T): Promise<Response> => {
   const cookieStore = new FetchCookieStore(args.event.request);
   const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
   const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });

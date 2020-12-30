@@ -4,7 +4,7 @@ import { JSONResponse } from '@werker/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
-import { withSignedCookies } from '../../vendor/middleware/cookie-store';
+import { withCookies } from '../../vendor/middleware/cookie-store';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
@@ -18,7 +18,6 @@ import { extractData } from '../extract';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
-const withCookies = withSignedCookies({ secret: 'foobar' });
 const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 
 router.options('/claps', withCORS(() => re.ok()))

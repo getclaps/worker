@@ -9,7 +9,7 @@ import { CookieOptions } from "./cookie-store";
  * The prefix to designate cookie signatures cookies. 
  * While pretty arbitrary, the `~` char makes signatures appear at the bottom when sorting alphabetically.
  */
-const PREFIX = '~~';
+const PREFIX = '~s~';
 
 const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 'string'
   ? new TextEncoder().encode(secret)
@@ -29,18 +29,15 @@ export class SignedCookieStore implements CookieStore {
     );
   }
 
-  backingStore() {
-    return this.#store;
-  }
-
   #store: CookieStore;
   #key: CryptoKey
-  constructor(store: CookieStore, key: CryptoKey) {
+
+  constructor(store: CookieStore, signingKey: CryptoKey) {
     this.#store = store;
-    this.#key = key;
+    this.#key = signingKey;
   }
 
-  private async verify(cookie: CookieListItem, sigCookie: CookieListItem) {
+  #verify = async (cookie: CookieListItem, sigCookie: CookieListItem) => {
     const signature = new Base64Decoder().decode(sigCookie.value);
     const message = new TextEncoder().encode([cookie.name, cookie.value].join('='));
     const ok = await crypto.subtle.verify('HMAC', this.#key, signature, message);
@@ -49,14 +46,14 @@ export class SignedCookieStore implements CookieStore {
     }
   }
 
-  async get(name?: string): Promise<CookieListItem> {
+  async get(name?: string): Promise<CookieListItem | null> {
     const cookie = await this.#store.get(name);
-    if (!cookie) return cookie;
+    if (!cookie) return null;
 
     const sigCookie = await this.#store.get(`${PREFIX}${name}`);
-    if (!sigCookie) throw new Error('Signature cookie missing');
+    if (!sigCookie) return null;
 
-    this.verify(cookie, sigCookie);
+    this.#verify(cookie, sigCookie);
 
     return cookie;
   }
@@ -68,9 +65,9 @@ export class SignedCookieStore implements CookieStore {
 
     for (const cookie of cookies) {
       const sigCookie = sigCookies.get(`${PREFIX}${cookie.name}`);
-      if (!sigCookie) throw new Error('Signature cookie missing');
+      if (!sigCookie) continue;
 
-      this.verify(cookie, sigCookie);
+      this.#verify(cookie, sigCookie);
     }
     return cookies;
   }
