@@ -2,7 +2,7 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
-import { withCookies } from './vendor/middleware/cookie-store';
+import { withSignedCookies } from './vendor/middleware/cookie-store';
 
 import { AUTH, DEBUG, IP_SALT_KEY, KV } from './constants';
 import { getDAO } from './dao/get-dao';
@@ -25,7 +25,7 @@ router.get('/__init', async ({ headers }) => {
   return re.ok('Init success');
 });
 
-router.get('/', withCookies(async ({ cookies }) => {
+router.get('/', withSignedCookies({ secret: 'foobar' })(async ({ cookies }) => {
   const id = cookies.get('did');
   if (!id) return re.seeOther('/login');
 

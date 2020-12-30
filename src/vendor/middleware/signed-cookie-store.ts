@@ -3,31 +3,30 @@ import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
 import { CookieInit, CookieList, CookieListItem, CookieStore } from "./cookie-store-types";
+import { CookieOptions } from "./cookie-store";
 
-const PREFIX = '~s.';
-// const POSTFIX = '';
+/** 
+ * The prefix to designate cookie signatures cookies. 
+ * While pretty arbitrary, the `~` char makes signatures appear at the bottom when sorting alphabetically.
+ */
+const PREFIX = '~~';
+
+const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 'string'
+  ? new TextEncoder().encode(secret)
+  : bufferSourceToUint8Array(secret);
 
 export class SignedCookieStore implements CookieStore {
-  static async create(store: CookieStore, { secret }: { secret: string | BufferSource }) {
-    const secretBuffer = typeof secret === 'string'
-      ? new TextEncoder().encode(secret)
-      : bufferSourceToUint8Array(secret);
-
-    const passphraseKey = await crypto.subtle.importKey('raw', secretBuffer, 'PBKDF2', false, ['deriveKey']);
-    const key = await crypto.subtle.deriveKey(
-      {
-        name: 'PBKDF2',
-        iterations: 1000,
-        hash: 'SHA-256',
-        salt: new UUID('a3491c45-b769-447f-87fd-64333c8d36f0'), // TODO: make configurable
-      },
+  static async deriveCryptoKey(opts: CookieOptions) {
+    if (!opts.secret) throw Error('Secret missing');
+    const passphraseKey = await crypto.subtle.importKey('raw', secretToUint8Array(opts.secret), 'PBKDF2', false, ['deriveKey']);
+    const salt = (opts.salt && bufferSourceToUint8Array(opts.salt)) ?? new UUID('a3491c45-b769-447f-87fd-64333c8d36f0');
+    return await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', iterations: 100, hash: 'SHA-256', salt },
       passphraseKey,
       { name: 'HMAC', hash: 'SHA-256', length: 128 },
       true,
       ['sign', 'verify'],
     );
-
-    return new SignedCookieStore(store, key);
   }
 
   backingStore() {
@@ -83,20 +82,22 @@ export class SignedCookieStore implements CookieStore {
       ? [options, value]
       : [options.name, options.value ?? ''];
 
+    if (name.startsWith(PREFIX)) throw new Error('Illegal name');
+
     const message = new TextEncoder().encode([name, val].join('='));
     const signature = await crypto.subtle.sign('HMAC', this.#key, message);
-    const sig = new Base64Encoder({ url: true }).encode(signature);
+    const b64Signature = new Base64Encoder({ url: true }).encode(signature);
 
     if (typeof options === 'string')  {
       this.#store.set(options, val);
-      this.#store.set(`${PREFIX}${options}`, sig);
+      this.#store.set(`${PREFIX}${options}`, b64Signature);
     } else {
       const { name, value, ...init } = options;
       this.#store.set(options);
       this.#store.set({ 
         ...init, 
         name: `${PREFIX}${options.name}`, 
-        value: sig,
+        value: b64Signature,
       });
     }
 

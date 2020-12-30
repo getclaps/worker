@@ -1,10 +1,11 @@
-export type Key = any;
-type Options = Record<string, any>;
+export type Key = string | number | Date | BufferSource | Key[];
 
 declare var StorageArea: {
     prototype: StorageArea;
     new(name: string): StorageArea;
 };
+
+type Options = Record<string, any>;
 
 /**
  * Main differences to the working draft:

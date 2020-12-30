@@ -4,7 +4,7 @@ const ORIGIN = 'origin';
 const METHOD = 'access-control-request-method';
 const HEADERS = 'access-control-request-headers';
 
-export const withCORS = <T extends { event: FetchEvent }>(handler: (args: T) => Awaitable<Response>) => async (args: T): Promise<Response> => {
+export const withCORS = <A extends { event: FetchEvent }>(handler: (args: A) => Awaitable<Response>) => async (args: A): Promise<Response> => {
   const { headers } = args.event.request;
 
   const response = await handler(args);

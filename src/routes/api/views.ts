@@ -2,7 +2,7 @@ import * as re from '@werker/response-creators';
 import { JSONResponse } from '@werker/json-fetch';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
-import { withCookies } from '../../vendor/middleware/cookie-store';
+import { withSignedCookies } from '../../vendor/middleware/cookie-store';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
@@ -13,6 +13,8 @@ import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+
+const withCookies = withSignedCookies({ secret: 'foobar' });
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {

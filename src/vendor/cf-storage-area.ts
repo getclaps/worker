@@ -74,7 +74,7 @@ export class CFStorageArea implements StorageArea<KVNamespace> {
     }
   }
 
-  async *keys<K extends Key = Key>(): AsyncGenerator<K> {
+  async *keys(): AsyncGenerator<Key> {
     for await (const key of paginationHelper(this.#kv)) {
       yield decodeKey(key);
     }
@@ -86,7 +86,7 @@ export class CFStorageArea implements StorageArea<KVNamespace> {
     }
   }
 
-  async *entries<T, K extends Key = Key>(): AsyncGenerator<[K, T]> {
+  async *entries<T>(): AsyncGenerator<[Key, T]> {
     for await (const key of paginationHelper(this.#kv)) {
       yield [decodeKey(key), await getValue(this.#kv, key, this.#packer)];
     }
