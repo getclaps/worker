@@ -17,7 +17,7 @@ export interface CookieStoreGetOptions {
   url?: string;
 }
 
-export type CookieSameSite = "strict" | "lax" | "none";
+export type CookieSameSite = 'strict' | 'lax' | 'none';
 
 export interface CookieInit {
   name: string;

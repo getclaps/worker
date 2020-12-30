@@ -1,6 +1,8 @@
 import { notAcceptable } from '@werker/response-creators';
 import negotiated from 'negotiated';
 
+import { BaseArg } from '.';
+
 export interface ContentNegotiationOptions {
   types?: string[],
   languages?: string[],
@@ -19,8 +21,8 @@ const weightFn = <T extends { weight: number }>(a: T, b: T) => a.weight >= b.wei
 
 export const withContentNegotiation =
   (opts: ContentNegotiationOptions = {}) =>
-    <T extends { event: FetchEvent }>(handler: (args: T & ContentNegotiationResults) => Promise<Response>) =>
-      async (args: T): Promise<Response> => {
+    <A extends BaseArg>(handler: (args: A & ContentNegotiationResults) => Promise<Response>) =>
+      async (args: A): Promise<Response> => {
         const headers = args.event.request.headers;
 
         const { types, languages, encodings, charsets } = opts;
@@ -49,10 +51,10 @@ export const withContentNegotiation =
         const response = await handler({ ...args, type, language, encoding, charset });
 
         // If the server accepts more than 1 option, we set the vary header for correct caching
-        if (types?.length > 1) response.headers.append('vary', 'accept');
-        if (languages?.length > 1) response.headers.append('vary', 'accept-language');
-        if (encodings?.length > 1) response.headers.append('vary', 'accept-encoding');
-        if (charsets?.length > 1) response.headers.append('vary', 'accept-charset');
+        if (types?.length > 1) response.headers.append('Vary', 'Accept');
+        if (languages?.length > 1) response.headers.append('Vary', 'Accept-Language');
+        if (encodings?.length > 1) response.headers.append('Vary', 'Accept-Encoding');
+        if (charsets?.length > 1) response.headers.append('Vary', 'Accept-Charset');
 
         return response;
       };

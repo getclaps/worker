@@ -1,13 +1,16 @@
 import { StorageArea } from '@werker/cloudflare-kv-storage';
 import { UUID } from 'uuid-class';
+
+import { BaseArg, Handler } from '.';
 import { Awaitable } from '../common-types';
-
+import { WithCookiesArgs } from './cookie-store';
 import { shortenId, parseUUID } from '../short-id';
-import { CookieStore, RequestCookies } from './cookie-store';
 
-type Args = { event: FetchEvent, cookieStore: CookieStore, cookies: RequestCookies };
-type Handler<A extends Args> = (args: A) => Promise<Response>;
-type WithSessionHandler<A, S> = (args: A & { session: S }) => Awaitable<Response>;
+export type WithSessionDeps = BaseArg & WithCookiesArgs;
+export type WithSessionArgs<S> = { session: S };
+export type WithSessionHandler<A extends WithSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
+
+type AnyRec = Record<any, any>;
 
 export interface SessionOptions {
   storage?: StorageArea,
@@ -18,8 +21,6 @@ export interface SessionOptions {
   /** Session expiration time in seconds. Defaults to five minutes. */
   expirationTtl?: number,
 }
-
-type AnyRec = Record<any, any>;
 
 async function getSessionObject<S extends AnyRec = AnyRec>(sessionId: UUID, event: FetchEvent, { storage, expirationTtl }: SessionOptions): Promise<S> {
   const obj = (await storage.get<S>(sessionId)) || <S>{};
@@ -63,7 +64,7 @@ async function getSessionObject<S extends AnyRec = AnyRec>(sessionId: UUID, even
  * It will implicitly call `event.waitUntil` to prevent the worker to shut down before the operation has finished.
  */
 export const withSession = <S extends AnyRec = AnyRec>({ storage, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
-  <A extends Args>(handler: WithSessionHandler<A, S>): Handler<A> =>
+  <A extends WithSessionDeps>(handler: WithSessionHandler<A, S>): Handler<A> =>
     async (args: A): Promise<Response> => {
       const { cookies, cookieStore, event } = args;
       const sessionId = parseUUID(cookies.get(cookieName)) ?? new UUID();
@@ -78,6 +79,7 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, cookieName = '
         httpOnly: true,
         expires: null, // session cookie
       });
+
       return response;
     };
 
