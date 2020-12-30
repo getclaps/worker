@@ -19,7 +19,7 @@ export const withSignedCookies = (opts: CookieOptions) => {
 
   return <A extends Args>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
     const fetchCookieStore = new FetchCookieStore(args.event.request)
-    const cookieStore = new SignedCookieStore(fetchCookieStore, await cryptoKeyPromise);
+    const cookieStore = new SignedCookieStore(fetchCookieStore, cryptoKeyPromise);
 
     // Parse cookies into a map for convenience. This allows looking up
     const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));

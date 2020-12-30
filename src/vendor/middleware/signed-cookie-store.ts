@@ -4,6 +4,7 @@ import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
 import { CookieInit, CookieList, CookieListItem, CookieStore } from "./cookie-store-types";
 import { CookieOptions } from "./cookie-store";
+import { Awaitable } from "../common-types";
 
 /** 
  * The prefix to designate cookie signatures cookies. 
@@ -30,9 +31,9 @@ export class SignedCookieStore implements CookieStore {
   }
 
   #store: CookieStore;
-  #key: CryptoKey
+  #key: Awaitable<CryptoKey>;
 
-  constructor(store: CookieStore, signingKey: CryptoKey) {
+  constructor(store: CookieStore, signingKey: Awaitable<CryptoKey>) {
     this.#store = store;
     this.#key = signingKey;
   }
@@ -40,7 +41,7 @@ export class SignedCookieStore implements CookieStore {
   #verify = async (cookie: CookieListItem, sigCookie: CookieListItem) => {
     const signature = new Base64Decoder().decode(sigCookie.value);
     const message = new TextEncoder().encode([cookie.name, cookie.value].join('='));
-    const ok = await crypto.subtle.verify('HMAC', this.#key, signature, message);
+    const ok = await crypto.subtle.verify('HMAC', await this.#key, signature, message);
     if (!ok) {
       throw new Error('Invalid Signature');
     }
@@ -53,7 +54,7 @@ export class SignedCookieStore implements CookieStore {
     const sigCookie = await this.#store.get(`${PREFIX}${name}`);
     if (!sigCookie) return null;
 
-    this.#verify(cookie, sigCookie);
+    await this.#verify(cookie, sigCookie);
 
     return cookie;
   }
@@ -67,7 +68,7 @@ export class SignedCookieStore implements CookieStore {
       const sigCookie = sigCookies.get(`${PREFIX}${cookie.name}`);
       if (!sigCookie) continue;
 
-      this.#verify(cookie, sigCookie);
+      await this.#verify(cookie, sigCookie);
     }
     return cookies;
   }
@@ -82,7 +83,7 @@ export class SignedCookieStore implements CookieStore {
     if (name.startsWith(PREFIX)) throw new Error('Illegal name');
 
     const message = new TextEncoder().encode([name, val].join('='));
-    const signature = await crypto.subtle.sign('HMAC', this.#key, message);
+    const signature = await crypto.subtle.sign('HMAC', await this.#key, message);
     const b64Signature = new Base64Encoder({ url: true }).encode(signature);
 
     if (typeof options === 'string')  {

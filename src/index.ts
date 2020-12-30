@@ -38,7 +38,7 @@ router.get('/', withSignedCookies({ secret: 'foobar' })(async ({ cookies }) => {
 async function handleRequest(event: FetchEvent) {
   const { request } = event;
   const { headers } = request;
-  const method = request.method as Method;
+  const method = <Method>request.method;
   const requestURL = new URL(request.url)
   const { pathname, searchParams } = requestURL;
 
