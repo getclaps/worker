@@ -7,7 +7,7 @@ import { WithCookiesArgs } from './cookie-store';
 import { shortenId, parseUUID } from '../short-id';
 
 export type WithSessionDeps = BaseArg & WithCookiesArgs;
-export type WithSessionArgs<S> = { session: S };
+export type WithSessionArgs<S extends AnyRec = AnyRec> = { session: S };
 export type WithSessionHandler<A extends WithSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
 
 type AnyRec = Record<any, any>;

@@ -7,7 +7,7 @@ import { CookieStore, Cookies } from './vendor/middleware/cookie-store';
 export interface RouteArgs {
   event: FetchEvent;
   request: Request;
-  requestURL: URL;
+  url: URL;
   pathname: string;
   searchParams: URLSearchParams
   headers: Headers;

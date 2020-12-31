@@ -18,8 +18,8 @@ const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
 </tr>`);
 
-router.get('/log', withDashboard(({ dao, isBookmarked, cookies, uuid, locale, requestURL }) => {
-  const timeFrame = requestURL.searchParams.get('time') || '1-hour';
+router.get('/log', withDashboard(({ dao, isBookmarked, cookies, uuid, locale, searchParams }) => {
+  const timeFrame = searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
 

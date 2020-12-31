@@ -8,11 +8,13 @@ import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteO
  * The prefix to designate cookie signatures cookies. 
  * While pretty arbitrary, the `~` char makes these cookies appear at the bottom when sorting alphabetically.
  */
-const PREFIX = '~s~';
+const PREFIX = '~s.';
 
 const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 'string'
   ? new TextEncoder().encode(secret)
   : bufferSourceToUint8Array(secret);
+
+const keyCache = new Map<string, Promise<CryptoKey>>();
 
 /**
  * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
@@ -26,18 +28,27 @@ export class SignedCookieStore implements CookieStore {
   /** 
    * A helper function to derive a crypto key from a passphrase. 
    */
-  static async deriveCryptoKey(opts: { secret: string | BufferSource }) {
+  static deriveCryptoKey(opts: { secret: string | BufferSource }): Promise<CryptoKey> {
     if (!opts.secret) throw Error('Secret missing');
 
-    const passphraseKey = await crypto.subtle.importKey('raw', secretToUint8Array(opts.secret), 'PBKDF2', false, ['deriveKey']);
-    const salt = new UUID('a3491c45-b769-447f-87fd-64333c8d36f0');
-    return await crypto.subtle.deriveKey(
-      { name: 'PBKDF2', iterations: 999, hash: 'SHA-256', salt },
-      passphraseKey,
-      { name: 'HMAC', hash: 'SHA-1', length: 128 },
-      false,
-      ['sign', 'verify'],
-    );
+    const keyId = new Base64Encoder().encode(secretToUint8Array(opts.secret));
+
+    if (!keyCache.has(keyId)) {
+      keyCache.set(keyId, (async () => {
+        const passphraseKey = await crypto.subtle.importKey('raw', secretToUint8Array(opts.secret), 'PBKDF2', false, ['deriveKey']);
+        const salt = new UUID('a3491c45-b769-447f-87fd-64333c8d36f0');
+        const key = await crypto.subtle.deriveKey(
+          { name: 'PBKDF2', iterations: 999, hash: 'SHA-256', salt },
+          passphraseKey,
+          { name: 'HMAC', hash: 'SHA-1', length: 128 },
+          false,
+          ['sign', 'verify'],
+        );
+        return key;
+      })());
+    }
+
+    return keyCache.get(keyId);
   }
 
   #store: CookieStore;
@@ -101,7 +112,7 @@ export class SignedCookieStore implements CookieStore {
     const signature = await this.#sign(name, val);
     const sigCookieName = `${PREFIX}${name}`;
 
-    if (typeof options === 'string')  {
+    if (typeof options === 'string') {
       this.#store.set(options, val);
       this.#store.set(sigCookieName, signature);
     } else {
@@ -113,7 +124,7 @@ export class SignedCookieStore implements CookieStore {
 
   async delete(name: string | CookieStoreDeleteOptions): Promise<void> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
-     
+
     this.#store.delete(name);
     this.#store.delete(`${PREFIX}${name}`);
   }

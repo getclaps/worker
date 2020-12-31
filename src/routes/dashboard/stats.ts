@@ -9,8 +9,8 @@ import { withDashboard } from './with-dashboard';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-router.get('/stats', withDashboard(({ requestURL, dao, isBookmarked, locale, cookies, uuid }) => {
-  const timeFrame = requestURL.searchParams.get('time') || '24-hours';
+router.get('/stats', withDashboard(({ searchParams, dao, isBookmarked, locale, cookies, uuid }) => {
+  const timeFrame = searchParams.get('time') || '24-hours';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
   const uniquenessWarning = !['hours', 'minutes', 'seconds'].includes(unit);

@@ -25,6 +25,12 @@ router.get('/__init', async ({ headers }) => {
   return re.ok('Init success');
 });
 
+router.get('/__resetIPSalt', async ({ headers }) => {
+  if (headers.get('Authorization') !== AUTH) return re.unauthorized();
+  await resetIPSalt();
+  return re.ok('Reset success');
+});
+
 router.get('/', withSignedCookies({ secret: 'foobar' })(async ({ cookies }) => {
   const id = cookies.get('did');
   if (!id) return re.seeOther('/login');
@@ -39,12 +45,16 @@ async function handleRequest(event: FetchEvent) {
   const { request } = event;
   const { headers } = request;
   const method = <Method>request.method;
-  const requestURL = new URL(request.url)
-  const { pathname, searchParams } = requestURL;
+  const url = new URL(request.url)
+  const { pathname, searchParams } = url;
 
   const match = router.match(method, pathname);
   if (match) {
-    const args = { method, request, requestURL, searchParams, event, pathname, headers, params: match.params };
+    const args = {
+      method, request, url, searchParams, event, pathname, headers, 
+      params: match.params,
+      matches: match.matches,
+    };
     try {
       return match.handler(args);
     } catch (err) {
