@@ -113,20 +113,26 @@ export class SignedCookieStore implements CookieStore {
     const sigCookieName = `${PREFIX}${name}`;
 
     if (typeof options === 'string') {
-      this.#store.set(options, val);
-      this.#store.set(sigCookieName, signature);
+      await Promise.all([
+        this.#store.set(options, val),
+        this.#store.set(sigCookieName, signature),
+      ]);
     } else {
       const { name, value, ...init } = options;
-      this.#store.set(options);
-      this.#store.set({ ...init, name: sigCookieName, value: signature });
+      await Promise.all([
+        this.#store.set(options),
+        this.#store.set({ ...init, name: sigCookieName, value: signature }),
+      ]);
     }
   }
 
   async delete(name: string | CookieStoreDeleteOptions): Promise<void> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
-    this.#store.delete(name);
-    this.#store.delete(`${PREFIX}${name}`);
+    await Promise.all([
+      this.#store.delete(name),
+      this.#store.delete(`${PREFIX}${name}`),
+    ]);
   }
 
   toString() {
