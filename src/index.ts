@@ -2,7 +2,7 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
-import { withCookies } from './vendor/middleware/cookie-store';
+import { withCookies } from './vendor/middleware/cookies';
 
 import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';

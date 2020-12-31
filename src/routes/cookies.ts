@@ -1,5 +1,5 @@
 import { Base64Encoder } from "base64-encoding";
-import { CookieInit, Cookies } from "../vendor/middleware/cookie-store";
+import { CookieInit, Cookies } from "../vendor/middleware/cookies";
 
 const oneMonthFromNow = () => new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
 

@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 
 import { Awaitable } from '../../vendor/common-types';
-import { withCookies } from '../../vendor/middleware/cookie-store';
+import { withCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 
 import { DAO } from '../../dao';

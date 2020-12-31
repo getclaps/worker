@@ -1,7 +1,7 @@
 import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
 
-import { Cookies } from '../../vendor/middleware/cookie-store';
+import { Cookies } from '../../vendor/middleware/cookies';
 import { shortenId } from '../../vendor/short-id';
 
 import * as cc from '../cookies';

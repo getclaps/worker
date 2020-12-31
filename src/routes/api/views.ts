@@ -2,7 +2,7 @@ import * as re from '@werker/response-creators';
 import { JSONResponse } from '@werker/json-fetch';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
-import { withCookies } from '../../vendor/middleware/cookie-store';
+import { withCookies } from '../../vendor/middleware/cookies';
 import { withCORS } from '../../vendor/middleware/cors';
 
 import { DAO } from '../../dao';

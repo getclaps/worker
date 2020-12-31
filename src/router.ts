@@ -2,7 +2,7 @@ import { Router, Method, Params } from 'tiny-request-router';
 import { UUID } from 'uuid-class';
 import { DAO } from './dao';
 import { Awaitable } from './vendor/common-types';
-import { CookieStore, Cookies } from './vendor/middleware/cookie-store';
+import { CookieStore, Cookies } from './vendor/middleware/cookies';
 
 export interface RouteArgs {
   event: FetchEvent;

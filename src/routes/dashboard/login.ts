@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
-import { withCookies } from '../../vendor/middleware/cookie-store';
+import { withCookies } from '../../vendor/middleware/cookies';
 
 import { router } from '../../router';
 import { DAO } from '../../dao';

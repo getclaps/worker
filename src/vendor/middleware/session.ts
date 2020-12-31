@@ -3,7 +3,7 @@ import { UUID } from 'uuid-class';
 
 import { BaseArg, Handler } from '.';
 import { Awaitable } from '../common-types';
-import { WithCookiesArgs } from './cookie-store';
+import { WithCookiesArgs } from './cookies';
 import { shortenId, parseUUID } from '../short-id';
 
 export type WithSessionDeps = BaseArg & WithCookiesArgs;

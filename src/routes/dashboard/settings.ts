@@ -1,6 +1,6 @@
 import { html } from '@werker/html';
 
-import { HeadersCookieStore } from '../../vendor/middleware/cookie-store';
+import { HeadersCookieStore } from '../../vendor/middleware/cookies';
 
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
