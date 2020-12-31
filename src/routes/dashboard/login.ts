@@ -44,12 +44,17 @@ router.get('/logout', withCookies(async ({ cookies, cookieStore }) => {
   const did = cookies.get('did');
   const ids = cookies.get('ids').split(',').filter(_ => _ !== did) ?? [];
 
-  await Promise.all([
-    cookieStore.set(cc.logoutsCookie(cookies)),
-    ...ids.length
-      ? [cookieStore.set(cc.loginCookie(ids[0]))] 
-      : [cookieStore.delete('did')]
-  ]);
+  if (ids.length) {
+    await Promise.all([
+      cookieStore.set(cc.loginCookie(ids[0])),
+      cookieStore.set(cc.logoutsCookie(cookies)),
+    ]);
+  } else {
+    await Promise.all([
+      cookieStore.delete('did'),
+      cookieStore.delete('ids'),
+    ]);
+  }
 
   return re.seeOther('/');
 }));
