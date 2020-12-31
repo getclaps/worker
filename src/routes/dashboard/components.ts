@@ -1,7 +1,7 @@
 import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
 
-import { RequestCookies } from '../../vendor/middleware/cookie-store';
+import { Cookies } from '../../vendor/middleware/cookie-store';
 import { shortenId } from '../../vendor/short-id';
 
 import * as cc from '../cookies';
@@ -12,7 +12,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
   title?: string,
   isBookmarked?: boolean,
   headers?: HeadersInit,
-  cookies?: RequestCookies,
+  cookies?: Cookies,
   uuid?: UUID,
 } = {}) => (content: HTMLContent) => new HTMLResponse(html`
 <!DOCTYPE html>
@@ -83,7 +83,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
   ],
 });
 
-export const htmlHostnameSelect = (cookies: RequestCookies, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
+export const htmlHostnameSelect = (cookies: Cookies, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortIds = cookies.get('ids').split(',') ?? [];
   const shortId = shortenId(uuid);
   return html`

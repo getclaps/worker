@@ -71,7 +71,7 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, cookieName = '
 
       const response = await handler({ ...args, session });
 
-      cookieStore.set({
+      await cookieStore.set({
         name: cookieName,
         value: shortenId(sessionId),
         sameSite: 'lax',

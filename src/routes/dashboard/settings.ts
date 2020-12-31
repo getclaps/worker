@@ -1,6 +1,6 @@
 import { html } from '@werker/html';
 
-import { toSetCookie } from '../../vendor/middleware/cookie-store';
+import { HeadersCookieStore } from '../../vendor/middleware/cookie-store';
 
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
@@ -116,7 +116,7 @@ async function settingsPage(
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                document.cookie = '${toSetCookie(await cc.bookmarkedCookie(id))}';
+                document.cookie = '${HeadersCookieStore.toSetCookie(await cc.bookmarkedCookie(id))}';
                 if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
               }));
@@ -163,8 +163,8 @@ async function settingsPage(
         </div>
         <div></div>
       </div>
-      <script>document.cookie = '${toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
-      <script>document.cookie = '${toSetCookie(await cc.hostnameCookie(id, dashboard.hostname[0]))}';</script>
+      <script>document.cookie = '${HeadersCookieStore.toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
+      <script>document.cookie = '${HeadersCookieStore.toSetCookie(await cc.hostnameCookie(id, dashboard.hostname[0]))}';</script>
     `;
   });
 }
