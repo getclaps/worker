@@ -24,7 +24,7 @@ export type CookieSameSite = 'strict' | 'lax' | 'none';
 
 export interface CookieInit {
   name: string;
-  value?: string;
+  value: string;
   expires?: number | Date | null;
   domain?: string | null;
   path?: string;

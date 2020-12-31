@@ -9,6 +9,7 @@ const sash = async (text: string) => new Base64Encoder({ url: true }).encode(awa
 export const dntCookieKey = (hostname: string) => `dnt_${encodeURIComponent(hostname)}`;
 export const dntCookie = (dnt: boolean, hostname: string): CookieInit => ({
   name: dntCookieKey(hostname),
+  value: '',
   sameSite: 'none',
   expires: dnt ? oneMonthFromNow() : new Date(0),
 })
@@ -16,7 +17,9 @@ export const dntCookie = (dnt: boolean, hostname: string): CookieInit => ({
 export const bookmarkedCookieKey = async (id: string) => `bkd_${await sash(id)}`;
 export const bookmarkedCookie = async (id: string): Promise<CookieInit> => ({
   name: await bookmarkedCookieKey(id),
+  value: '',
   sameSite: 'lax',
+  httpOnly: true,
   expires: oneMonthFromNow(),
 })
 
@@ -45,6 +48,7 @@ export const hostnameCookie = async (id: string, hostname: string): Promise<Cook
   name: await hostnameCookieKey(id),
   value: hostname,
   sameSite: 'lax',
+  httpOnly: true,
   expires: oneMonthFromNow(),
 });
 
