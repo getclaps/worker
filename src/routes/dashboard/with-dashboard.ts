@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 
 import { Awaitable } from '../../vendor/common-types';
-import { withSignedCookies } from '../../vendor/middleware/cookie-store';
+import { withCookies } from '../../vendor/middleware/cookie-store';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 
 import { DAO } from '../../dao';
@@ -14,7 +14,7 @@ import * as cc from '../cookies';
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
 const acceptHTML = withContentNegotiation({ types: ['text/html'] });
-const withCookies = withSignedCookies({ secret: 'foobar' });
+// const withCookies = withSignedCookies({ secret: 'foobar' });
 
 export const withDashboard = (handler: DashboardHandler) => withCookies<RouteArgs>(acceptHTML(async (args): Promise<Response> => {
   const { headers, event, cookies } = args;

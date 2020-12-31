@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
-import { withSignedCookies } from '../../vendor/middleware/cookie-store';
+import { withCookies } from '../../vendor/middleware/cookie-store';
 
 import { router } from '../../router';
 import { DAO } from '../../dao';
@@ -11,7 +11,7 @@ import { parseUUID } from '../../vendor/short-id';
 import * as cc from '../cookies';
 import { page } from './components';
 
-const withCookies = withSignedCookies({ secret: 'foobar' });
+// const withCookies = withSignedCookies({ secret: 'foobar' });
 
 router.post('/login', withCookies(async ({ request, cookies, cookieStore }) => {
   const dao: DAO = getDAO();

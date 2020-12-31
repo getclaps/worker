@@ -2,7 +2,7 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
-import { withSignedCookies } from './vendor/middleware/cookie-store';
+import { withCookies } from './vendor/middleware/cookie-store';
 
 import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';
@@ -13,6 +13,8 @@ import * as cc from './routes/cookies';
 import './routes/index';
 // @ts-ignore
 resolveOrNull(import(/* webpackMode: "eager" */ './billing')); 
+
+// const withCookies = withSignedCookies({ secret: 'foobar' });
 
 async function resetIPSalt() {
   await storage.set(IP_SALT_KEY, new UUID());
@@ -31,7 +33,7 @@ router.get('/__resetIPSalt', async ({ headers }) => {
   return re.ok('Reset success');
 });
 
-router.get('/', withSignedCookies({ secret: 'foobar' })(async ({ cookies }) => {
+router.get('/', withCookies(async ({ cookies }) => {
   const id = cookies.get('did');
   if (!id) return re.seeOther('/login');
 
