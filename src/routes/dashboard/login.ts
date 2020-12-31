@@ -29,10 +29,12 @@ router.post('/login', withCookies(async ({ request, cookies, cookieStore }) => {
     return re.seeOther(referrer)
   }
 
-  cookieStore.set(cc.loginsCookie(cookies, id));
-  cookieStore.set(cc.loginCookie(id))
-  cookieStore.set(await cc.bookmarkedCookie(id));
-  if (hostname) cookieStore.set(await cc.hostnameCookie(id, hostname));
+  await Promise.all([
+    cookieStore.set(cc.loginsCookie(cookies, id)),
+    cookieStore.set(cc.loginCookie(id)),
+    cookieStore.set(await cc.bookmarkedCookie(id)),
+    ...hostname ? [cookieStore.set(await cc.hostnameCookie(id, hostname))] : [],
+  ]);
 
   return re.seeOther(referrer);
 }));
@@ -42,8 +44,12 @@ router.get('/logout', withCookies(async ({ cookies, cookieStore }) => {
   const did = cookies.get('did');
   const ids = cookies.get('ids').split(',').filter(_ => _ !== did) ?? [];
 
-  cookieStore.set(cc.logoutsCookie(cookies));
-  if (ids.length) cookieStore.set(cc.loginCookie(ids[0])); else cookieStore.delete('did');
+  await Promise.all([
+    cookieStore.set(cc.logoutsCookie(cookies)),
+    ...ids.length
+      ? [cookieStore.set(cc.loginCookie(ids[0]))] 
+      : [cookieStore.delete('did')]
+  ]);
 
   return re.seeOther('/');
 }));

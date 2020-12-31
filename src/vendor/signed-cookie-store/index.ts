@@ -118,6 +118,10 @@ export class SignedCookieStore implements CookieStore {
     this.#store.delete(`${PREFIX}${name}`);
   }
 
+  toString() {
+    return this.#store.toString();
+  }
+
   addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void { throw new Error("Method not implemented.") }
   dispatchEvent(event: Event): boolean { throw new Error("Method not implemented.") }
   removeEventListener(type: string, callback: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void { throw new Error("Method not implemented.") }

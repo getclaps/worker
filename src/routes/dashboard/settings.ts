@@ -201,7 +201,7 @@ router.post('/settings', withDashboard(async (args) => {
       cookieDNT = fd.get('dnt') === 'on'
       dashboard = await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
       const hn = dashboard.hostname[0];
-      cookieStore.set(cc.dntCookie(cookieDNT, hn));
+      await cookieStore.set(cc.dntCookie(cookieDNT, hn));
       break;
     }
     // case 'relocate': {
