@@ -21,6 +21,7 @@
     "@werker/cloudflare-kv-storage": "^0.3.0",
     "@werker/html": "^1.1.3",
     "@werker/json-fetch": "^1.0.2",
+    "@werker/request-cookie-store": "^0.2.0",
     "@werker/response-creators": "^1.0.3",
     "@werker/stripe-webhook": "^1.1.0",
     "base64-encoding": "^0.14.2",

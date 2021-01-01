@@ -1,8 +1,8 @@
+import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "@werker/request-cookie-store/interface";
 import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
-import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "../request-cookie-store/cookie-store-interface";
 
 /** 
  * The prefix to designate cookie signature cookies. 
@@ -169,4 +169,4 @@ export class SignedCookieStore implements CookieStore {
   }
 }
 
-export * from "../request-cookie-store/cookie-store-interface"
+export * from "@werker/request-cookie-store/interface";

@@ -1,6 +1,6 @@
+import { CookieStore, RequestCookieStore } from "@werker/request-cookie-store";
 import { BaseArg, Handler } from ".";
 import { Awaitable } from "../common-types";
-import { CookieStore, RequestCookieStore } from "../request-cookie-store";
 import { SignedCookieStore } from "../signed-cookie-store";
 
 export type WithCookiesArgs = { cookieStore: CookieStore, cookies: Cookies }
@@ -64,4 +64,4 @@ export const withCookies = <A extends BaseArg>(handler: WithCookiesHandler<A>) =
   return response;
 }
 
-export * from '../request-cookie-store';
+export * from '@werker/request-cookie-store';
