@@ -32,11 +32,11 @@ export const loginCookie = (id: string): CookieInit => ({
 })
 
 export const loginsCookie = (cookies: Cookies, id: string): CookieInit => {
-  const ids = cookies.get('ids')?.split(',') ?? [];
+  const ids = cookies.get('ids')?.split('.') ?? [];
   if (id && !ids.includes(id)) ids.push(id);
   return {
     name: 'ids',
-    value: ids.join(),
+    value: ids.join('.'),
     sameSite: 'lax',
     httpOnly: true,
     expires: oneMonthFromNow(),
@@ -54,10 +54,10 @@ export const hostnameCookie = async (id: string, hostname: string): Promise<Cook
 
 export const logoutsCookie = (cookies: Cookies): CookieInit => {
   const did = cookies.get('did');
-  const ids = cookies.get('ids')?.split(',').filter(_ => _ !== did)
+  const ids = cookies.get('ids')?.split('.').filter(_ => _ !== did)
   return {
     name: 'ids',
-    value: ids.join(),
+    value: ids.join('.'),
     sameSite: 'lax',
     httpOnly: true,
     expires: oneMonthFromNow(),

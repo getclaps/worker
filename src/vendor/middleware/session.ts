@@ -26,12 +26,12 @@ export interface SessionOptions {
 /**
  * Session middleware for worker environments.
  * 
+ * The session object is a POJO that is persisted once per microtask, i.e. setting multiple properties in a row (not yielding to the event loop) 
+ * will only trigger a single serialization/database put operation. 
+ * It will implicitly call `event.waitUntil` to prevent the worker to shut down before the operation has finished.
+ * 
  * Users need to provide a `StorageArea` to persist the session between requests. 
  * There are implementations for both browsers (IndexedDB-backed) and Cloudflare Workers (KV storage backed) available.
- * 
- * The session object is a POJO that is persistend once per microtask, i.e. setting multiple properties in a row (i.e. not yielding to the event loop) 
- * will only trigger a single serialization + database put operation. 
- * It will implicitly call `event.waitUntil` to prevent the worker to shut down before the operation has finished.
  * 
  * Issues
  * - Will "block" until session object is retrieved from KV => provide "unyielding" version that returns a promise?

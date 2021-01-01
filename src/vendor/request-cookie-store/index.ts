@@ -1,6 +1,5 @@
 import { CookieStore, CookieListItem, CookieList, CookieInit, CookieStoreGetOptions, CookieStoreDeleteOptions } from "./cookie-store-interface";
-
-import { setCookie, attrsToSetCookie } from './set-cookie';
+import { setCookie, attrsToSetCookie, parseCookieHeader } from './set-cookie';
 
 /**
  * # Request Cookie Store
@@ -9,8 +8,8 @@ import { setCookie, attrsToSetCookie } from './set-cookie';
  * Uses the `Cookie` header of a request to populate the store and
  * keeps a record of changes that can be exported as a list of `Set-Cookie` headers.
  * 
- * Note this is not a polyfill. It is intended as a cookie middleware for Cloudflare Workers,
- * nd published here as a standalone module.
+ * Note that this is not a polyfill! It is intended as a cookie middleware for Cloudflare Workers,
+ * but perhaps there are other uses as well.
  */
 export class RequestCookieStore implements CookieStore {
   #origin: URL | null;
@@ -20,17 +19,12 @@ export class RequestCookieStore implements CookieStore {
   constructor(request: Request) {
     const origin = request.headers.get('origin');
     const cookie = request.headers.get('cookie');
-
     this.#origin = (origin && new URL(origin)) || null;
-
-    // TODO: replace with spec-compliant parser!?
-    this.#store = new Map(cookie?.split(/;\s*/)
-      .map(x => x.split('='))
-      .map(([k, v]) => [k, v] as [string, string])
-      .filter(([k]) => !!k));
+    this.#store = parseCookieHeader(cookie);
   }
 
   async get(options: string | CookieStoreGetOptions): Promise<CookieListItem> {
+    // FIXME
     if (typeof options !== 'string') throw Error('Overload not implemented.');
 
     return this.#store.has(options)
@@ -39,14 +33,20 @@ export class RequestCookieStore implements CookieStore {
   }
 
   async getAll(options?: string | CookieStoreGetOptions): Promise<CookieList> {
+    // FIXME
     if (options != null) throw Error('Overload not implemented.');
 
     return [...this.#store.entries()].map(([name, value]) => ({ name, value }))
   }
 
   async set(options: string | CookieInit, value?: string) {
-    const [name, val, attributes, expires] = setCookie(options, value, this.#origin);
+    const result = setCookie(options, value, this.#origin);
+    if (!result) return null;
+
+    const [attributes, expires] = result;
+    const [[name, val]] = attributes;
     this.#changes.set(name, attributes);
+
     if (expires && expires < new Date()) 
       this.#store.delete(name); 
     else 
@@ -54,6 +54,7 @@ export class RequestCookieStore implements CookieStore {
   }
 
   async delete(options: string | CookieStoreDeleteOptions) {
+    // FIXME
     if (typeof options !== 'string') throw Error('Overload not implemented.');
 
     const expires = new Date(0);
@@ -78,20 +79,34 @@ export class RequestCookieStore implements CookieStore {
     return headers;
   }
 
-  /** Helper to turn a single `CookieInit` into a `set-cookie` string. */
-  static toSetCookie(cookie: CookieInit): string {
-    const [, , attrs] = setCookie(cookie);
-    return attrsToSetCookie(attrs);
-  }
-
-  /** Exports the cookie store as a cookie string, similar to `document.cookie` or `Cookie` header. */
-  toCookieString() { 
+  /** Exports the entire cookie store as a `cookie` header string */
+  toCookieString() {
     return [...this.#store.entries()].map(x => x.join('=')).join('; ');
   }
 
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void { throw new Error("Method not implemented.") }
-  dispatchEvent(event: Event): boolean { throw new Error("Method not implemented.") }
-  removeEventListener(type: string, callback: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void { throw new Error("Method not implemented.") }
+  /** Helper to turn a single `CookieInit` into a `set-cookie` string. */
+  static toSetCookie(cookie: CookieInit): string {
+    const [attrs] = setCookie(cookie);
+    return attrsToSetCookie(attrs);
+  }
+
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    throw new Error("Method not implemented.")
+  }
+  dispatchEvent(event: Event): boolean {
+    throw new Error("Method not implemented.")
+  }
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void {
+    throw new Error("Method not implemented.")
+  }
 }
 
 export * from './cookie-store-interface';

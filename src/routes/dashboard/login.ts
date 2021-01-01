@@ -42,7 +42,7 @@ router.post('/login', withCookies(async ({ request, cookies, cookieStore }) => {
 // TODO: make POST
 router.get('/logout', withCookies(async ({ cookies, cookieStore }) => {
   const did = cookies.get('did');
-  const ids = cookies.get('ids').split(',').filter(_ => _ !== did) ?? [];
+  const ids = cookies.get('ids').split('.').filter(_ => _ !== did) ?? [];
 
   if (ids.length) {
     await Promise.all([

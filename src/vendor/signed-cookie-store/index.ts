@@ -5,8 +5,9 @@ import { Base64Decoder, Base64Encoder } from "base64-encoding";
 import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "../request-cookie-store/cookie-store-interface";
 
 /** 
- * The prefix to designate cookie signatures cookies. 
- * While pretty arbitrary, the `~` char makes these cookies appear at the bottom when sorting alphabetically.
+ * The prefix to designate cookie signature cookies. 
+ * While pretty arbitrary, the `~` char makes these cookies appear at the bottom 
+ * when sorting alphabetically in a web inspector.
  */
 const PREFIX = '~s.';
 
@@ -21,9 +22,8 @@ const keyCache = new Map<string, Promise<CryptoKey>>();
  * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
  * that transparently signs and verifies cookies via the Web Cryptography API. 
  * 
- * This is likely only useful in server-side implementations, but the code is written in a platform-agnostic way.
- * 
- * It was written to be used in @werker/middleware, but published here as a standalone module for use elsewhere.
+ * This is likely only useful in server-side implementations, 
+ * but written in a platform-agnostic way. 
  */
 export class SignedCookieStore implements CookieStore {
   /** 
@@ -36,8 +36,14 @@ export class SignedCookieStore implements CookieStore {
 
     if (!keyCache.has(keyId)) {
       keyCache.set(keyId, (async () => {
-        const passphraseKey = await crypto.subtle.importKey('raw', secretToUint8Array(opts.secret), 'PBKDF2', false, ['deriveKey']);
         const salt = new UUID('a3491c45-b769-447f-87fd-64333c8d36f0');
+        const passphraseKey = await crypto.subtle.importKey(
+          'raw',
+          secretToUint8Array(opts.secret),
+          'PBKDF2',
+          false,
+          ['deriveKey']
+        );
         const key = await crypto.subtle.deriveKey(
           { name: 'PBKDF2', iterations: 999, hash: 'SHA-256', salt },
           passphraseKey,
@@ -73,6 +79,10 @@ export class SignedCookieStore implements CookieStore {
     return new Base64Encoder({ url: true }).encode(signature);
   }
 
+  /**
+   * @throws if the signature doesn't match.
+   * @returns null when the signature cookie is missing. 
+   */
   async get(name: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
@@ -87,6 +97,10 @@ export class SignedCookieStore implements CookieStore {
     return cookie;
   }
 
+  /**
+   * @throws if any signature doesn't match.
+   * @returns A list of cookies, exclusive of all cookies without signatures
+   */
   async getAll(name?: string | CookieStoreGetOptions): Promise<CookieList> {
     if (name != null) throw Error('Overload not implemented.');
 
@@ -136,13 +150,23 @@ export class SignedCookieStore implements CookieStore {
     ]);
   }
 
-  toString() {
-    return this.#store.toString();
+  addEventListener(
+    type: string,
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): void {
+    throw new Error("Method not implemented.")
   }
-
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void { throw new Error("Method not implemented.") }
-  dispatchEvent(event: Event): boolean { throw new Error("Method not implemented.") }
-  removeEventListener(type: string, callback: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void { throw new Error("Method not implemented.") }
+  dispatchEvent(event: Event): boolean {
+    throw new Error("Method not implemented.")
+  }
+  removeEventListener(
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void {
+    throw new Error("Method not implemented.")
+  }
 }
 
 export * from "../request-cookie-store/cookie-store-interface"

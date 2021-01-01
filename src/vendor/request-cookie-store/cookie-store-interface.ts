@@ -1,5 +1,6 @@
 /**
- * Verbatim translation of <https://wicg.github.io/cookie-store/#CookieStore>
+ * A verbatim TypeScript translation of the interfaces defined in the 
+ * [WICG Cookie Store API](https://wicg.github.io/cookie-store/#CookieStore) working draft.
  */
 export interface CookieStore extends EventTarget {
   get(name?: string): Promise<CookieListItem | null>;

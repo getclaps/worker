@@ -84,7 +84,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
 });
 
 export const htmlHostnameSelect = (cookies: Cookies, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
-  const shortIds = cookies.get('ids').split(',') ?? [];
+  const shortIds = cookies.get('ids').split('.') ?? [];
   const shortId = shortenId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
