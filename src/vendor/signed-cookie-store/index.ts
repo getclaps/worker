@@ -2,7 +2,7 @@ import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
-import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "../headers-cookie-store/cookie-store-interface";
+import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "../request-cookie-store/cookie-store-interface";
 
 /** 
  * The prefix to designate cookie signatures cookies. 
@@ -17,6 +17,7 @@ const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 
 const keyCache = new Map<string, Promise<CryptoKey>>();
 
 /**
+ * # Signed Cookie Store
  * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
  * that transparently signs and verifies cookies via the Web Cryptography API. 
  * 
@@ -144,4 +145,4 @@ export class SignedCookieStore implements CookieStore {
   removeEventListener(type: string, callback: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void { throw new Error("Method not implemented.") }
 }
 
-export * from "../headers-cookie-store/cookie-store-interface"
+export * from "../request-cookie-store/cookie-store-interface"

@@ -3,22 +3,23 @@ import { CookieStore, CookieListItem, CookieList, CookieInit, CookieStoreGetOpti
 import { setCookie, attrsToSetCookie } from './set-cookie';
 
 /**
+ * # Request Cookie Store
  * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store) for request handlers. 
  * 
- * The class takes a `Headers` object, parses the `Cookie` header, and populates the store with the results.
- * Changes to the store are recorded and can be exported as a list of `Set-Cookie` headers.
+ * Uses the `Cookie` header of a request to populate the store and
+ * keeps a record of changes that can be exported as a list of `Set-Cookie` headers.
  * 
- * This makes it useful for server-side cookie middleware.
- * It was written to be used in @werker/middleware, but published here as a standalone module for use elsewhere.
+ * Note this is not a polyfill. It is intended as a cookie middleware for Cloudflare Workers,
+ * nd published here as a standalone module.
  */
-export class HeadersCookieStore implements CookieStore {
+export class RequestCookieStore implements CookieStore {
   #origin: URL | null;
   #store: Map<string, string> = new Map();
   #changes: Map<string, string[][]> = new Map();
 
-  constructor(headers: Headers) {
-    const origin = headers.get('origin');
-    const cookie = headers.get('cookie');
+  constructor(request: Request) {
+    const origin = request.headers.get('origin');
+    const cookie = request.headers.get('cookie');
 
     this.#origin = (origin && new URL(origin)) || null;
 
@@ -63,9 +64,13 @@ export class HeadersCookieStore implements CookieStore {
 
   /** 
    * Exports the recorded changes to this store as a list of  `Set-Cookie` headers.
-   * This can be passed to the headers field of a `Response` constructor.
+   * 
+   * Can be passed as the `headers` field when building a new `Response`:
+   * ```ts
+   * new Response(body, { headers: cookieStore.headers })
+   * ```
    */
-  headers(): [string, string][] {
+  get headers(): [string, string][] {
     const headers = [];
     for (const attrs of this.#changes.values()) {
       headers.push(['Set-Cookie', attrsToSetCookie(attrs)]);
@@ -73,7 +78,7 @@ export class HeadersCookieStore implements CookieStore {
     return headers;
   }
 
-  /** Helper to turn cookie inits into set-cookie strings. */
+  /** Helper to turn a single `CookieInit` into a `set-cookie` string. */
   static toSetCookie(cookie: CookieInit): string {
     const [, , attrs] = setCookie(cookie);
     return attrsToSetCookie(attrs);
@@ -81,7 +86,7 @@ export class HeadersCookieStore implements CookieStore {
 
   /** Exports the cookie store as a cookie string, similar to `document.cookie` or `Cookie` header. */
   toCookieString() { 
-    return [...this.#store.entries()].map(x => x.join('=')).join('; ') 
+    return [...this.#store.entries()].map(x => x.join('=')).join('; ');
   }
 
   addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void { throw new Error("Method not implemented.") }

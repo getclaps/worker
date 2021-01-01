@@ -13,6 +13,7 @@ export type WithSessionHandler<A extends WithSessionDeps, S> = (args: A & WithSe
 type AnyRec = Record<any, any>;
 
 export interface SessionOptions {
+  /** The storage area where to persist the session objects */
   storage?: StorageArea,
 
   /** You can override the name of the session cookie. Defaults to `sid`. */
@@ -21,6 +22,40 @@ export interface SessionOptions {
   /** Session expiration time in seconds. Defaults to five minutes. */
   expirationTtl?: number,
 }
+
+/**
+ * Session middleware for worker environments.
+ * 
+ * Users need to provide a `StorageArea` to persist the session between requests. 
+ * There are implementations for both browsers (IndexedDB-backed) and Cloudflare Workers (KV storage backed) available.
+ * 
+ * The session object is a POJO that is persistend once per microtask, i.e. setting multiple properties in a row (i.e. not yielding to the event loop) 
+ * will only trigger a single serialization + database put operation. 
+ * It will implicitly call `event.waitUntil` to prevent the worker to shut down before the operation has finished.
+ * 
+ * Issues
+ * - Will "block" until session object is retrieved from KV => provide "unyielding" version that returns a promise?
+ */
+export const withSession = <S extends AnyRec = AnyRec>({ storage, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
+  <A extends WithSessionDeps>(handler: WithSessionHandler<A, S>): Handler<A> =>
+    async (args: A): Promise<Response> => {
+      const { cookies, cookieStore, event } = args;
+
+      const sessionId = parseUUID(cookies.get(cookieName)) ?? new UUID();
+      const session = await getSessionObject<S>(sessionId, event, { storage, cookieName, expirationTtl });
+
+      const response = await handler({ ...args, session });
+
+      await cookieStore.set({
+        name: cookieName,
+        value: shortenId(sessionId),
+        sameSite: 'lax',
+        httpOnly: true,
+        expires: null, // session cookie
+      });
+
+      return response;
+    };
 
 async function getSessionObject<S extends AnyRec = AnyRec>(sessionId: UUID, event: FetchEvent, { storage, expirationTtl }: SessionOptions): Promise<S> {
   const obj = (await storage.get<S>(sessionId)) || <S>{};
@@ -51,37 +86,3 @@ async function getSessionObject<S extends AnyRec = AnyRec>(sessionId: UUID, even
     }
   });
 }
-
-/**
- * Session middleware for worker environments.
- * 
- * Users need to provide a `StorageArea` to persist the session between requests. 
- * There are implementations for both browsers (IndexedDB-backed) and Cloudflare Workers (KV storage backed) available.
- * 
- * The session object is a POJO that is persistend once per microtask, i.e. setting multiple properties in a row (i.e. not yielding to the event loop) 
- * will only trigger a single serialization + database put operation. 
- * It will implicitly call `event.waitUntil` to prevent the worker to shut down before the operation has finished.
- */
-export const withSession = <S extends AnyRec = AnyRec>({ storage, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
-  <A extends WithSessionDeps>(handler: WithSessionHandler<A, S>): Handler<A> =>
-    async (args: A): Promise<Response> => {
-      const { cookies, cookieStore, event } = args;
-      const sessionId = parseUUID(cookies.get(cookieName)) ?? new UUID();
-      const session = await getSessionObject<S>(sessionId, event, { storage, cookieName, expirationTtl });
-
-      const response = await handler({ ...args, session });
-
-      await cookieStore.set({
-        name: cookieName,
-        value: shortenId(sessionId),
-        sameSite: 'lax',
-        httpOnly: true,
-        expires: null, // session cookie
-      });
-
-      return response;
-    };
-
-// TODO: Non-yielding (unyielding?) variant
-// The session object is provided as a promise, so that users have full control over when to await for the database request to finish.
-// (when serving streaming responses via @werker/html you might not want to wait for a db request to finish before sending initial response data)

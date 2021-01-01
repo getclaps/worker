@@ -1,6 +1,6 @@
 import { BaseArg, Handler } from ".";
 import { Awaitable } from "../common-types";
-import { CookieStore, HeadersCookieStore } from "../headers-cookie-store";
+import { CookieStore, RequestCookieStore } from "../request-cookie-store";
 import { SignedCookieStore } from "../signed-cookie-store";
 
 export type WithCookiesArgs = { cookieStore: CookieStore, cookies: Cookies }
@@ -18,11 +18,18 @@ export interface WithCookieOptions {
   salt?: BufferSource
 }
 
+/**
+ * Issues: 
+ * - Forgetting to await a set cookie call can lead to response being sent without the signed cookie.
+ *   - Maybe sign cookies in bulk during headers call? => needs knowledge about cookie store internals
+ *   - Keep track of in-progress calls?
+ * - Can't mix signed and unsigned cookies
+ */
 export const withSignedCookies = (opts: WithCookieOptions) => {
   const cryptoKeyPromise = SignedCookieStore.deriveCryptoKey(opts);
 
   return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
-    const reqCookieStore = new HeadersCookieStore(args.event.request.headers);
+    const reqCookieStore = new RequestCookieStore(args.event.request);
     const cookieStore = new SignedCookieStore(reqCookieStore, await cryptoKeyPromise);
 
     const cookies: Cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
@@ -35,7 +42,7 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
       statusText,
       headers: [
         ...headers,
-        ...reqCookieStore.headers(),
+        ...reqCookieStore.headers,
       ],
     });
     return response;
@@ -43,7 +50,7 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
 }
 
 export const withCookies = <A extends BaseArg>(handler: WithCookiesHandler<A>) => async (args: A): Promise<Response> => {
-  const cookieStore = new HeadersCookieStore(args.event.request.headers);
+  const cookieStore = new RequestCookieStore(args.event.request);
   const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
   const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
   const response = new Response(body, {
@@ -51,10 +58,10 @@ export const withCookies = <A extends BaseArg>(handler: WithCookiesHandler<A>) =
     statusText,
     headers: [
       ...headers,
-      ...cookieStore.headers(),
+      ...cookieStore.headers,
     ],
   });
   return response;
 }
 
-export * from '../headers-cookie-store';
+export * from '../request-cookie-store';
