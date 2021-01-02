@@ -2,14 +2,9 @@ import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteO
 import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
+import { WithCookieOptions } from "../middleware";
 
-
-/** 
- * The prefix to designate cookie signature cookies. 
- * While pretty arbitrary, the `~` char makes these cookies appear at the bottom 
- * when sorting alphabetically in a web inspector.
- */
-const PREFIX = '~s.';
+const POSTFIX = '.sig';
 
 const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 'string'
   ? new TextEncoder().encode(secret)
@@ -29,33 +24,36 @@ export class SignedCookieStore implements CookieStore {
   /** 
    * A helper function to derive a crypto key from a passphrase. 
    */
-  static deriveCryptoKey(opts: { secret: string | BufferSource }): Promise<CryptoKey> {
+  static async deriveCryptoKey(opts: WithCookieOptions): Promise<CryptoKey> {
     if (!opts.secret) throw Error('Secret missing');
 
-    const keyId = new Base64Encoder().encode(secretToUint8Array(opts.secret));
+    const passphraseKey = await crypto.subtle.importKey(
+      'raw',
+      secretToUint8Array(opts.secret),
+      'PBKDF2',
+      false,
+      ['deriveKey']
+    );
+    const key = await crypto.subtle.deriveKey(
+      {
+        name: 'PBKDF2',
+        iterations: opts.iterations ?? 999,
+        hash: opts.deriveHash ?? 'SHA-256',
+        salt: opts.salt
+          ? bufferSourceToUint8Array(opts.salt)
+          : new UUID('a3491c45-b769-447f-87fd-64333c8d36f0')
+      },
+      passphraseKey,
+      {
+        name: 'HMAC',
+        hash: opts.signHash ?? 'SHA-256',
+        length: opts.length ?? 128
+      },
+      false,
+      ['sign', 'verify'],
+    );
 
-    if (!keyCache.has(keyId)) {
-      keyCache.set(keyId, (async () => {
-        const salt = new UUID('a3491c45-b769-447f-87fd-64333c8d36f0');
-        const passphraseKey = await crypto.subtle.importKey(
-          'raw',
-          secretToUint8Array(opts.secret),
-          'PBKDF2',
-          false,
-          ['deriveKey']
-        );
-        const key = await crypto.subtle.deriveKey(
-          { name: 'PBKDF2', iterations: 999, hash: 'SHA-256', salt },
-          passphraseKey,
-          { name: 'HMAC', hash: 'SHA-1', length: 128 },
-          false,
-          ['sign', 'verify'],
-        );
-        return key;
-      })());
-    }
-
-    return keyCache.get(keyId);
+    return key
   }
 
   #store: CookieStore;
@@ -89,7 +87,7 @@ export class SignedCookieStore implements CookieStore {
     const cookie = await this.#store.get(name);
     if (!cookie) return null;
 
-    const sigCookie = await this.#store.get(`${PREFIX}${name}`);
+    const sigCookie = await this.#store.get(`${name}${POSTFIX}`);
     if (!sigCookie) return null;
 
     await this.#verify(cookie, sigCookie);
@@ -105,16 +103,22 @@ export class SignedCookieStore implements CookieStore {
     if (name != null) throw Error('Overload not implemented.');
 
     const all = await this.#store.getAll();
-    const cookies = all.filter(x => !x.name.startsWith(PREFIX));
-    const sigCookies = new Map(all.filter(x => x.name.startsWith(PREFIX)).map(x => [x.name, x]));
+    const allCookies = new Map(all.map(x => [x.name, x]));
+    const sigCookies = new Map(all.filter(x => x.name.endsWith(POSTFIX)).map(x => [x.name, x]));
 
-    for (const cookie of cookies) {
-      const sigCookie = sigCookies.get(`${PREFIX}${cookie.name}`);
-      if (!sigCookie) continue;
+    const cookies: CookieList = [];
+
+    for (const sigCookie of sigCookies.values()) {
+      const name = sigCookie.name;
+      const baseCookieName = name.substring(0, name.length - POSTFIX.length);
+      const cookie = allCookies.get(baseCookieName)
 
       await this.#verify(cookie, sigCookie);
+
+      cookies.push(cookie);
     }
-    return cookies;
+
+    return [...cookies.values()]
   }
 
   async set(options: string | CookieInit, value?: string) {
@@ -122,10 +126,10 @@ export class SignedCookieStore implements CookieStore {
       ? [options, value]
       : [options.name, options.value ?? ''];
 
-    if (name.startsWith(PREFIX)) throw new Error('Illegal name');
+    if (name.endsWith(POSTFIX)) throw new Error('Illegal name');
 
     const signature = await this.#sign(name, val);
-    const sigCookieName = `${PREFIX}${name}`;
+    const sigCookieName = `${name}${POSTFIX}`;
 
     if (typeof options === 'string') {
       await Promise.all([
@@ -146,7 +150,7 @@ export class SignedCookieStore implements CookieStore {
 
     await Promise.all([
       this.#store.delete(name),
-      this.#store.delete(`${PREFIX}${name}`),
+      this.#store.delete(`${name}${POSTFIX}`),
     ]);
   }
 

@@ -24,7 +24,10 @@ const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true })
 const parseSessionCookie = <T>(value: string) => <T>new MsgPackDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
 
 export interface SessionOptions<S extends AnyRec = AnyRec> {
-  /** The storage area where to persist the session objects */
+  /** 
+   * The storage area where to persist the session objects. 
+   * If it is omitted, the session will be a pure cookie session.
+   */
   storage?: StorageArea,
 
   /** You can override the name of the session cookie. Defaults to `sid`. */
@@ -69,12 +72,10 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession
 
       await cookieStore.set({
         name: cookieName,
-        value: storage 
-          ? shortenId(id) 
+        value: storage
+          ? shortenId(id)
           : stringifySessionCookie(session),
-        expires: storage 
-          ? null // set server be in control of expiration
-          : new Date(Date.now() + expirationTtl * 1000), 
+        expires: new Date(Date.now() + expirationTtl * 1000),
         sameSite: 'lax',
         httpOnly: true,
       });

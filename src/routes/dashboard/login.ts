@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
 
-import { withCookies } from '../../vendor/middleware/cookies';
+// import { withCookies } from '../../vendor/middleware/cookies';
 
 import { router } from '../../router';
 import { DAO } from '../../dao';
@@ -9,11 +9,9 @@ import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 
 import { page } from './components';
-import { dashSession } from './with-dashboard';
+import { dashSession, dashCookies as withCookies } from './with-dashboard';
 import { withContentNegotiation } from '../../vendor/middleware';
 import { JSONResponse } from '@werker/json-fetch';
-
-// const withCookies = withSignedCookies({ secret: 'foobar' });
 
 router.post('/login', withCookies(dashSession(withContentNegotiation({ types: ['application/json', 'text/html']})(async ({ request, session, type }) => {
   const dao: DAO = getDAO();

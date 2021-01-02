@@ -2,19 +2,17 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
-import { RequestCookieStore, withCookies } from './vendor/middleware/cookies';
+import { RequestCookieStore } from './vendor/middleware/cookies';
 
 import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
-import { dashSession } from './routes/dashboard/with-dashboard';
+import { dashSession, dashCookies as withCookies } from './routes/dashboard/with-dashboard';
 
 import './routes/index';
 // @ts-ignore
 resolveOrNull(import(/* webpackMode: "eager" */ './billing')); 
-
-// const withCookies = withSignedCookies({ secret: 'foobar' });
 
 async function resetIPSalt() {
   await storage.set(IP_SALT_KEY, new UUID());

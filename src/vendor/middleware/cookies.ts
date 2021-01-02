@@ -16,6 +16,10 @@ export type Cookies = ReadonlyMap<string, string>;
 export interface WithCookieOptions {
   secret: string | BufferSource
   salt?: BufferSource
+  deriveHash?: string,
+  length?: number,
+  iterations?: number
+  signHash?: string,
 }
 
 /**
