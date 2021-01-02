@@ -31,6 +31,8 @@ export interface DashboardSession {
   ids: string[]
   bookmarked: Set<string>,
   hostnames: Map<string, string>
+  statsTime: string,
+  logTime: string,
 }
 
 export type Handler = (args: RouteArgs) => Awaitable<Response>;

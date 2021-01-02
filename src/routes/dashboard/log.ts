@@ -19,7 +19,8 @@ const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
 </tr>`);
 
 router.get('/log', withDashboard(({ dao, isBookmarked, session, uuid, locale, searchParams }) => {
-  const timeFrame = searchParams.get('time') || '1-hour';
+  if (searchParams.get('time')) session.logTime = searchParams.get('time');
+  const timeFrame = session.logTime || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
 
