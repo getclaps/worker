@@ -8,64 +8,64 @@ import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 
-import * as cc from '../cookies';
 import { page } from './components';
+import { dashSession } from './with-dashboard';
+import { withContentNegotiation } from '../../vendor/middleware';
+import { JSONResponse } from '@werker/json-fetch';
 
 // const withCookies = withSignedCookies({ secret: 'foobar' });
 
-router.post('/login', withCookies(async ({ request, cookies, cookieStore }) => {
+router.post('/login', withCookies(dashSession(withContentNegotiation({ types: ['application/json', 'text/html']})(async ({ request, session, type }) => {
   const dao: DAO = getDAO();
 
   const formData = await request.formData()
   const id = formData.get('password').toString();
   const hostname = formData.get('id')?.toString();
-  const referrer = (formData.get('referrer') || request.headers.get('referer') || '/').toString();
+  const ref = (formData.get('referer') || request.headers.get('referer')).toString();
+  const location = ref.endsWith('/login') ? '/stats' : ref;
 
-  try {
-    const uuid = parseUUID(id);
-    const d = await dao.getDashboard(uuid);
-    if (!d) throw Error();
-  } catch {
-    return re.seeOther(referrer)
+  const uuid = parseUUID(id);
+  const dash = await dao.getDashboard(uuid);
+  if (!dash) {
+    // Incorret password
+    throw Error();
   }
 
-  await Promise.all([
-    cookieStore.set(cc.loginsCookie(cookies, id)),
-    cookieStore.set(cc.loginCookie(id)),
-    cookieStore.set(await cc.bookmarkedCookie(id)),
-    ...hostname ? [cookieStore.set(await cc.hostnameCookie(id, hostname))] : [],
-  ]);
+  session.cid = id;
+  if (!session.ids.includes(id)) session.ids.push(id);
+  session.bookmarked.add(id);
+  if (hostname) session.hostnames.set(id, hostname);
 
-  return re.seeOther(referrer);
-}));
+  if (type === 'text/html') {
+    return re.seeOther(location)
+  } 
+  if (type === 'application/json') {
+    return new JSONResponse({ location });
+  }
+}))));
 
 // TODO: make POST
-router.get('/logout', withCookies(async ({ cookies, cookieStore }) => {
-  const did = cookies.get('did');
-  const ids = cookies.get('ids').split('.').filter(_ => _ !== did) ?? [];
+router.get('/logout', withCookies(dashSession(async ({ session }) => {
+  const cid = session.cid;
+  const ids = session.ids.filter(id => id !== cid);
 
+  session.ids = ids;
   if (ids.length) {
-    await Promise.all([
-      cookieStore.set(cc.loginCookie(ids[0])),
-      cookieStore.set(cc.logoutsCookie(cookies)),
-    ]);
+    session.cid = ids[0];
   } else {
-    await Promise.all([
-      cookieStore.delete('did'),
-      cookieStore.delete('ids'),
-    ]);
+    delete session.cid;
   }
 
   return re.seeOther('/');
-}));
+})));
 
 
-router.get('/login', withCookies(({ headers }) => {
+router.get('/login', ({ headers }) => {
   const referrer = headers.get('referer');
   return page()(html`
     <div class="flex-center" style="margin-top:3rem">
       <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
-        ${referrer ? html`<input type="hidden" name="referrer" value="${referrer}" />` : null}
+        ${referrer ? html`<input type="hidden" name="referer" value="${referrer}" />` : null}
         <div class="bp3-form-group">
           <label class="bp3-label" for="form-group-input">
             Key
@@ -102,11 +102,12 @@ router.get('/login', withCookies(({ headers }) => {
           if (cred) {
             const { id, password } = cred;
             const body = new URLSearchParams(Object.entries({ id, password }));
-            const referrer = new FormData(form).get('referrer');
             document.getElementById('login').querySelectorAll('input, button').forEach(el => { el.disabled = true });
-            const response = await fetch('/login', { method: 'POST', body, redirect: 'manual' });
-            if (referrer) window.location.assign(referrer);
-            else window.location.reload();
+            const response = await fetch('/login', { method: 'POST', body, headers: { accept: 'application/json' } });
+            if (response.ok) 
+              window.location.assign((await response.json()).location);
+            else 
+              window.location.reload();
           }
         }
         openCredentialsManager();
@@ -117,4 +118,4 @@ router.get('/login', withCookies(({ headers }) => {
       }
     </script>
   `);
-}));
+});

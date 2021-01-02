@@ -12,7 +12,7 @@ import { page } from './components';
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
 async function settingsPage(
-  { uuid, id, cookies, dao, isBookmarked }: DashboardArgs, 
+  { uuid, id, cookies, session, dao, isBookmarked }: DashboardArgs, 
   { headers = new Headers(), dashboard, cookieDNT, showError }: {
     headers?: Headers, 
     dashboard?: Dashboard, 
@@ -20,7 +20,7 @@ async function settingsPage(
     showError?: boolean,
   } = {},
 ) {
-  return page({ dir: 'settings', cookies, uuid, isBookmarked, headers })(async () => {
+  return page({ dir: 'settings', session, uuid, isBookmarked, headers })(async () => {
     try {
       dashboard = dashboard || await dao.getDashboard(uuid);
     } catch (e) {
@@ -116,7 +116,6 @@ async function settingsPage(
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                document.cookie = '${RequestCookieStore.toSetCookie(await cc.bookmarkedCookie(id))}';
                 if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
               }));
@@ -164,7 +163,6 @@ async function settingsPage(
         <div></div>
       </div>
       <script>document.cookie = '${RequestCookieStore.toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
-      <script>document.cookie = '${RequestCookieStore.toSetCookie(await cc.hostnameCookie(id, dashboard.hostname[0]))}';</script>
     `;
   });
 }

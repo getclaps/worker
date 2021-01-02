@@ -2,8 +2,8 @@ import 'abortcontroller-polyfill';
 
 import { StorageArea } from '@werker/cloudflare-kv-storage';
 import { UUID } from 'uuid-class';
-// import { Packr } from 'msgpackr/browser';
-import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
+import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';
+// import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
 import { BaseArg, Handler } from '.';
 import { Awaitable } from '../common-types';
@@ -11,16 +11,19 @@ import { WithCookiesArgs } from './cookies';
 import { shortenId, parseUUID } from '../short-id';
 import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 
-type AnyRec = Partial<Record<any, any>>;
+type AnyRec = Record<any, any>;
 
 export type WithSessionDeps = BaseArg & WithCookiesArgs;
 export type WithSessionArgs<S extends AnyRec = AnyRec> = { session: S };
 export type WithSessionHandler<A extends WithSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
 
-const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new CBOREncoder({ structuredClone: true }).encode(value));
-const parseSessionCookie = <T>(value: string) => <T>new CBORDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
+// TODO: make configurable
+// const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new CBOREncoder({ structuredClone: true }).encode(value));
+// const parseSessionCookie = <T>(value: string) => <T>new CBORDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
+const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new MsgPackEncoder({ structuredClone: true }).encode(value));
+const parseSessionCookie = <T>(value: string) => <T>new MsgPackDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
 
-export interface SessionOptions {
+export interface SessionOptions<S extends AnyRec = AnyRec> {
   /** The storage area where to persist the session objects */
   storage?: StorageArea,
 
@@ -29,6 +32,9 @@ export interface SessionOptions {
 
   /** Session expiration time in seconds. Defaults to five minutes. */
   expirationTtl?: number,
+
+  /** TODO */
+  defaultSession?: S,
 }
 
 /**
@@ -44,34 +50,48 @@ export interface SessionOptions {
  * Issues
  * - Will "block" until session object is retrieved from KV => provide "unyielding" version that returns a promise?
  */
-export const withSession = <S extends AnyRec = AnyRec>({ storage, cookieName = 'sidcborx', expirationTtl = 5 * 60 }: SessionOptions = {}) =>
+export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession = {}, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions = {}) =>
   <A extends WithSessionDeps>(handler: WithSessionHandler<A, S>): Handler<A> =>
     async (args: A): Promise<Response> => {
       const { cookies, cookieStore, event } = args;
 
-      const ac = new AbortController();
+      const controller = new AbortController();
 
-      const [id, session] = await getSessionObject<S>(cookies.get(cookieName), event, { storage, cookieName, expirationTtl }, ac.signal);
+      const [id, session] = await getSessionProxy<S>(cookies.get(cookieName), event, {
+        storage,
+        cookieName,
+        expirationTtl,
+        defaultSession,
+        signal: controller.signal,
+      });
 
       const response = await handler({ ...args, session });
 
       await cookieStore.set({
         name: cookieName,
-        value: storage ? shortenId(id) : stringifySessionCookie(session),
+        value: storage 
+          ? shortenId(id) 
+          : stringifySessionCookie(session),
+        expires: storage 
+          ? null // set server be in control of expiration
+          : new Date(Date.now() + expirationTtl * 1000), 
         sameSite: 'lax',
         httpOnly: true,
-        expires: null, // session cookie
       });
 
       // Indicate that cookie session can no longer be modified.
-      ac.abort();
+      controller.abort();
 
       return response;
     };
 
-async function getSessionObject<S extends AnyRec = AnyRec>(cookieVal: string, event: FetchEvent, { storage, expirationTtl }: SessionOptions, signal: AbortSignal): Promise<[UUID|null, S]> {
+async function getSessionProxy<S extends AnyRec = AnyRec>(
+  cookieVal: string,
+  event: FetchEvent,
+  { storage, expirationTtl, defaultSession, signal }: SessionOptions & { signal: AbortSignal },
+): Promise<[UUID | null, S]> {
   if (!storage) {
-    const obj = cookieVal && parseSessionCookie<S>(cookieVal) || <S>{};
+    const obj = (cookieVal && parseSessionCookie<S>(cookieVal)) || defaultSession;
 
     return [null, new Proxy(<any>obj, {
       set(target, prop, value) {
@@ -89,9 +109,9 @@ async function getSessionObject<S extends AnyRec = AnyRec>(cookieVal: string, ev
       }
     })];
   }
-    
-  const sessionId = parseUUID(cookieVal) ?? new UUID();
-  const obj = (await storage.get<S>(sessionId)) || <S>{};
+
+  const sessionId = parseUUID(cookieVal) || new UUID();
+  const obj = (await storage.get<S>(sessionId)) || defaultSession;
 
   let nr = 0;
   /** Batch calls within the same micro task */

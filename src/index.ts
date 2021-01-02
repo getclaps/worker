@@ -8,7 +8,7 @@ import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { resolveOrNull } from './util';
-import * as cc from './routes/cookies';
+import { dashSession } from './routes/dashboard/with-dashboard';
 
 import './routes/index';
 // @ts-ignore
@@ -42,15 +42,15 @@ router.get('/__resetIPSalt', async ({ headers }) => {
   return re.ok('Reset success');
 });
 
-router.get('/', withCookies(async ({ cookies }) => {
-  const id = cookies.get('did');
-  if (!id) return re.seeOther('/login');
+router.get('/', withCookies(dashSession(async ({ session }) => {
+  const cid = session.cid;
+  if (!cid) return re.seeOther('/login');
 
-  const isBookmarked = cookies.has(await cc.bookmarkedCookieKey(id))
-  if (!isBookmarked) return re.seeOther('/settings')
+  const isBookmarked = session.bookmarked.has(cid);
+  if (!isBookmarked) return re.seeOther('/settings');
 
   return re.seeOther('/stats')
-}));
+})));
 
 async function handleRequest(event: FetchEvent) {
   const { request } = event;

@@ -1,18 +1,17 @@
 import { html, HTMLContent, HTMLResponse } from '@werker/html';
 import { UUID } from 'uuid-class';
+import { DashboardSession } from '../../router';
 
-import { Cookies } from '../../vendor/middleware/cookies';
 import { shortenId } from '../../vendor/short-id';
 
-import * as cc from '../cookies';
 import { styles } from './styles';
 
-export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = false, headers = [], cookies, uuid }: {
+export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = false, headers = [], session, uuid }: {
   dir?: string,
   title?: string,
   isBookmarked?: boolean,
   headers?: HeadersInit,
-  cookies?: Cookies,
+  session?: DashboardSession,
   uuid?: UUID,
 } = {}) => (content: HTMLContent) => new HTMLResponse(html`
 <!DOCTYPE html>
@@ -49,7 +48,7 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
         <div class="bp3-navbar-group bp3-align-right unlock ${!isBookmarked ? 'hidden' : ''}">
           <form id="switch" method="POST" action="/login" autocomplete="off"  style="margin-right:5px">
             <div class="bp3-control-group">
-              ${cookies && uuid ? htmlHostnameSelect(cookies, uuid) : ''}
+              ${session && uuid ? htmlHostnameSelect(session, uuid) : ''}
               <a class="bp3-button bp3-icon-add" title="Add account" href="/login"></a>
             </div>
             <script>document.querySelectorAll('#switch select').forEach(el => el.addEventListener('change', e => e.target.form.submit()))</script>
@@ -83,15 +82,14 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
   ],
 });
 
-export const htmlHostnameSelect = (cookies: Cookies, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
-  const shortIds = cookies.get('ids').split('.') ?? [];
+export const htmlHostnameSelect = (session: DashboardSession, uuid: UUID, { modifiers = '' }: { modifiers?: string } = {}) => {
   const shortId = shortenId(uuid);
   return html`
     <div class="bp3-select ${modifiers}">
       <select name="password">
-        ${shortIds.map(async sid => html`
+        ${session.ids.map(async sid => html`
           <option value="${sid}" ${sid === shortId ? 'selected' : ''}>
-            ${cookies.get(await cc.hostnameCookieKey(sid)) ?? sid}
+            ${session.hostnames.get(sid) ?? sid}
           </option>
         `)}
       </select>

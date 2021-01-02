@@ -23,6 +23,14 @@ export interface DashboardArgs extends RouteArgs {
   dao: DAO;
   isBookmarked: boolean;
   locale: string;
+  session: DashboardSession
+}
+
+export interface DashboardSession {
+  cid?: string,
+  ids: string[]
+  bookmarked: Set<string>,
+  hostnames: Map<string, string>
 }
 
 export type Handler = (args: RouteArgs) => Awaitable<Response>;

@@ -9,7 +9,7 @@ import { withDashboard } from './with-dashboard';
 
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
-router.get('/stats', withDashboard(({ searchParams, dao, isBookmarked, locale, cookies, uuid }) => {
+router.get('/stats', withDashboard(({ searchParams, dao, isBookmarked, locale, session, uuid }) => {
   const timeFrame = searchParams.get('time') || '24-hours';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
@@ -18,7 +18,7 @@ router.get('/stats', withDashboard(({ searchParams, dao, isBookmarked, locale, c
   // const d = dao.getDashboard(uuid);
   const x = dao.getStats(uuid, [value, unit]);
 
-  return page({ dir: 'stats', isBookmarked, cookies, uuid })(html`
+  return page({ dir: 'stats', isBookmarked, session, uuid })(html`
     <div class="bp3-running-text" style="padding-top:40px">
       ${/*<h2>Stats</h2>*/''}
       <form id="stats-query" method="GET" action="/stats">

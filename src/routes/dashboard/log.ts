@@ -18,14 +18,14 @@ const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
   <td></td>
 </tr>`);
 
-router.get('/log', withDashboard(({ dao, isBookmarked, cookies, uuid, locale, searchParams }) => {
+router.get('/log', withDashboard(({ dao, isBookmarked, session, uuid, locale, searchParams }) => {
   const timeFrame = searchParams.get('time') || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
 
   // const d = dao.getDashboard(uuid);
 
-  return page({ dir: 'log', isBookmarked, cookies, uuid })(html`
+  return page({ dir: 'log', isBookmarked, session, uuid })(html`
     <div class="bp3-running-text" style="padding-top:40px">
       <form id="log-query" method="GET" action="/log">
         <label class="bp3-label bp3-inline" style="display:inline-block; margin-bottom:2rem">
