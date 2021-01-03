@@ -11,33 +11,33 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@cloudflare/workers-types": "^2.1.0",
-    "ts-loader": "^8.0.12",
+    "ts-loader": "^8.0.13",
     "typescript": "^4.1.3",
-    "webpack": "^5.10.1"
+    "webpack": "^5.11.1"
   },
   "dependencies": {
     "@download/blockies": "github:qwtel/blockies",
     "@getclaps/proof-of-clap": "^0.3.0",
-    "@werker/cloudflare-kv-storage": "^0.3.0",
+    "@werker/cloudflare-kv-storage": "^0.5.0",
     "@werker/html": "^1.1.3",
-    "@werker/json-fetch": "^1.0.2",
-    "@werker/request-cookie-store": "^0.2.0",
+    "@werker/json-fetch": "^2.0.1",
+    "@werker/request-cookie-store": "^0.2.2",
     "@werker/response-creators": "^1.0.3",
     "@werker/stripe-webhook": "^1.1.0",
     "abortcontroller-polyfill": "^1.5.0",
     "base64-encoding": "^0.14.2",
     "cbor-x": "^0.6.0",
     "date-fns": "^2.16.1",
-    "device-detector-js": "^2.2.5",
+    "device-detector-js": "^2.2.7",
     "faunadb": "^4.0.0",
     "ipaddr.js": "^2.0.0",
     "msgpack-lite": "^0.1.26",
-    "msgpackr": "^1.0.2",
-    "negotiated": "^1.0.0",
+    "msgpackr": "^1.1.0",
+    "negotiated": "^1.0.2",
     "tiny-request-router": "^1.2.2",
-    "typed-array-utils": "^0.1.0",
+    "typed-array-utils": "^0.2.0",
     "typeson": "^5.18.2",
     "typeson-registry": "^1.0.0-alpha.38",
-    "uuid-class": "^0.11.0"
+    "uuid-class": "^0.11.1"
   }
 }
