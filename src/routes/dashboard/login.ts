@@ -13,7 +13,7 @@ import { dashSession, dashCookies as withCookies } from './with-dashboard';
 import { withContentNegotiation } from '../../vendor/middleware';
 import { JSONResponse } from '@werker/json-fetch';
 
-router.post('/login', withCookies(dashSession(withContentNegotiation({ types: ['application/json', 'text/html']})(async ({ request, session, type }) => {
+router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{ types: ['application/json', 'text/html'] })(async ({ request, session, type }) => {
   const dao: DAO = getDAO();
 
   const formData = await request.formData()
