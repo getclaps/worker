@@ -1,7 +1,8 @@
 import 'abortcontroller-polyfill';
 
-import { StorageArea } from '@werker/cloudflare-kv-storage';
+import { StorageArea } from '@werker/cloudflare-kv-storage/interface';
 import { UUID } from 'uuid-class';
+import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';
 // import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
@@ -9,7 +10,6 @@ import { BaseArg, Handler } from '.';
 import { Awaitable } from '../common-types';
 import { WithCookiesArgs } from './cookies';
 import { shortenId, parseUUID } from '../short-id';
-import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 
 type AnyRec = Record<any, any>;
 
@@ -89,7 +89,7 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession
 async function getSessionProxy<S extends AnyRec = AnyRec>(
   cookieVal: string,
   event: FetchEvent,
-  { storage, expirationTtl, defaultSession, signal }: SessionOptions & { signal: AbortSignal },
+  { storage, expirationTtl, defaultSession, signal }: SessionOptions<S> & { signal: AbortSignal },
 ): Promise<[UUID | null, S]> {
   if (!storage) {
     const obj = (cookieVal && parseSessionCookie<S>(cookieVal)) || defaultSession;

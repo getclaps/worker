@@ -10,8 +10,6 @@ const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 
   ? new TextEncoder().encode(secret)
   : bufferSourceToUint8Array(secret);
 
-const keyCache = new Map<string, Promise<CryptoKey>>();
-
 /**
  * # Signed Cookie Store
  * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
@@ -47,7 +45,7 @@ export class SignedCookieStore implements CookieStore {
       {
         name: 'HMAC',
         hash: opts.signHash ?? 'SHA-256',
-        length: opts.length ?? 128
+        length: 128
       },
       false,
       ['sign', 'verify'],
@@ -103,22 +101,18 @@ export class SignedCookieStore implements CookieStore {
     if (name != null) throw Error('Overload not implemented.');
 
     const all = await this.#store.getAll();
-    const allCookies = new Map(all.map(x => [x.name, x]));
-    const sigCookies = new Map(all.filter(x => x.name.endsWith(POSTFIX)).map(x => [x.name, x]));
+    const sigCookies = all.filter(x => x.name.endsWith(POSTFIX))
 
-    const cookies: CookieList = [];
+    const list: CookieList = [];
 
-    for (const sigCookie of sigCookies.values()) {
+    for (const sigCookie of sigCookies) {
       const name = sigCookie.name;
       const baseCookieName = name.substring(0, name.length - POSTFIX.length);
-      const cookie = allCookies.get(baseCookieName)
-
-      await this.#verify(cookie, sigCookie);
-
-      cookies.push(cookie);
+      const cookie = await this.get(baseCookieName);
+      if (cookie) list.push(cookie);
     }
 
-    return [...cookies.values()]
+    return list;
   }
 
   async set(options: string | CookieInit, value?: string) {

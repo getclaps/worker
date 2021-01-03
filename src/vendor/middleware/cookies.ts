@@ -1,6 +1,7 @@
 import { CookieStore, RequestCookieStore } from "@werker/request-cookie-store";
 import { BaseArg, Handler } from ".";
 import { Awaitable } from "../common-types";
+import { EncryptedCookieStore } from "../encrypted-cookie-store";
 import { SignedCookieStore } from "../signed-cookie-store";
 
 export type WithCookiesArgs = { cookieStore: CookieStore, cookies: Cookies }
@@ -17,7 +18,6 @@ export interface WithCookieOptions {
   secret: string | BufferSource
   salt?: BufferSource
   deriveHash?: string,
-  length?: number,
   iterations?: number
   signHash?: string,
 }
@@ -34,8 +34,33 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
 
   return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
     const reqCookieStore = new RequestCookieStore(args.event.request);
-    const cookieStore = new SignedCookieStore(reqCookieStore, await cryptoKeyPromise);
 
+    const cookieStore = new SignedCookieStore(reqCookieStore, await cryptoKeyPromise);
+    const cookies: Cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+
+    const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
+
+    // New `Response` to work around a known limitation in `Headers` class:
+    const response = new Response(body, {
+      status,
+      statusText,
+      headers: [
+        ...headers,
+        ...reqCookieStore.headers,
+      ],
+    });
+    return response;
+  };
+}
+
+export const withEncryptedCookies = (opts: WithCookieOptions) => {
+  const signingKeyPromise = SignedCookieStore.deriveCryptoKey(opts);
+  const encryptionKeyPromise = EncryptedCookieStore.deriveCryptoKey(opts);
+
+  return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
+    const reqCookieStore = new RequestCookieStore(args.event.request);
+
+    const cookieStore = new EncryptedCookieStore(reqCookieStore, await signingKeyPromise, await encryptionKeyPromise);
     const cookies: Cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
 
     const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });

@@ -1,8 +1,8 @@
 import * as re from '@werker/response-creators';
-import { KVStorageArea } from '@werker/cloudflare-kv-storage';
+import { CloudflareStorageArea } from '@werker/cloudflare-kv-storage';
 
 import { Awaitable } from '../../vendor/common-types';
-import { withSignedCookies } from '../../vendor/middleware/cookies';
+import { withSignedCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withSession } from '../../vendor/middleware';
 
@@ -15,10 +15,10 @@ import { AUTH, KV } from '../../constants';
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
 const acceptHTML = withContentNegotiation(<const>{ types: ['text/html'] });
-export const dashCookies = withSignedCookies({ secret: AUTH });
+export const dashCookies = withEncryptedCookies({ secret: AUTH });
 export const dashSession = withSession<DashboardSession>({
-  storage: new KVStorageArea(KV),
-  cookieName: 'sidx',
+  // storage: new CloudflareStorageArea(KV),
+  cookieName: 'getclaps.dev.session',
   defaultSession: {
     ids: [],
     bookmarked: new Set(),
@@ -33,7 +33,7 @@ export const withDashboard = (handler: DashboardHandler) => dashCookies<RouteArg
   const dao: DAO = getDAO();
 
   const id = session.cid;
-  if (!id) throw re.seeOther('/login');
+  if (!id) return re.seeOther('/login');
 
   const uuid = parseUUID(id);
 
