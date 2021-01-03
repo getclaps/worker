@@ -1,3 +1,4 @@
+import * as re from '@werker/response-creators';
 import { CookieStore, RequestCookieStore } from "@werker/request-cookie-store";
 import { BaseArg, Handler } from ".";
 import { Awaitable } from "../common-types";
@@ -30,13 +31,18 @@ export interface WithCookieOptions {
  * - Can't mix signed and unsigned cookies
  */
 export const withSignedCookies = (opts: WithCookieOptions) => {
-  const cryptoKeyPromise = SignedCookieStore.deriveCryptoKey(opts);
+  const keyPromise = SignedCookieStore.deriveCryptoKey(opts);
 
   return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
     const reqCookieStore = new RequestCookieStore(args.event.request);
+    const cookieStore = new SignedCookieStore(reqCookieStore, await keyPromise);
 
-    const cookieStore = new SignedCookieStore(reqCookieStore, await cryptoKeyPromise);
-    const cookies: Cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+    let cookies: Cookies;
+    try {
+      cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+    } catch {
+      return re.forbidden();
+    }
 
     const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
 
@@ -54,14 +60,18 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
 }
 
 export const withEncryptedCookies = (opts: WithCookieOptions) => {
-  const signingKeyPromise = SignedCookieStore.deriveCryptoKey(opts);
-  const encryptionKeyPromise = EncryptedCookieStore.deriveCryptoKey(opts);
+  const keyPromise = EncryptedCookieStore.deriveCryptoKey(opts);
 
   return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
     const reqCookieStore = new RequestCookieStore(args.event.request);
+    const cookieStore = new EncryptedCookieStore(reqCookieStore, await keyPromise);
 
-    const cookieStore = new EncryptedCookieStore(reqCookieStore, await signingKeyPromise, await encryptionKeyPromise);
-    const cookies: Cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+    let cookies: Cookies;
+    try {
+      cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+    } catch {
+      return re.forbidden();
+    }
 
     const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
 
@@ -74,6 +84,7 @@ export const withEncryptedCookies = (opts: WithCookieOptions) => {
         ...reqCookieStore.headers,
       ],
     });
+
     return response;
   };
 }

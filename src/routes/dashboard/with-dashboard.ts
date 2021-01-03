@@ -18,7 +18,7 @@ const acceptHTML = withContentNegotiation(<const>{ types: ['text/html'] });
 export const dashCookies = withEncryptedCookies({ secret: AUTH });
 export const dashSession = withSession<DashboardSession>({
   // storage: new CloudflareStorageArea(KV),
-  cookieName: 'getclaps.dev.session',
+  cookieName: 'getclaps.session',
   defaultSession: {
     ids: [],
     bookmarked: new Set(),
