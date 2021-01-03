@@ -8,6 +8,7 @@ import { router, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
 import { withDashboard } from './with-dashboard';
 import { page } from './components';
+import { validateURL } from '../validate';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
@@ -15,20 +16,21 @@ async function settingsPage(
   { uuid, id, cookies, session, dao, isBookmarked }: DashboardArgs, 
   { headers = new Headers(), dashboard, cookieDNT, showError }: {
     headers?: Headers, 
-    dashboard?: Dashboard, 
+    dashboard?: Required<Dashboard>, 
     cookieDNT?: boolean, 
     showError?: boolean,
   } = {},
 ) {
   return page({ dir: 'settings', session, uuid, isBookmarked, headers })(async () => {
     try {
-      dashboard = dashboard || await dao.getDashboard(uuid);
+      dashboard = dashboard || await dao.getDashboard(uuid) || undefined;
+      if (!dashboard) throw Error();
     } catch (e) {
       throw html`<div>Something went wrong.</div>`;
     }
 
     const hn = dashboard.hostname[0];
-    cookieDNT = cookieDNT || cookies.has(cc.dntCookieKey(hn));
+    cookieDNT = cookieDNT ?? (hn ? cookies.has(cc.dntCookieKey(hn)) : false)
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
     return html`
@@ -58,12 +60,12 @@ async function settingsPage(
                 <input type="hidden" name="method" value="delete-domain"/>
                 <p>
                   Your current domains are:
-                  <ul>${dashboard.hostname.map((h, i) =>
+                  <ul>${dashboard.hostname.map((h, i, hns) =>
                     html`<li>
                       ${i === 0 
                         ? html`<strong>${h}</strong>` 
                         : h}
-                      ${dashboard.hostname.length > 1 
+                      ${hns.length > 1 
                         ? html`<button class="bp3-button bp3-small bp3-icon-delete" type="submit" name="hostname" value="https://${h}"></button>` 
                         : ''}
                      </li>`
@@ -85,7 +87,7 @@ async function settingsPage(
             </div>
             <button class="bp3-button bp3-icon-database" type="submit">Store Password</button>
             <script>
-              document.querySelector('input[name=password] + button').addEventListener('click', function(e) { 
+              document.querySelector('input[name=password] + button').addEventListener('click', e => { 
                 e.preventDefault();
                 var el = e.target;
                 var show = el.classList.contains('bp3-icon-eye-open');
@@ -155,7 +157,7 @@ async function settingsPage(
             </p>
             ${dashboard.ip ? html`<p><small>Last login from: <code>${dashboard.ip}</code></small></p>` : ''}
             <script>
-              document.querySelector('input[name="dnt"]').addEventListener('change', function(e) { setTimeout(function () { e.target.form.submit() }, 500) })
+              document.querySelector('input[name="dnt"]').addEventListener('change', e => setTimeout(() => e.target.form.submit(), 500))
             </script>
             <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
           </form>
@@ -174,14 +176,15 @@ router.post('/settings', withDashboard(async (args) => {
   const headers = new Headers();
 
   let showError = false;
-  let dashboard: Dashboard;
-  let cookieDNT: boolean;
+  let dashboard: Required<Dashboard> | undefined;
+  let cookieDNT: boolean | undefined;
 
   const fd = await request.formData();
+  
   switch (fd.get('method')) {
     case 'domain': {
       try {
-        dashboard = await dao.appendDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+        dashboard = await dao.appendDomain(uuid, validateURL(fd.get('hostname')?.toString()).hostname);
       } catch (err) {
         if (err instanceof ConflictError) { showError = true } else throw err;
       }
@@ -189,7 +192,7 @@ router.post('/settings', withDashboard(async (args) => {
     }
     case 'delete-domain': {
       try {
-        dashboard = await dao.removeDomain(uuid, new URL(fd.get('hostname').toString()).hostname);
+        dashboard = await dao.removeDomain(uuid, validateURL(fd.get('hostname')?.toString()).hostname);
       } catch (err) {
         if (err instanceof ConflictError) { showError = true } else throw err;
       }

@@ -50,5 +50,6 @@ router.post('/views', cors(withErrors(withCookies(acceptJSON(async ({ headers, c
     dnt: cookies.has(cc.dntCookieKey(url.hostname))
   });
 
+  // @ts-ignore
   return new JSONResponse(data);
 })))));

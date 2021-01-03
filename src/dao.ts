@@ -6,10 +6,10 @@ export interface DAO {
   getDashboards(): Promise<Dashboard[]>;
   cancelAll(toCancel: Dashboard[], toActivate?: Dashboard[]): Promise<void>;
   monthlyViews(hostname: string, date?: Date): Promise<number>;
-  upsertDashboard(data: Dashboard): Promise<Dashboard>;
-  getDashboard(id: UUID): Promise<Dashboard>;
-  appendDomain(id: UUID, hostname: string): Promise<Dashboard>;
-  removeDomain(id: UUID, hostname: string): Promise<Dashboard>;
+  upsertDashboard(data: Dashboard): Promise<Required<Dashboard>>;
+  getDashboard(id: UUID): Promise<Required<Dashboard> | null>;
+  appendDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
+  removeDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
   relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
   updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
   getClaps({ href }: { href: string }): Promise<{ [href: string]: ClapCount }>;
@@ -31,9 +31,9 @@ export interface Dashboard {
 interface ViewDataLike {
   hostname: string,
   href: string,
-  country: string,
-  visitor: UUID,
-  device: DeviceDetectorResult,
+  country?: string | null,
+  visitor?: UUID | null,
+  device?: DeviceDetectorResult | null,
 }
 
 export interface ClapData extends ViewDataLike {
@@ -44,11 +44,11 @@ export interface ClapData extends ViewDataLike {
 }
 
 export interface ViewData extends ViewDataLike {
-  referrer: string,
+  referrer?: string | null,
 }
 
 export interface UpdateOptions {
-  ip: string | null, 
+  ip: string | null,
   dnt: boolean,
   originHostname: string,
 }
@@ -65,7 +65,7 @@ export interface StatsData {
   views: { href: string, views: number }[],
   claps: { href: string, claps: number, clappers: number }[],
   countries: { country: string, views: number }[],
-  referrals: { referrer: string, referrals: number }[], 
+  referrals: { referrer: string, referrals: number }[],
 }
 
 export interface LogEntry {

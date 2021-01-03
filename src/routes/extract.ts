@@ -1,4 +1,3 @@
-import { KVStorageArea } from '@werker/cloudflare-kv-storage';
 import { UUID } from 'uuid-class';
 import * as ipAddr from 'ipaddr.js';
 import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
@@ -6,13 +5,13 @@ import { concatBufferSources } from 'typed-array-utils';
 
 import { DEBUG, IP_SALT_KEY, storage } from '../constants';
 
-async function getVisitor(ip: string, userAgent: string, hostname: string) {
+async function getVisitor(ip: string | null, userAgent: string | null, hostname: string | null) {
   if (!ip) return null;
   try {
     const base = concatBufferSources(
       new Uint8Array(ipAddr.parse(ip).toByteArray()),
-      new TextEncoder().encode(userAgent),
-      new TextEncoder().encode(hostname), 
+      new TextEncoder().encode(userAgent ?? ''),
+      new TextEncoder().encode(hostname ?? ''), 
     );
     const dailyIPSalt = new UUID(await storage.get(IP_SALT_KEY));
     return await UUID.v5(base, dailyIPSalt);
@@ -28,11 +27,11 @@ export async function extractData(headers: Headers, hostname: string) {
 
   const visitor = await getVisitor(connectingIP, userAgent, hostname);
 
-  let device: DeviceDetectorResult = null;
+  let device: DeviceDetectorResult | null  = null;
   if (!DEBUG) {
     try {
       const deviceDetector = new DeviceDetector({ skipBotDetection: true });
-      device = deviceDetector.parse(userAgent);
+      device = userAgent ? deviceDetector.parse(userAgent) : null;
     } catch (err) {}
   }
 

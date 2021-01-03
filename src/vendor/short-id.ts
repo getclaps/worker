@@ -1,8 +1,19 @@
 import { UUID } from 'uuid-class';
 import { Base64Encoder, Base64Decoder } from 'base64-encoding';
 
-export const shortenId = (uuid: UUID) => new Base64Encoder({ url: true }).encode(uuid);
-export const parseUUID = (s?: string | null) => s &&
-  (s.length === 22 || s.length == 24 && s.endsWith('==') 
-    ? new UUID(new Base64Decoder().decode(s).buffer)
-    : new UUID(s))
+export function shortenId(uuid?: null): null;
+export function shortenId(uuid: UUID): string;
+export function shortenId(uuid: UUID | null): string | null;
+export function shortenId(uuid?: any): string | null {
+  return uuid
+    ? new Base64Encoder({ url: true }).encode(uuid)
+    : null;
+};
+
+export function parseUUID(uuid?: string | null): UUID | null {
+  return uuid
+    ? uuid.length === 22 || uuid.length == 24 && uuid.endsWith('==')
+      ? new UUID(new Base64Decoder().decode(uuid).buffer)
+      : new UUID(uuid)
+    : null;
+}

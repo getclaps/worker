@@ -26,13 +26,13 @@ export const withCORS = (opt: CORSOptions = {}) => <A extends BaseArg>(handler: 
     : opt.origin;
 
   if (!res.headers.has(ALLOW_ORIGIN)) 
-    res.headers.set(ALLOW_ORIGIN, origin?.origin ?? req.headers.get(ORIGIN));
+    res.headers.set(ALLOW_ORIGIN, origin?.origin ?? <string>req.headers.get(ORIGIN));
 
   if (!res.headers.has(ALLOW_METHODS) && req.headers.has(REQUEST_METHOD)) 
-    res.headers.set(ALLOW_METHODS, req.headers.get(REQUEST_METHOD));
+    res.headers.set(ALLOW_METHODS, <string>req.headers.get(REQUEST_METHOD));
 
   if (!res.headers.has(ALLOW_HEADERS) && req.headers.has(REQUEST_HEADERS))
-    res.headers.set(ALLOW_HEADERS, req.headers.get(REQUEST_HEADERS));
+    res.headers.set(ALLOW_HEADERS, <string>req.headers.get(REQUEST_HEADERS));
 
   if (!res.headers.has(ALLOW_CREDENTIALS) && opt.credentials) 
     res.headers.set(ALLOW_CREDENTIALS, 'true');

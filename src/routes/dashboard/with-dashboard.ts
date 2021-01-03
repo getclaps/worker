@@ -36,6 +36,7 @@ export const withDashboard = (handler: DashboardHandler) => dashCookies<RouteArg
   if (!id) return re.seeOther('/login');
 
   const uuid = parseUUID(id);
+  if (!uuid) return re.seeOther('/login');
 
   const isBookmarked = session.bookmarked.has(id);
 

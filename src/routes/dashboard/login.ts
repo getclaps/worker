@@ -17,17 +17,16 @@ router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{ ty
   const dao: DAO = getDAO();
 
   const formData = await request.formData()
-  const id = formData.get('password').toString();
+  const id = formData.get('password')?.toString();
   const hostname = formData.get('id')?.toString();
-  const ref = (formData.get('referer') || request.headers.get('referer')).toString();
+  const ref = (formData.get('referer') || request.headers.get('referer') || '/stats').toString();
   const location = ref.endsWith('/login') ? '/stats' : ref;
 
+  if (!id) throw Error('TODO')
   const uuid = parseUUID(id);
+  if (!uuid) throw Error('TODO')
   const dash = await dao.getDashboard(uuid);
-  if (!dash) {
-    // Incorret password
-    throw Error();
-  }
+  if (!dash) throw Error('TODO');
 
   session.cid = id;
   if (!session.ids.includes(id)) session.ids.push(id);
@@ -40,6 +39,7 @@ router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{ ty
   if (type === 'application/json') {
     return new JSONResponse({ location });
   }
+  return re.badRequest();
 }))));
 
 // TODO: make POST

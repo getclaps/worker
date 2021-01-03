@@ -19,7 +19,7 @@ const withRowFallback = (c: HTMLContent) => fallback(c, (err) => html`<tr>
 </tr>`);
 
 router.get('/log', withDashboard(({ dao, isBookmarked, session, uuid, locale, searchParams }) => {
-  if (searchParams.get('time')) session.logTime = searchParams.get('time');
+  if (searchParams.has('time')) session.logTime = <string>searchParams.get('time');
   const timeFrame = session.logTime || '1-hour';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);
@@ -69,7 +69,7 @@ router.get('/log', withDashboard(({ dao, isBookmarked, session, uuid, locale, se
                     : html`<td style="width:40%"></td>`}
                   <td style="width:30px">${noOpener(entry.referrer)}</td>
                   ${entry.referrer 
-                    ? html`<td title="${parseURL(entry.referrer).href}" class="ellipsis" style="width:25%">${mkRef(entry.referrer)}</td>` 
+                    ? html`<td title="${parseURL(entry.referrer)?.href}" class="ellipsis" style="width:25%">${mkRef(entry.referrer)}</td>` 
                     : html`<td style="width:25%"></td>`}
                   <td style="width:15%">${entry.ts ? formatDistance(entry.ts, now) : ''}</td>
                   <td><span title="${cname}">${emoji}</span> <img class="identicon" src="${img}" alt="${seed.slice(0, 7)}" width="16" height="16"/></td>

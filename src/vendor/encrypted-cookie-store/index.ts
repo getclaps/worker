@@ -69,7 +69,7 @@ export class EncryptedCookieStore extends SignedCookieStore {
     });
   }
 
-  async get(name: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
+  async get(name?: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
     const cookie = await super.get(name);

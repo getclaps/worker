@@ -79,7 +79,7 @@ export class SignedCookieStore implements CookieStore {
    * @throws if the signature doesn't match.
    * @returns null when the signature cookie is missing. 
    */
-  async get(name: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
+  async get(name?: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
     const cookie = await this.#store.get(name);
@@ -117,7 +117,7 @@ export class SignedCookieStore implements CookieStore {
 
   async set(options: string | CookieInit, value?: string) {
     const [name, val] = typeof options === 'string'
-      ? [options, value]
+      ? [options, value ?? '']
       : [options.name, options.value ?? ''];
 
     if (name.endsWith(POSTFIX)) throw new Error('Illegal name');

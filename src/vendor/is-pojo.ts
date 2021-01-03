@@ -1,4 +1,4 @@
-function isPOJO(arg) {
+function isPOJO(arg: any) {
   if (arg == null || typeof arg !== 'object') {
     return false;
   }

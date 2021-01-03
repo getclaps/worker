@@ -73,7 +73,7 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession
       await cookieStore.set({
         name: cookieName,
         value: storage
-          ? shortenId(id)
+          ? shortenId(id) ?? ''
           : stringifySessionCookie(session),
         expires: new Date(Date.now() + expirationTtl * 1000),
         sameSite: 'lax',
@@ -87,7 +87,7 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession
     };
 
 async function getSessionProxy<S extends AnyRec = AnyRec>(
-  cookieVal: string,
+  cookieVal: string | null | undefined,
   event: FetchEvent,
   { storage, expirationTtl, defaultSession, signal }: SessionOptions<S> & { signal: AbortSignal },
 ): Promise<[UUID | null, S]> {

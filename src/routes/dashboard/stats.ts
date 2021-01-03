@@ -10,7 +10,7 @@ import { withDashboard } from './with-dashboard';
 const withFallback = (c: HTMLContent) => fallback(c, (err) => html`<div>Something went wrong: ${err.message}</div>`);
 
 router.get('/stats', withDashboard(({ searchParams, dao, isBookmarked, locale, session, uuid }) => {
-  if (searchParams.get('time')) session.statsTime = searchParams.get('time');
+  if (searchParams.has('time')) session.statsTime = <string>searchParams.get('time');
   const timeFrame = session.statsTime || '24-hours';
   const [valueString, unit] = timeFrame.split('-') as [string, TimeUnit];
   const value = Number(valueString);

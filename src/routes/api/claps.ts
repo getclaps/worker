@@ -54,6 +54,7 @@ router.post('/claps', cors(withErrors(withCookies(acceptJSON(async ({ request, h
     dnt: cookies.has(cc.dntCookieKey(url.hostname)),
   });
 
+  // @ts-ignore
   return new JSONResponse(data);
 })))));
 
@@ -66,5 +67,6 @@ router.get('/claps', cors(withErrors(acceptJSON(async ({ searchParams }) => {
     href: url.href,
   });
 
+  // @ts-ignore
   return new JSONResponse(data);
 }))));

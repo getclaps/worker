@@ -9,6 +9,7 @@
     "preserveConstEnums": true,
     "sourceMap": true,
     "esModuleInterop": true,
+    "strict": true,
     "types": ["@cloudflare/workers-types"]
   },
   "include": [

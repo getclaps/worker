@@ -37,12 +37,12 @@ export const page = ({ dir = 'stats', title = 'getclaps.dev', isBookmarked = fal
           </div>
         </div>
         <div class="bp3-navbar-group bp3-align-left unlock ${!isBookmarked ? 'hidden' : ''}">
-          <a class="bp3-button bp3-minimal ${dir === 'stats' ? 'bp3-active': ''}" href="/stats">Stats</a>
-          <a class="bp3-button bp3-minimal ${dir === 'log' ? 'bp3-active': ''}" href="/log">Log</a>
-          <a class="bp3-button bp3-minimal ${dir === 'settings' ? 'bp3-active': ''}" href="/settings">Settings</a>
-          ${globalThis.hasBilling ? html`
+          <a class="bp3-button bp3-minimal ${dir === 'stats' ? 'bp3-active' : ''}" href="/stats">Stats</a>
+          <a class="bp3-button bp3-minimal ${dir === 'log' ? 'bp3-active' : ''}" href="/log">Log</a>
+          <a class="bp3-button bp3-minimal ${dir === 'settings' ? 'bp3-active' : ''}" href="/settings">Settings</a>
+          ${(globalThis as any).hasBilling ? html`
             <span class="bp3-navbar-divider"></span>
-            <a class="bp3-button bp3-minimal ${dir === 'subscription' ? 'bp3-active': ''}" href="/subscription">Subscription</a>
+            <a class="bp3-button bp3-minimal ${dir === 'subscription' ? 'bp3-active' : ''}" href="/subscription">Subscription</a>
           ` : ''}
         </div>
         <div class="bp3-navbar-group bp3-align-right unlock ${!isBookmarked ? 'hidden' : ''}">
@@ -88,16 +88,17 @@ export const htmlHostnameSelect = (session: DashboardSession, uuid: UUID, { modi
     <div class="bp3-select ${modifiers}">
       <select name="password">
         ${session.ids.map(async sid => html`
-          <option value="${sid}" ${sid === shortId ? 'selected' : ''}>
-            ${session.hostnames.get(sid) ?? sid}
-          </option>
+        <option value="${sid}" ${sid===shortId ? 'selected' : '' }>
+          ${session.hostnames.get(sid) ?? sid}
+        </option>
         `)}
       </select>
     </div>`;
 }
 
-export const parseURL = (href?: string|null) => {
+export const parseURL = (href?: string | null) => {
   let url: URL;
+  if (!href) return null;
   try { url = new URL(href) } catch { return null }
   return url;
 };
@@ -105,8 +106,8 @@ export const parseURL = (href?: string|null) => {
 export const noOpener = (href: string) => {
   const url = parseURL(href);
   return url ? html`<a href="${url.href}" target="_blank" rel="noreferrer noopener" class="opener">
-    <span class="bp3-icon bp3-icon-share"></span>
-  </a>` : '';
+  <span class="bp3-icon bp3-icon-share"></span>
+</a>` : '';
 }
 
 export const mkRef = (href: string) => {
@@ -120,10 +121,11 @@ export const htmlTimeFrameSelect = (timeFrames: string[], selectedTimeFrame: str
   return html`
     <div class="bp3-select" style="margin-right:5px">
       <select name="time">
-        ${timeFrames.map(tf => html`<option ${tf === selectedTimeFrame ? 'selected' : ''} value="${tf}">${tf.split('-').join(' ')}</option>`)}
+        ${timeFrames.map(tf => html`<option ${tf===selectedTimeFrame ? 'selected' : '' } value="${tf}">
+          ${tf.split('-').join(' ')}</option>`)}
         ${!timeFrames.includes(selectedTimeFrame)
-          ? html`<option selected value="${selectedTimeFrame}">${'---'}</option>`
-          : ''}
+    ? html`<option selected value="${selectedTimeFrame}">${'---'}</option>`
+    : ''}
       </select>
     </div>
   `;
