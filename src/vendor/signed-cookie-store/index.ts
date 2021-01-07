@@ -10,6 +10,12 @@ const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 
   ? new TextEncoder().encode(secret)
   : bufferSourceToUint8Array(secret);
 
+export interface DeriveOptions {
+  secret: string | BufferSource,
+  salt?: BufferSource,
+  iterations?: number,
+}
+
 /**
  * # Signed Cookie Store
  * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
@@ -22,7 +28,7 @@ export class SignedCookieStore implements CookieStore {
   /** 
    * A helper function to derive a crypto key from a passphrase. 
    */
-  static async deriveCryptoKey(opts: WithCookieOptions): Promise<CryptoKey> {
+  static async deriveCryptoKey(opts: DeriveOptions): Promise<CryptoKey> {
     if (!opts.secret) throw Error('Secret missing');
 
     const passphraseKey = await crypto.subtle.importKey(
@@ -36,7 +42,7 @@ export class SignedCookieStore implements CookieStore {
       {
         name: 'PBKDF2',
         iterations: opts.iterations ?? 999,
-        hash: opts.deriveHash ?? 'SHA-256',
+        hash: 'SHA-256',
         salt: opts.salt
           ? bufferSourceToUint8Array(opts.salt)
           : new UUID('a3491c45-b769-447f-87fd-64333c8d36f0')
@@ -44,7 +50,7 @@ export class SignedCookieStore implements CookieStore {
       passphraseKey,
       {
         name: 'HMAC',
-        hash: opts.signHash ?? 'SHA-256',
+        hash: 'SHA-256',
         length: 128
       },
       false,
@@ -148,22 +154,14 @@ export class SignedCookieStore implements CookieStore {
     ]);
   }
 
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions
-  ): void {
-    throw new Error("Method not implemented.")
+  addEventListener(...args: Parameters<CookieStore['addEventListener']>): void {
+    return this.#store.addEventListener(...args);
   }
   dispatchEvent(event: Event): boolean {
-    throw new Error("Method not implemented.")
+    return this.#store.dispatchEvent(event);
   }
-  removeEventListener(
-    type: string,
-    callback: EventListenerOrEventListenerObject,
-    options?: boolean | EventListenerOptions
-  ): void {
-    throw new Error("Method not implemented.")
+  removeEventListener(...args: Parameters<CookieStore['removeEventListener']>): void {
+    return this.#store.removeEventListener(...args);
   }
 }
 

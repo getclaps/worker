@@ -2,7 +2,6 @@ import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteO
 import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array, concatBufferSources, splitBufferSource } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
-import { WithCookieOptions } from "../middleware";
 
 const POSTFIX = '.enc';
 const IV_LENGTH = 16; // bytes
@@ -11,9 +10,20 @@ const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 
   ? new TextEncoder().encode(secret)
   : bufferSourceToUint8Array(secret);
 
+export interface DeriveOptions {
+  secret: string | BufferSource,
+  salt?: BufferSource,
+  iterations?: number,
+}
+
+/**
+ * # Encrypted Cookie Store
+ * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
+ * that transparently encrypts and decrypts cookie via AES-GCM.
+ */
 export class EncryptedCookieStore implements CookieStore {
   /** A helper function to derive a crypto key from a passphrase */
-  static async deriveCryptoKey(opts: WithCookieOptions): Promise<CryptoKey> {
+  static async deriveCryptoKey(opts: DeriveOptions): Promise<CryptoKey> {
     if (!opts.secret) throw Error('Secret missing');
 
     const passphraseKey = await crypto.subtle.importKey(
@@ -28,7 +38,7 @@ export class EncryptedCookieStore implements CookieStore {
       {
         name: 'PBKDF2',
         iterations: opts.iterations ?? 999,
-        hash: opts.deriveHash ?? 'SHA-256',
+        hash: 'SHA-256',
         salt: opts.salt
           ? bufferSourceToUint8Array(opts.salt)
           : new UUID('19fc3989-ce6a-4b4e-b626-fa2e6ef3be0c')
@@ -109,27 +119,19 @@ export class EncryptedCookieStore implements CookieStore {
     const [iv, cipher] = splitBufferSource(buffer, IV_LENGTH);
     const clearBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, this.#key, cipher);
     const clearText = new TextDecoder().decode(clearBuffer);
-    cookie.name = cookie.name.substring(cookie.name.length - POSTFIX.length);
+    cookie.name = cookie.name.substring(0, cookie.name.length - POSTFIX.length);
     cookie.value = clearText;
     return cookie;
   }
 
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject,
-    options?: boolean | AddEventListenerOptions
-  ): void {
-    throw new Error("Method not implemented.")
+  addEventListener(...args: Parameters<CookieStore['addEventListener']>): void {
+    return this.#store.addEventListener(...args);
   }
   dispatchEvent(event: Event): boolean {
-    throw new Error("Method not implemented.")
+    return this.#store.dispatchEvent(event);
   }
-  removeEventListener(
-    type: string,
-    callback: EventListenerOrEventListenerObject,
-    options?: boolean | EventListenerOptions
-  ): void {
-    throw new Error("Method not implemented.")
+  removeEventListener(...args: Parameters<CookieStore['removeEventListener']>): void {
+    return this.#store.removeEventListener(...args);
   }
 }
 

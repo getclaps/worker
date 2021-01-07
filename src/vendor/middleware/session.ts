@@ -107,7 +107,7 @@ async function getSessionProxy<S extends AnyRec = AnyRec>(
           throw Error('Headers already sent, session can no longer be modified!');
         delete target[prop];
         return true;
-      }
+      },
     })];
   }
 
@@ -137,6 +137,6 @@ async function getSessionProxy<S extends AnyRec = AnyRec>(
       delete target[prop];
       persist();
       return true;
-    }
+    },
   })];
 }

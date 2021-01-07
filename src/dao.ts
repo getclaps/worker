@@ -10,7 +10,7 @@ export interface DAO {
   getDashboard(id: UUID): Promise<Required<Dashboard> | null>;
   appendDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
   removeDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
-  relocateDashboard(oldId: UUID, newId: UUID): Promise<Dashboard>;
+  relocateDashboard(oldId: UUID, newId: UUID): Promise<Required<Dashboard>>;
   updateClaps(data: ClapData, options: UpdateOptions): Promise<ClapCount>;
   getClaps({ href }: { href: string }): Promise<{ [href: string]: ClapCount }>;
   getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
