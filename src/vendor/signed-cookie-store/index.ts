@@ -2,7 +2,6 @@ import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteO
 import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
-import { WithCookieOptions } from "../middleware";
 
 const POSTFIX = '.sig';
 
@@ -18,7 +17,7 @@ export interface DeriveOptions {
 
 /**
  * # Signed Cookie Store
- * An implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
+ * A partial implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
  * that transparently signs and verifies cookies via the Web Cryptography API. 
  * 
  * This is likely only useful in server-side implementations, 
