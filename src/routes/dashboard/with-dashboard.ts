@@ -14,7 +14,7 @@ import { AUTH, KV } from '../../constants';
 
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
-const acceptHTML = withContentNegotiation(<const>{ types: ['text/html'] });
+export const acceptHTML = withContentNegotiation(<const>{ types: ['text/html'] });
 export const dashCookies = withEncryptedCookies({ secret: AUTH });
 export const dashSession = withSession<DashboardSession>({
   // storage: new CloudflareStorageArea(KV),

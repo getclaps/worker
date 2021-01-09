@@ -2,7 +2,7 @@ import * as re from '@werker/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
-import { RequestCookieStore } from './vendor/middleware/cookies';
+// import { RequestCookieStore } from './vendor/middleware/cookies';
 
 import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';
@@ -18,14 +18,14 @@ async function resetIPSalt() {
   await storage.set(IP_SALT_KEY, new UUID());
 }
 
-router.get('/__test', async ({ request }) => {
-  const cookieStore = new RequestCookieStore(request);
-  await cookieStore.set('foo', 'bar');
-  await cookieStore.set('fizz', 'buzz');
-  const response = new Response(null, cookieStore);
-  console.log(JSON.stringify([...response.headers]))
-  return response;
-});
+// router.get('/__test', async ({ request }) => {
+//   const cookieStore = new RequestCookieStore(request);
+//   await cookieStore.set('foo', 'bar');
+//   await cookieStore.set('fizz', 'buzz');
+//   const response = new Response(null, cookieStore);
+//   console.log(JSON.stringify([...response.headers]))
+//   return response;
+// });
 
 router.get('/__init', async ({ headers }) => {
   if (headers.get('Authorization') !== AUTH) return re.unauthorized();

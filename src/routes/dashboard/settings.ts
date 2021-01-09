@@ -6,22 +6,23 @@ import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
-import { withDashboard } from './with-dashboard';
+import { dashSession, withDashboard } from './with-dashboard';
 import { page } from './components';
 import { validateURL } from '../validate';
+import { UUID } from 'uuid-class';
+import { shortenId } from '../../vendor/short-id';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
 async function settingsPage(
   { uuid, id, cookies, session, dao, isBookmarked }: DashboardArgs, 
-  { headers = new Headers(), dashboard, cookieDNT, showError }: {
-    headers?: Headers, 
+  { dashboard, cookieDNT, showError }: {
     dashboard?: Required<Dashboard>, 
     cookieDNT?: boolean, 
     showError?: boolean,
   } = {},
 ) {
-  return page({ dir: 'settings', session, uuid, isBookmarked, headers })(async () => {
+  return page({ dir: 'settings', session, uuid, isBookmarked })(async () => {
     try {
       dashboard = dashboard || await dao.getDashboard(uuid) || undefined;
       if (!dashboard) throw Error();
@@ -32,6 +33,8 @@ async function settingsPage(
     const hn = dashboard.hostname[0];
     cookieDNT = cookieDNT ?? (hn ? cookies.has(cc.dntCookieKey(hn)) : false)
     if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
+
+    if (hn) session.hostnames.set(id, hn);
 
     return html`
     <div class="bp3-running-text">
@@ -58,6 +61,7 @@ async function settingsPage(
           ${dashboard.hostname.length 
             ? html`<form method="POST" action="/settings" style="margin-top:.5rem">
                 <input type="hidden" name="method" value="delete-domain"/>
+                <p>TODO</p>
                 <p>
                   Your current domains are:
                   <ul>${dashboard.hostname.map((h, i, hns) =>
@@ -118,22 +122,23 @@ async function settingsPage(
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
+                if (document.querySelector('#bookmark-warning'))
+                  document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
               }));
             }
           </script>
-          ${/*<form method="POST" action="/dashboard">
+          <!-- <form method="POST" action="/settings">
             <input type="hidden" name="method" value="relocate" />
-            <p>If you've accidentally published your dashboard key, you can invalidate it by <em>relocating</em> this
-              dashboard to a new URL:</p>
-            <button class="bp3-button" type="submit">Relocate Dashboard</button>
+            <h4>Reset Key</h4>
+            <p>If you've accidentally published your dashboard key, you can invalidate it by resetting it here:</p>
+            <button class="bp3-button" type="submit">Reset Key</button>
             <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
               <input type="checkbox" name="okay" required />
               <span class="bp3-control-indicator"></span>
-              I understand that the current dashboard URL will be inaccessible after relocating
+              I understand that the current key will be invalid after resetting.
             </label>
-          </form>*/''}
+          </form> -->
         </div>
         `}
       </div>
@@ -171,9 +176,7 @@ async function settingsPage(
 
 router.get('/settings', withDashboard(settingsPage))
 router.post('/settings', withDashboard(async (args) => {
-  const { request, dao, uuid, cookieStore } = args;
-
-  const headers = new Headers();
+  const { request, dao, uuid, cookieStore, session } = args;
 
   let showError = false;
   let dashboard: Required<Dashboard> | undefined;
@@ -205,18 +208,27 @@ router.post('/settings', withDashboard(async (args) => {
       await cookieStore.set(cc.dntCookie(cookieDNT, hn));
       break;
     }
-    // case 'relocate': {
-    //   const oldUUID = elongateId(id);
-    //   const newUUID = UUID.v4();
-    //   const { subscription } = await dao.relocateDashboard(oldUUID, newUUID);
-    //   const newId = shortenId(newUUID);
-    //   await stripeAPI(`/v1/subscriptions/${subscription}`, {
-    //     method: 'POST',
-    //     data: { 'metadata[dashboard_id]': shortenId(newUUID) },
-    //   });
-    //   cookies.set(cc.loginCookie(newId));
-    //   return re.seeOther(`/dashboard`);
+    case 'relocate': {
+      const oldUUID = uuid;
+      const newUUID = UUID.v4();
+      const oldId = shortenId(oldUUID);
+      const newId = shortenId(newUUID);
+      dashboard = await dao.relocateDashboard(oldUUID, newUUID);
+      session.cid = newId;
+      session.ids = session.ids.map(id => id === oldId ? newId : id);
+      session.hostnames.set(newId, session.hostnames.get(oldId) ?? newId);
+      // if ((globalThis as any).hasBilling) {
+      //   const newId = shortenId(newUUID);
+      //   await stripeAPI(`/v1/subscriptions/${dashboard.subscription}`, {
+      //     method: 'POST',
+      //     data: { 'metadata[dashboard_id]': newId },
+      //   });
+      //   // cookies.set(cc.loginCookie(newId));
+      //   // return re.seeOther(`/dashboard`);
+      // }
+      break;
+    }
     default: break;
   }
-  return settingsPage(args, { headers: headers, dashboard: dashboard, cookieDNT: cookieDNT, showError });
+  return settingsPage(args, { dashboard: dashboard, cookieDNT: cookieDNT, showError });
 }));
