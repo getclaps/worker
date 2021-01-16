@@ -84,6 +84,8 @@ export class SignedCookieStore implements CookieStore {
    * @throws if the signature doesn't match.
    * @returns null when the signature cookie is missing. 
    */
+  get(name?: string): Promise<CookieListItem | null>;
+  get(options?: CookieStoreGetOptions): Promise<CookieListItem | null>;
   async get(name?: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
@@ -102,6 +104,8 @@ export class SignedCookieStore implements CookieStore {
    * @throws if any signature doesn't match.
    * @returns A list of cookies, exclusive of all cookies without signatures
    */
+  getAll(name?: string): Promise<CookieList>;
+  getAll(options?: CookieStoreGetOptions): Promise<CookieList>;
   async getAll(name?: string | CookieStoreGetOptions): Promise<CookieList> {
     if (name != null) throw Error('Overload not implemented.');
 
@@ -120,6 +124,8 @@ export class SignedCookieStore implements CookieStore {
     return list;
   }
 
+  set(name: string, value: string): Promise<void>;
+  set(options: CookieInit): Promise<void>;
   async set(options: string | CookieInit, value?: string) {
     const [name, val] = typeof options === 'string'
       ? [options, value ?? '']
@@ -144,6 +150,8 @@ export class SignedCookieStore implements CookieStore {
     }
   }
 
+  delete(name: string): Promise<void>;
+  delete(options: CookieStoreDeleteOptions): Promise<void>;
   async delete(name: string | CookieStoreDeleteOptions): Promise<void> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
