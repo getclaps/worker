@@ -89,7 +89,7 @@ export const withEncryptedCookies = (opts: WithCookieOptions) => {
   };
 }
 
-export const withCookies = <A extends BaseArg>(handler: WithCookiesHandler<A>) => async (args: A): Promise<Response> => {
+export const withCookies = () => <A extends BaseArg>(handler: WithCookiesHandler<A>) => async (args: A): Promise<Response> => {
   const cookieStore = new RequestCookieStore(args.event.request);
   const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
   const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });

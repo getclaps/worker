@@ -30,7 +30,7 @@ const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 const cors = withCORS({ credentials: true });
 
 router.options('/views', cors(() => re.ok()))
-router.post('/views', cors(withErrors(withCookies(acceptJSON(async ({ headers, cookies, searchParams }) => {
+router.post('/views', cors(withErrors(withCookies()(acceptJSON(async ({ headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));

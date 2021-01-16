@@ -22,7 +22,7 @@ const acceptJSON = withContentNegotiation({ types: ['application/json'] });
 const cors = withCORS({ credentials: true });
 
 router.options('/claps', cors(() => re.ok()))
-router.post('/claps', cors(withErrors(withCookies(acceptJSON(async ({ request, headers, cookies, searchParams }) => {
+router.post('/claps', cors(withErrors(withCookies()(acceptJSON(async ({ request, headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
