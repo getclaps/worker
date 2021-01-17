@@ -1,6 +1,7 @@
 import { notAcceptable } from '@werker/response-creators';
 import negotiated from 'negotiated';
 
+import { Awaitable } from '../common-types';
 import { BaseArg } from '.';
 
 const weightSortFn = <X extends { weight: number }>(a: X, b: X) => a.weight >= b.weight ? a : b;
@@ -32,7 +33,7 @@ export const withContentNegotiation = <
   L extends readonly string[],
   E extends readonly string[],
   C extends readonly string[]>(opts: ContentNegotiationOptions<T, L, E, C> = {}) =>
-  <A extends BaseArg>(handler: (args: A & ContentNegotiationResults<T, L, E, C>) => Promise<Response>) =>
+  <A extends BaseArg>(handler: (args: A & ContentNegotiationResults<T, L, E, C>) => Awaitable<Response>) =>
     async (args: A): Promise<Response> => {
       const headers = args.event.request.headers;
 
