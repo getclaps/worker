@@ -74,6 +74,7 @@ export class EncryptedCookieStore implements CookieStore {
     const cookie = await this.#store.get(`${name}${POSTFIX}`);
     if (!cookie) return cookie;
 
+    // FIXME: empty values!
     return this.#decrypt(cookie);
   }
 
@@ -95,11 +96,11 @@ export class EncryptedCookieStore implements CookieStore {
   set(options: CookieInit): Promise<void>;
   async set(options: string | CookieInit, value?: string) {
     const [name, val] = typeof options === 'string'
-      ? [options, value]
+      ? [options, value ?? '']
       : [options.name, options.value ?? ''];
 
+    // FIXME: empty string!
     const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
-
     const message = new TextEncoder().encode(val);
     const cipher = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, this.#key, message);
     const cipherB64 = new Base64Encoder({ url: true }).encode(concatBufferSources(iv, cipher));
@@ -117,7 +118,7 @@ export class EncryptedCookieStore implements CookieStore {
     return this.#store.delete(`${options}${POSTFIX}`);
   }
 
-  #decrypt = async (cookie: CookieListItem): Promise<CookieListItem> =>  {
+  #decrypt = async (cookie: CookieListItem): Promise<CookieListItem> => {
     const buffer = new Base64Decoder().decode(cookie.value);
     const [iv, cipher] = splitBufferSource(buffer, IV_LENGTH);
     const clearBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, this.#key, cipher);
