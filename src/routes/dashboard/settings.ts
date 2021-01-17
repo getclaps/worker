@@ -17,26 +17,21 @@ const storePassword = html`<button type="submit" class="bp3-button bp3-minimal b
 async function settingsPage(
   { uuid, id, cookies, session, dao, isBookmarked }: DashboardArgs, 
   { dashboard, cookieDNT, showError }: {
-    dashboard?: Required<Dashboard>, 
+    dashboard?: Required<Dashboard> | null, 
     cookieDNT?: boolean, 
     showError?: boolean,
   } = {},
 ) {
-  return page({ dir: 'settings', session, uuid, isBookmarked })(async () => {
-    try {
-      dashboard = dashboard || await dao.getDashboard(uuid) || undefined;
-      if (!dashboard) throw Error();
-    } catch (e) {
-      throw html`<div>Something went wrong.</div>`;
-    }
+  dashboard = dashboard || await dao.getDashboard(uuid);
+  if (!dashboard) throw Error();
 
-    const hn = dashboard.hostname[0];
-    cookieDNT = cookieDNT ?? (hn ? cookies.has(cc.dntCookieKey(hn)) : false)
-    if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
+  const hn = dashboard.hostname[0];
+  cookieDNT = cookieDNT ?? (hn ? cookies.has(cc.dntCookieKey(hn)) : false)
+  if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
-    if (hn) session.hostnames.set(id, hn);
+  if (hn) session.hostnames.set(id, hn);
 
-    return html`
+  return page({ dir: 'settings', session, uuid, isBookmarked })(html`
     <div class="bp3-running-text">
       <div class="row">
         <div>
@@ -61,7 +56,6 @@ async function settingsPage(
           ${dashboard.hostname.length 
             ? html`<form method="POST" action="/settings" style="margin-top:.5rem">
                 <input type="hidden" name="method" value="delete-domain"/>
-                <p>TODO</p>
                 <p>
                   Your current domains are:
                   <ul>${dashboard.hostname.map((h, i, hns) =>
@@ -170,8 +164,7 @@ async function settingsPage(
         <div></div>
       </div>
       <script>document.cookie = '${RequestCookieStore.toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
-    `;
-  });
+    `);
 }
 
 router.get('/settings', withDashboard(settingsPage))
