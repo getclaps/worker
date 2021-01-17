@@ -31,13 +31,13 @@ kv_namespaces = [
 
 [env.production]
   name = "clap-worker-production"
-  route = "https://worker.getclaps.dev/*"
-  zone_id = "a0f647422a7f0fba9b734898e8a7883f"
+  route = "https://worker.clap-button.com/*"
+  zone_id = "921f99936380db6078d69bc9bdf50bc7"
   kv_namespaces = [
     { binding = "KV_NAMESPACE", id = "b4a2fe0155804185a6493e257b993f0b" }
   ]
 
   [env.production.vars]
-    WORKER_DOMAIN = 'https://worker.getclaps.dev'
+    WORKER_DOMAIN = 'https://worker.clap-button.com'
     STRIPE_PRICE_ID = "price_1I0K7OJ61lhnKf1rSWycIXdZ"
     STRIPE_PUBLISHABLE_KEY = "pk_live_51HGcLVJ61lhnKf1r2Ic1uZGgvsexTk8aGpJvMB7cqIav7kvO7Fk9639sWNescJ4tQJekG4ACRPmrJGaEWTBSnKJZ00wJw7qbkN"
