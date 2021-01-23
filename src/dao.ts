@@ -7,6 +7,7 @@ export interface DAO {
   cancelAll(toCancel: Dashboard[], toActivate?: Dashboard[]): Promise<void>;
   monthlyViews(hostname: string, date?: Date): Promise<number>;
   upsertDashboard(data: Dashboard): Promise<Required<Dashboard>>;
+  tmpUpdateIP(id: UUID, ip: string): Promise<void>;
   getDashboard(id: UUID): Promise<Required<Dashboard> | null>;
   appendDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
   removeDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;

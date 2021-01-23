@@ -30,7 +30,7 @@ export const dashSession = withSession<DashboardSession>({
 export const withDashboard = (handler: DashboardHandler) => dashCookies<RouteArgs>(dashSession(acceptHTML(async (args): Promise<Response> => {
   const { headers, event, session } = args;
 
-  const dao: DAO = getDAO();
+  const dao = getDAO();
 
   const id = session.cid;
   if (!id) return re.seeOther('/login');
@@ -43,12 +43,8 @@ export const withDashboard = (handler: DashboardHandler) => dashCookies<RouteArg
   const [locale] = args.language?.split('-') ?? ['en'];
   const response = await handler({ ...args, locale, id, uuid, session, dao, isBookmarked });
 
-  event.waitUntil((async () => {
-    const ip = headers.get('cf-connecting-ip');
-    if (ip != null) {
-      await dao.upsertDashboard({ id: uuid, ip });
-    }
-  })());
+  const ip = headers.get('cf-connecting-ip');
+  if (ip) event.waitUntil(dao.tmpUpdateIP(uuid, ip))
 
   return response;
 })));

@@ -20,6 +20,7 @@ async function settingsPage(
     dashboard?: Required<Dashboard> | null, 
     cookieDNT?: boolean, 
     showError?: boolean,
+    isBookmarked?: boolean,
   } = {},
 ) {
   dashboard = dashboard || await dao.getDashboard(uuid);
@@ -97,8 +98,7 @@ async function settingsPage(
             <p style="margin-top:.5rem" class="unlock ${dashboard.hostname.length === 0 || !isBookmarked ? 'hidden' : ''}">
               Clicking the ${storePassword} button will trigger your browser's password manager.
               Use it to store the key to this dashboard.
-              <br /><small style="display:inline-block;margin-top:.5rem;">If you've already stored the key, clicking the
-                button will have no effect.</small>
+              <br/><small style="display:inline-block;margin-top:.5rem;">If you've already stored the key, clicking the button will have no effect.</small>
             </p>
             ${!isBookmarked 
                ? html`
@@ -116,23 +116,13 @@ async function settingsPage(
                 e.preventDefault();
                 const cred = new PasswordCredential(document.querySelector('form#login'));
                 await navigator.credentials.store(cred);
-                if (document.querySelector('#bookmark-warning'))
-                  document.querySelector('#bookmark-warning').remove();
+                if (document.querySelector('#bookmark-warning')) document.querySelector('#bookmark-warning').remove();
                 document.querySelectorAll('.unlock').forEach(el => { el.classList.remove('hidden') });
+                const body = new URLSearchParams(Object.entries({ id: '${hn}', password: '${id}' }));
+                await fetch('/login', { method: 'POST', body, headers: { accept: 'application/json' } });
               }));
             }
           </script>
-          <!-- <form method="POST" action="/settings">
-            <input type="hidden" name="method" value="relocate" />
-            <h4>Reset Key</h4>
-            <p>If you've accidentally published your dashboard key, you can invalidate it by resetting it here:</p>
-            <button class="bp3-button" type="submit">Reset Key</button>
-            <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
-              <input type="checkbox" name="okay" required />
-              <span class="bp3-control-indicator"></span>
-              I understand that the current key will be invalid after resetting.
-            </label>
-          </form> -->
         </div>
         `}
       </div>
@@ -161,7 +151,19 @@ async function settingsPage(
             <noscript><button class="bp3-button" type="submit">Submit</button></noscript>
           </form>
         </div>
-        <div></div>
+        <div class="unlock ${dashboard.hostname.length === 0 || !isBookmarked ? 'hidden' : ''}">
+          <h3>Reset Key</h3>
+          <form method="POST" action="/settings">
+            <input type="hidden" name="method" value="relocate" />
+            <p>If you've accidentally published your dashboard key, you can invalidate it here:</p>
+            <button class="bp3-button bp3-intent-warn" type="submit">Reset Key</button>
+            <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
+              <input type="checkbox" name="okay" required />
+              <span class="bp3-control-indicator"></span>
+              I understand that the current key will be invalid after resetting.
+            </label>
+          </form>
+        </div>
       </div>
       <script>document.cookie = '${RequestCookieStore.toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
     `);
@@ -203,13 +205,16 @@ router.post('/settings', withDashboard(async (args) => {
     }
     case 'relocate': {
       const oldUUID = uuid;
-      const newUUID = UUID.v4();
+      const newUUID = args.uuid = UUID.v4();
       const oldId = shortenId(oldUUID);
-      const newId = shortenId(newUUID);
+      const newId = args.id = shortenId(newUUID);
       dashboard = await dao.relocateDashboard(oldUUID, newUUID);
       session.cid = newId;
       session.ids = session.ids.map(id => id === oldId ? newId : id);
       session.hostnames.set(newId, session.hostnames.get(oldId) ?? newId);
+      session.hostnames.delete(oldId);
+      session.bookmarked.delete(oldId)
+      args.isBookmarked = false;
       // if ((globalThis as any).hasBilling) {
       //   const newId = shortenId(newUUID);
       //   await stripeAPI(`/v1/subscriptions/${dashboard.subscription}`, {
@@ -223,5 +228,5 @@ router.post('/settings', withDashboard(async (args) => {
     }
     default: break;
   }
-  return settingsPage(args, { dashboard: dashboard, cookieDNT: cookieDNT, showError });
+  return settingsPage(args, { dashboard, cookieDNT, showError });
 }));

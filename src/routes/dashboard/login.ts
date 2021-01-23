@@ -13,8 +13,10 @@ import { dashSession, dashCookies as withCookies } from './with-dashboard';
 import { withContentNegotiation } from '../../vendor/middleware';
 import { JSONResponse } from '@werker/json-fetch';
 
-router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{ types: ['application/json', 'text/html'] })(async ({ request, session, type }) => {
-  const dao: DAO = getDAO();
+router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{
+  types: ['application/json', 'text/html'],
+})(async ({ request, session, type, headers }) => {
+  const dao = getDAO();
 
   const formData = await request.formData()
   const id = formData.get('password')?.toString();
@@ -22,11 +24,16 @@ router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{ ty
   const ref = (formData.get('referer') || request.headers.get('referer') || '/stats').toString();
   const location = ref.endsWith('/login') ? '/stats' : ref;
 
-  if (!id) throw Error('TODO')
+  if (!id) return loginPage({ headers })
+
   const uuid = parseUUID(id);
-  if (!uuid) throw Error('TODO')
+  if (!uuid) return loginPage({ headers })
+
   const dash = await dao.getDashboard(uuid);
-  if (!dash) throw Error('TODO');
+  if (!dash) {
+    if (session.ids.includes(id)) session.ids = session.ids.filter(_ => _ !== id);
+    return loginPage({ headers });
+  }
 
   session.cid = id;
   if (!session.ids.includes(id)) session.ids.push(id);
@@ -34,8 +41,8 @@ router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{ ty
   if (hostname) session.hostnames.set(id, hostname);
 
   if (type === 'text/html') {
-    return re.seeOther(location)
-  } 
+    return re.seeOther(location);
+  }
   if (type === 'application/json') {
     return new JSONResponse({ location });
   }
@@ -57,13 +64,14 @@ router.get('/logout', withCookies(dashSession(async ({ session }) => {
   return re.seeOther('/');
 })));
 
+router.get('/login', loginPage);
 
-router.get('/login', ({ headers }) => {
+function loginPage({ headers }: { headers: Headers }) {
   const referrer = headers.get('referer');
   return page()(html`
     <div class="flex-center" style="margin-top:3rem">
       <form id="login" method="POST" action="/login" class="bp3-inline" autocomplete="on">
-        ${referrer ? html`<input type="hidden" name="referer" value="${referrer}" />` : null}
+        ${referrer ? html`<input type="hidden" name="referer" value="${referrer}" />` : ''}
         <div class="bp3-form-group">
           <label class="bp3-label" for="form-group-input">
             Key
@@ -116,4 +124,4 @@ router.get('/login', ({ headers }) => {
       }
     </script>
   `);
-});
+};
