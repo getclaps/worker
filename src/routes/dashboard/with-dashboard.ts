@@ -1,16 +1,15 @@
 import * as re from '@werker/response-creators';
-import { CloudflareStorageArea } from '@werker/cloudflare-kv-storage';
 
 import { Awaitable } from '../../vendor/common-types';
 import { withCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookieSession } from '../../vendor/middleware';
 
-import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 import { RouteArgs, DashboardArgs, DashboardSession } from '../../router';
-import { AUTH, KV } from '../../constants';
+import { AUTH, storage } from '../../constants';
+import { dntCookieKey } from '../cookies';
 
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
@@ -44,7 +43,14 @@ export const withDashboard = (handler: DashboardHandler) => withCookies()<RouteA
   const response = await handler({ ...args, locale, id, uuid, session, dao, isBookmarked });
 
   const ip = headers.get('cf-connecting-ip');
-  if (ip) event.waitUntil(dao.tmpUpdateIP(uuid, ip))
+  const hns = session.ids.map(id => session.hostnames.get(id));
+  if (ip) {
+    event.waitUntil(hns.map(hn => {
+      if (!hn) return;
+      const dnt = cookies.has(dntCookieKey(hn));
+      return storage.set(hn, dnt ? [ip] : []);
+    }));
+  }
 
   return response;
 }))));

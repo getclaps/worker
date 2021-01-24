@@ -4,7 +4,6 @@ import { html } from '@werker/html';
 // import { withCookies } from '../../vendor/middleware/cookies';
 
 import { router } from '../../router';
-import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 

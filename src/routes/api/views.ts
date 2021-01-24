@@ -13,6 +13,7 @@ import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { storage } from '../../constants';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -39,6 +40,9 @@ router.post('/views', cors(withErrors(withCookies()(acceptJSON(async ({ headers,
   const referrer = getReferrer(searchParams.get('referrer'), url.hostname);
   const extractedData = await extractData(headers, originURL.hostname);
 
+  const dnt = cookies.has(cc.dntCookieKey(url.hostname)) ||
+    ((await storage.get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
+
   const data = await dao.getClapsAndUpdateViews({
     hostname: url.hostname,
     href: url.href,
@@ -46,8 +50,7 @@ router.post('/views', cors(withErrors(withCookies()(acceptJSON(async ({ headers,
     ...extractedData
   }, {
     originHostname: originURL.hostname,
-    ip: headers.get('cf-connecting-ip'),
-    dnt: cookies.has(cc.dntCookieKey(url.hostname))
+    dnt,
   });
 
   // @ts-ignore

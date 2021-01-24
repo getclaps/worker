@@ -15,6 +15,7 @@ import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { storage } from '../../constants';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -40,6 +41,9 @@ router.post('/claps', cors(withErrors(withCookies()(acceptJSON(async ({ request,
 
   const extractedData = await extractData(headers, originURL.hostname);
 
+  const dnt = cookies.has(cc.dntCookieKey(url.hostname)) ||
+    ((await storage.get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
+
   const data = await dao.updateClaps({
     claps, 
     nonce,
@@ -50,8 +54,7 @@ router.post('/claps', cors(withErrors(withCookies()(acceptJSON(async ({ request,
     hash: url.hash,
   }, {
     originHostname: originURL.hostname,
-    ip: headers.get('cf-connecting-ip'),
-    dnt: cookies.has(cc.dntCookieKey(url.hostname)),
+    dnt,
   });
 
   // @ts-ignore

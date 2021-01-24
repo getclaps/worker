@@ -6,11 +6,12 @@ import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
 import { router, DashboardArgs } from '../../router';
 import * as cc from '../cookies';
-import { dashSession, withDashboard } from './with-dashboard';
+import { withDashboard } from './with-dashboard';
 import { page } from './components';
 import { validateURL } from '../validate';
 import { UUID } from 'uuid-class';
 import { shortenId } from '../../vendor/short-id';
+import { storage } from '../../constants';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
@@ -28,7 +29,6 @@ async function settingsPage(
 
   const hn = dashboard.hostname[0];
   cookieDNT = cookieDNT ?? (hn ? cookies.has(cc.dntCookieKey(hn)) : false)
-  if (dashboard.dnt !== cookieDNT) cookieDNT = dashboard.dnt;
 
   if (hn) session.hostnames.set(id, hn);
 
@@ -144,7 +144,9 @@ async function settingsPage(
                 as well as all page views from the last IP address that accessed this dashboard.
               </small>
             </p>
-            ${dashboard.ip ? html`<p><small>Last login from: <code>${dashboard.ip}</code></small></p>` : ''}
+            ${cookieDNT 
+               ? html`<p><small>Last login from: <code>${storage.get<string[]>(hn)?.then(x => x[0])}</code></small></p>`
+               : ''}
             <script>
               document.querySelector('input[name="dnt"]').addEventListener('change', e => setTimeout(() => e.target.form.submit(), 500))
             </script>
@@ -156,7 +158,7 @@ async function settingsPage(
           <form method="POST" action="/settings">
             <input type="hidden" name="method" value="relocate" />
             <p>If you've accidentally published your dashboard key, you can invalidate it here:</p>
-            <button class="bp3-button bp3-intent-warn" type="submit">Reset Key</button>
+            <button class="bp3-button bp3-intent-danger" type="submit">Reset Key</button>
             <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
               <input type="checkbox" name="okay" required />
               <span class="bp3-control-indicator"></span>
@@ -165,7 +167,7 @@ async function settingsPage(
           </form>
         </div>
       </div>
-      <script>document.cookie = '${RequestCookieStore.toSetCookie(cc.dntCookie(dashboard.dnt, dashboard.hostname[0]))}';</script>
+      <script>document.cookie = '${RequestCookieStore.toSetCookie(cc.dntCookie(cookieDNT, dashboard.hostname[0]))}';</script>
     `);
 }
 
@@ -198,9 +200,13 @@ router.post('/settings', withDashboard(async (args) => {
     }
     case 'dnt': {
       cookieDNT = fd.get('dnt') === 'on'
-      dashboard = await dao.upsertDashboard({ id: uuid, dnt: cookieDNT });
-      const hn = dashboard.hostname[0];
-      await cookieStore.set(cc.dntCookie(cookieDNT, hn));
+      const md = await dao.getDashboard(uuid);
+      if (md) {
+        dashboard = md;
+        const hn = dashboard.hostname[0];
+        await cookieStore.set(cc.dntCookie(cookieDNT, hn));
+        args.cookies = new Map((await cookieStore.getAll()).map(({ name: n, value: v }) => [n, v]));
+      }
       break;
     }
     case 'relocate': {
