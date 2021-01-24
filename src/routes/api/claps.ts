@@ -10,7 +10,7 @@ import { withCORS } from '../../vendor/middleware/cors';
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
- 
+
 import { withErrors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
@@ -45,7 +45,7 @@ router.post('/claps', cors(withErrors(withCookies()(acceptJSON(async ({ request,
     ((await storage.get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
 
   const data = await dao.updateClaps({
-    claps, 
+    claps,
     nonce,
     ...extractedData,
     id: new UUID(id),

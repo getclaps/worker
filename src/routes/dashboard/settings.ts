@@ -221,6 +221,7 @@ router.post('/settings', withDashboard(async (args) => {
       session.hostnames.delete(oldId);
       session.bookmarked.delete(oldId)
       args.isBookmarked = false;
+      // FIXME: Update subscription metadata
       // if ((globalThis as any).hasBilling) {
       //   const newId = shortenId(newUUID);
       //   await stripeAPI(`/v1/subscriptions/${dashboard.subscription}`, {

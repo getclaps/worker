@@ -39,26 +39,26 @@ export const withContentNegotiation = <
 
       const { types, languages, encodings, charsets } = opts;
 
-      const neverT = { weight: -1, type: <T[number] | null>null };
-      const neverL = { weight: -1, language: <L[number] | null>null };
-      const neverE = { weight: -1, encoding: <E[number] | null>null };
-      const neverC = { weight: -1, charset: <C[number] | null>null };
+      const neverT = { weight: -1, type: null as T[number] | null };
+      const neverL = { weight: -1, language: null as L[number] | null };
+      const neverE = { weight: -1, encoding: null as E[number] | null };
+      const neverC = { weight: -1, charset: null as C[number] | null };
 
       const { type } = [...negotiated.mediaTypes(headers.get('accept'))]
-          .filter(t => !types || types.includes(t.type))
-          .reduce(weightSortFn, neverT);
+        .filter(t => !types || types.includes(t.type))
+        .reduce(weightSortFn, neverT);
 
       const { language } = [...negotiated.languages(headers.get('accept-language'))]
-          .filter(l => !languages || languages.includes(l.language))
-          .reduce(weightSortFn, neverL);
+        .filter(l => !languages || languages.includes(l.language))
+        .reduce(weightSortFn, neverL);
 
       const { encoding } = [...negotiated.encodings(headers.get('accept-encoding'))]
-          .filter(e => !encodings || encodings.includes(e.encoding))
-          .reduce(weightSortFn, neverE);
+        .filter(e => !encodings || encodings.includes(e.encoding))
+        .reduce(weightSortFn, neverE);
 
       const { charset } = [...negotiated.charsets(headers.get('accept-charset'))]
-          .filter(c => !charsets || charsets.includes(c.charset))
-          .reduce(weightSortFn, neverC);
+        .filter(c => !charsets || charsets.includes(c.charset))
+        .reduce(weightSortFn, neverC);
 
       if (headers.has('accept') && types && !type) return notAcceptable();
       if (headers.has('accept-language') && languages && !language) return notAcceptable();
