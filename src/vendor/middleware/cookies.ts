@@ -5,8 +5,11 @@ import { Awaitable } from "../common-types";
 import { EncryptedCookieStore } from "../encrypted-cookie-store";
 import { SignedCookieStore } from "../signed-cookie-store";
 
-export type WithCookiesArgs = { cookieStore: CookieStore, cookies: Cookies }
+export type WithCookiesArgs = { cookieStore: CookieStore, cookies: Cookies };
+export type WithEncryptedCookiesArgs = { encryptedCookieStore: CookieStore, encryptedCookies: Cookies };
+
 export type WithCookiesHandler<A extends BaseArg> = (args: A & WithCookiesArgs) => Awaitable<Response>;
+export type WithEncryptedCookiesHandler<A extends BaseArg> = (args: A & WithEncryptedCookiesArgs) => Awaitable<Response>;
 
 /**
  * A readonly map of the cookies associated with this request.
@@ -21,6 +24,21 @@ export interface WithCookieOptions {
   deriveHash?: string,
   iterations?: number
   signHash?: string,
+}
+
+export const withCookies = () => <A extends BaseArg>(handler: WithCookiesHandler<A>) => async (args: A): Promise<Response> => {
+  const cookieStore = new RequestCookieStore(args.event.request);
+  const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+  const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
+  const response = new Response(body, {
+    status,
+    statusText,
+    headers: [
+      ...headers,
+      ...cookieStore.headers,
+    ],
+  });
+  return response;
 }
 
 /**
@@ -44,7 +62,11 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
       return re.forbidden();
     }
 
-    const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
+    const { status, statusText, body, headers } = await handler({
+      ...args,
+      cookieStore,
+      cookies,
+    });
 
     // New `Response` to work around a known limitation in `Headers` class:
     const response = new Response(body, {
@@ -62,18 +84,22 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
 export const withEncryptedCookies = (opts: WithCookieOptions) => {
   const keyPromise = EncryptedCookieStore.deriveCryptoKey(opts);
 
-  return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
+  return <A extends BaseArg>(handler: WithEncryptedCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
     const reqCookieStore = new RequestCookieStore(args.event.request);
-    const cookieStore = new EncryptedCookieStore(reqCookieStore, await keyPromise);
+    const encryptedCookieStore = new EncryptedCookieStore(reqCookieStore, await keyPromise);
 
-    let cookies: Cookies;
+    let encryptedCookies: Cookies;
     try {
-      cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+      encryptedCookies = new Map((await encryptedCookieStore.getAll()).map(({ name, value }) => [name, value]));
     } catch {
       return re.forbidden();
     }
 
-    const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
+    const { status, statusText, body, headers } = await handler({
+      ...args,
+      encryptedCookieStore,
+      encryptedCookies,
+    });
 
     // New `Response` to work around a known limitation in `Headers` class:
     const response = new Response(body, {
@@ -87,21 +113,6 @@ export const withEncryptedCookies = (opts: WithCookieOptions) => {
 
     return response;
   };
-}
-
-export const withCookies = () => <A extends BaseArg>(handler: WithCookiesHandler<A>) => async (args: A): Promise<Response> => {
-  const cookieStore = new RequestCookieStore(args.event.request);
-  const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
-  const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
-  const response = new Response(body, {
-    status,
-    statusText,
-    headers: [
-      ...headers,
-      ...cookieStore.headers,
-    ],
-  });
-  return response;
 }
 
 export * from '@werker/request-cookie-store';

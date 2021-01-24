@@ -6,30 +6,22 @@ import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';
 // import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
-import { BaseArg, Handler } from '.';
+import { BaseArg, Handler, WithCookiesArgs } from '.';
 import { Awaitable } from '../common-types';
-import { WithCookiesArgs } from './cookies';
+import { WithEncryptedCookiesArgs } from './cookies';
 import { shortenId, parseUUID } from '../short-id';
 
 type AnyRec = Record<any, any>;
 
-export type WithSessionDeps = BaseArg & WithCookiesArgs;
 export type WithSessionArgs<S extends AnyRec = AnyRec> = { session: S };
+
+export type WithCookieSessionDeps = BaseArg & WithEncryptedCookiesArgs;
+export type WithCookieSessionHandler<A extends WithCookieSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
+
+export type WithSessionDeps = BaseArg & WithCookiesArgs;
 export type WithSessionHandler<A extends WithSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
 
-// TODO: make configurable
-// const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new CBOREncoder({ structuredClone: true }).encode(value));
-// const parseSessionCookie = <T>(value: string) => <T>new CBORDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
-const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new MsgPackEncoder({ structuredClone: true }).encode(value));
-const parseSessionCookie = <T>(value: string) => <T>new MsgPackDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
-
-export interface SessionOptions<S extends AnyRec = AnyRec> {
-  /** 
-   * The storage area where to persist the session objects. 
-   * If it is omitted, the session will be a pure cookie session.
-   */
-  storage?: StorageArea,
-
+export interface CookieSessionOptions<S extends AnyRec = AnyRec> {
   /** You can override the name of the session cookie. Defaults to `sid`. */
   cookieName?: string,
 
@@ -39,6 +31,49 @@ export interface SessionOptions<S extends AnyRec = AnyRec> {
   /** TODO */
   defaultSession?: S,
 }
+
+export interface SessionOptions<S extends AnyRec = AnyRec> extends CookieSessionOptions<S> {
+  /** 
+   * The storage area where to persist the session objects. 
+   * If it is omitted, the session will be a pure cookie session.
+   */
+  storage?: StorageArea,
+}
+
+/**
+ * Cookie session middleware for worker environments.
+ * 
+ * Requires an encrypted cookie store 
+ */
+export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = {}, cookieName = 'session', expirationTtl = 5 * 60 }: CookieSessionOptions = {}) =>
+  <A extends WithCookieSessionDeps>(handler: WithCookieSessionHandler<A, S>): Handler<A> =>
+    async (args: A): Promise<Response> => {
+      const { encryptedCookies: cookies, encryptedCookieStore: cookieStore, event } = args;
+
+      const controller = new AbortController();
+
+      const [, session] = await getCookieSessionProxy<S>(cookies.get(cookieName), event, {
+        cookieName,
+        expirationTtl,
+        defaultSession,
+        signal: controller.signal,
+      });
+
+      const response = await handler({ ...args, session });
+
+      await cookieStore.set({
+        name: cookieName,
+        value: stringifySessionCookie(session),
+        expires: new Date(Date.now() + expirationTtl * 1000),
+        sameSite: 'lax',
+        httpOnly: true,
+      });
+
+      // Indicate that cookie session can no longer be modified.
+      controller.abort();
+
+      return response;
+    };
 
 /**
  * Session middleware for worker environments.
@@ -56,61 +91,65 @@ export interface SessionOptions<S extends AnyRec = AnyRec> {
 export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession = {}, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions = {}) =>
   <A extends WithSessionDeps>(handler: WithSessionHandler<A, S>): Handler<A> =>
     async (args: A): Promise<Response> => {
-      const { cookies, cookieStore, event } = args;
+      if (!storage) throw Error('StorageArea required for session');
 
-      const controller = new AbortController();
+      const { cookies, cookieStore, event } = args;
 
       const [id, session] = await getSessionProxy<S>(cookies.get(cookieName), event, {
         storage,
         cookieName,
         expirationTtl,
         defaultSession,
-        signal: controller.signal,
       });
 
       const response = await handler({ ...args, session });
 
       await cookieStore.set({
         name: cookieName,
-        value: storage
-          ? shortenId(id) ?? ''
-          : stringifySessionCookie(session),
+        value: shortenId(id) ?? '',
         expires: new Date(Date.now() + expirationTtl * 1000),
         sameSite: 'lax',
         httpOnly: true,
       });
 
-      // Indicate that cookie session can no longer be modified.
-      controller.abort();
-
       return response;
     };
+
+// TODO: make configurable
+// const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new CBOREncoder({ structuredClone: true }).encode(value));
+// const parseSessionCookie = <T>(value: string) => <T>new CBORDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
+const stringifySessionCookie = <T>(value: T) => new Base64Encoder({ url: true }).encode(new MsgPackEncoder({ structuredClone: true }).encode(value));
+const parseSessionCookie = <T>(value: string) => <T>new MsgPackDecoder({ structuredClone: true }).decode(new Base64Decoder().decode(value));
+
+async function getCookieSessionProxy<S extends AnyRec = AnyRec>(
+  cookieVal: string | null | undefined,
+  _: FetchEvent,
+  { defaultSession, signal }: CookieSessionOptions & { signal: AbortSignal },
+): Promise<[UUID | null, S]> {
+  const obj = (cookieVal && parseSessionCookie<S>(cookieVal)) || defaultSession;
+
+  return [null, new Proxy(<any>obj, {
+    set(target, prop, value) {
+      if (signal.aborted)
+        throw Error('Headers already sent, session can no longer be modified!');
+      target[prop] = value;
+      return true;
+    },
+
+    deleteProperty(target, prop) {
+      if (signal.aborted)
+        throw Error('Headers already sent, session can no longer be modified!');
+      delete target[prop];
+      return true;
+    },
+  })];
+}
 
 async function getSessionProxy<S extends AnyRec = AnyRec>(
   cookieVal: string | null | undefined,
   event: FetchEvent,
-  { storage, expirationTtl, defaultSession, signal }: SessionOptions<S> & { signal: AbortSignal },
+  { storage, expirationTtl, defaultSession }: Required<SessionOptions<S>>,
 ): Promise<[UUID | null, S]> {
-  if (!storage) {
-    const obj = (cookieVal && parseSessionCookie<S>(cookieVal)) || defaultSession;
-
-    return [null, new Proxy(<any>obj, {
-      set(target, prop, value) {
-        if (signal.aborted)
-          throw Error('Headers already sent, session can no longer be modified!');
-        target[prop] = value;
-        return true;
-      },
-
-      deleteProperty(target, prop) {
-        if (signal.aborted)
-          throw Error('Headers already sent, session can no longer be modified!');
-        delete target[prop];
-        return true;
-      },
-    })];
-  }
-
   const sessionId = parseUUID(cookieVal) || new UUID();
   const obj = (await storage.get<S>(sessionId)) || defaultSession;
 

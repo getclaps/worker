@@ -2,9 +2,9 @@ import * as re from '@werker/response-creators';
 import { CloudflareStorageArea } from '@werker/cloudflare-kv-storage';
 
 import { Awaitable } from '../../vendor/common-types';
-import { withSignedCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
+import { withCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
-import { withSession } from '../../vendor/middleware';
+import { withCookieSession } from '../../vendor/middleware';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
@@ -16,7 +16,7 @@ type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
 export const acceptHTML = withContentNegotiation(<const>{ types: ['text/html'] });
 export const dashCookies = withEncryptedCookies({ secret: AUTH });
-export const dashSession = withSession<DashboardSession>({
+export const dashSession = withCookieSession<DashboardSession>({
   // storage: new CloudflareStorageArea(KV),
   cookieName: 'getclaps.session',
   defaultSession: {
@@ -27,8 +27,8 @@ export const dashSession = withSession<DashboardSession>({
   expirationTtl: 60 * 60 * 24 * 365,
 });
 
-export const withDashboard = (handler: DashboardHandler) => dashCookies<RouteArgs>(dashSession(acceptHTML(async (args): Promise<Response> => {
-  const { headers, event, session } = args;
+export const withDashboard = (handler: DashboardHandler) => withCookies()<RouteArgs>(dashCookies(dashSession(acceptHTML(async (args): Promise<Response> => {
+  const { headers, event, session, cookies } = args;
 
   const dao = getDAO();
 
@@ -47,4 +47,4 @@ export const withDashboard = (handler: DashboardHandler) => dashCookies<RouteArg
   if (ip) event.waitUntil(dao.tmpUpdateIP(uuid, ip))
 
   return response;
-})));
+}))));
