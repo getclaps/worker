@@ -28,7 +28,7 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
   }
 }
 
-const json = withContentNegotiation(<const>{ accepts: [mime.JSON], types: [mime.JSON] });
+const json = withContentNegotiation(<const>{ types: [mime.JSON] });
 const cors = withCORS({ credentials: true });
 const cookies = withCookies();
 
