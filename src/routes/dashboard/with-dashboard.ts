@@ -48,11 +48,11 @@ export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cook
   const ip = headers.get('cf-connecting-ip');
   const hns = session.ids.map(id => session.hostnames.get(id));
   if (ip) {
-    event.waitUntil(hns.map(hn => {
-      if (!hn) return;
+    event.waitUntil(Promise.all(hns.map(hn => {
+      if (!hn) return null;
       const dnt = cookies.has(dntCookieKey(hn));
       return storage.set(hn, dnt ? [ip] : []);
-    }));
+    })));
   }
 
   return response;

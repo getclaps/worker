@@ -45,8 +45,8 @@ export const withSignedCookies = (opts: WithCookiesOptions) => {
   const keyPromise = SignedCookieStore.deriveCryptoKey(opts);
 
   return <X extends Base>(handler: WithSignedCookiesHandler<X>): Handler<X> => async (ctx: X): Promise<Response> => {
-    const reqCookieStore = new RequestCookieStore(ctx.event.request);
-    const signedCookieStore = new SignedCookieStore(reqCookieStore, await keyPromise);
+    const cookieStore = new RequestCookieStore(ctx.event.request);
+    const signedCookieStore = new SignedCookieStore(cookieStore, await keyPromise);
 
     let signedCookies: Cookies; 
     try { 
@@ -67,7 +67,7 @@ export const withSignedCookies = (opts: WithCookiesOptions) => {
       statusText,
       headers: [
         ...headers,
-        ...reqCookieStore.headers,
+        ...cookieStore.headers,
       ],
     });
     return response;
@@ -78,8 +78,8 @@ export const withEncryptedCookies = (opts: WithCookiesOptions) => {
   const keyPromise = EncryptedCookieStore.deriveCryptoKey(opts);
 
   return <X extends Base>(handler: WithEncryptedCookiesHandler<X>): Handler<X> => async (ctx: X): Promise<Response> => {
-    const reqCookieStore = new RequestCookieStore(ctx.event.request);
-    const encryptedCookieStore = new EncryptedCookieStore(reqCookieStore, await keyPromise);
+    const cookieStore = new RequestCookieStore(ctx.event.request);
+    const encryptedCookieStore = new EncryptedCookieStore(cookieStore, await keyPromise);
 
     let encryptedCookies: Cookies;
     try { 
@@ -100,7 +100,7 @@ export const withEncryptedCookies = (opts: WithCookiesOptions) => {
       statusText,
       headers: [
         ...headers,
-        ...reqCookieStore.headers,
+        ...cookieStore.headers,
       ],
     });
 
@@ -109,12 +109,12 @@ export const withEncryptedCookies = (opts: WithCookiesOptions) => {
 }
 
 export class CookiesMap extends Map<string, string> {
-  static async from(cookieStore: CookieStore): Promise<Cookies> {
+  static async from(cookieStore: CookieStore) {
     return new CookiesMap((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
   }
 
-  /** Updates this cookie map with the values from `cookieStore`. */
-  async update(cookieStore: CookieStore): Promise<void> {
+  /** updates this cookie map with the values from `cookieStore`. */
+  async update(cookieStore: CookieStore) {
     super.clear();
     for (const { name, value } of await cookieStore.getAll()) {
       super.set(name, value);
