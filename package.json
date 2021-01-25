@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "author": "Florian Klampfer <mail@qwtel.com>",
-  "license": "AGPL-3.0-only",
+  "license": "MIT",
   "devDependencies": {
     "@cloudflare/workers-types": "^2.1.0",
     "ts-loader": "^8.0.14",
