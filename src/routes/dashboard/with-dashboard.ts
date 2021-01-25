@@ -4,6 +4,7 @@ import { Awaitable } from '../../vendor/common-types';
 import { withCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookieSession } from '../../vendor/middleware';
+import * as mime from '../../vendor/middleware/mime';
 
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
@@ -13,10 +14,11 @@ import { dntCookieKey } from '../cookies';
 
 type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
-export const acceptHTML = withContentNegotiation(<const>{ types: ['text/html'] });
+const html = withContentNegotiation(<const>{ types: [mime.HTML] });
+const cookies = withCookies();
+
 export const dashCookies = withEncryptedCookies({ secret: AUTH });
 export const dashSession = withCookieSession<DashboardSession>({
-  // storage: new CloudflareStorageArea(KV),
   cookieName: 'getclaps.session',
   defaultSession: {
     ids: [],
@@ -26,7 +28,7 @@ export const dashSession = withCookieSession<DashboardSession>({
   expirationTtl: 60 * 60 * 24 * 365,
 });
 
-export const withDashboard = (handler: DashboardHandler) => withCookies()<RouteArgs>(dashCookies(dashSession(acceptHTML(async (args): Promise<Response> => {
+export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cookies(dashCookies(dashSession(async (args): Promise<Response> => {
   const { headers, event, session, cookies } = args;
 
   const dao = getDAO();
@@ -40,6 +42,7 @@ export const withDashboard = (handler: DashboardHandler) => withCookies()<RouteA
   const isBookmarked = session.bookmarked.has(id);
 
   const [locale] = args.language?.split('-') ?? ['en'];
+
   const response = await handler({ ...args, locale, id, uuid, session, dao, isBookmarked });
 
   const ip = headers.get('cf-connecting-ip');

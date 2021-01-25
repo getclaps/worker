@@ -1,5 +1,5 @@
 import { Method } from "tiny-request-router";
-import { BaseArg, Handler } from ".";
+import { Base, Handler } from ".";
 
 const ORIGIN = 'origin';
 const REQUEST_METHOD = 'access-control-request-method';
@@ -19,9 +19,9 @@ interface CORSOptions {
 /**
  * A CORS middleware that gives clients exactly the permissions they ask for.
  */
-export const withCORS = (opt: CORSOptions = {}) => <A extends BaseArg>(handler: Handler<A>) => async (args: A): Promise<Response> => {
-  const req = args.event.request;
-  const res = await handler(args);
+export const withCORS = (opt: CORSOptions = {}) => <X extends Base>(handler: Handler<X>) => async (ctx: X): Promise<Response> => {
+  const req = ctx.event.request;
+  const res = await handler(ctx);
 
   const origin = typeof opt.origin === 'string' 
     ? new URL(opt.origin) 

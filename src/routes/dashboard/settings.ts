@@ -1,6 +1,10 @@
+import { UUID } from 'uuid-class';
 import { html } from '@werker/html';
 
 import { RequestCookieStore } from '../../vendor/middleware/cookies';
+import { withCN } from '../../vendor/middleware';
+import * as mime from '../../vendor/middleware/mime';
+import { shortenId } from '../../vendor/short-id';
 
 import { Dashboard } from '../../dao';
 import { ConflictError } from '../../errors';
@@ -9,8 +13,6 @@ import * as cc from '../cookies';
 import { withDashboard } from './with-dashboard';
 import { page } from './components';
 import { validateURL } from '../validate';
-import { UUID } from 'uuid-class';
-import { shortenId } from '../../vendor/short-id';
 import { storage } from '../../constants';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
@@ -172,7 +174,7 @@ async function settingsPage(
 }
 
 router.get('/settings', withDashboard(settingsPage))
-router.post('/settings', withDashboard(async (args) => {
+router.post('/settings', withCN({ accepts: [mime.FORM] })(withDashboard(async (args) => {
   const { request, dao, uuid, cookieStore, session } = args;
 
   let showError = false;
@@ -205,7 +207,7 @@ router.post('/settings', withDashboard(async (args) => {
         dashboard = md;
         const hn = dashboard.hostname[0];
         await cookieStore.set(cc.dntCookie(cookieDNT, hn));
-        args.cookies = new Map((await cookieStore.getAll()).map(({ name: n, value: v }) => [n, v]));
+        await args.cookies.update(cookieStore);
       }
       break;
     }
@@ -236,4 +238,4 @@ router.post('/settings', withDashboard(async (args) => {
     default: break;
   }
   return settingsPage(args, { dashboard, cookieDNT, showError });
-}));
+})));

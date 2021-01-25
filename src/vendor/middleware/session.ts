@@ -6,20 +6,20 @@ import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';
 // import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
-import { BaseArg, Handler, WithCookiesArgs } from '.';
+import { Base, Handler, WithCookies } from '.';
 import { Awaitable } from '../common-types';
-import { WithEncryptedCookiesArgs } from './cookies';
+import { WithEncryptedCookies } from './cookies';
 import { shortenId, parseUUID } from '../short-id';
 
 type AnyRec = Record<any, any>;
 
-export type WithSessionArgs<S extends AnyRec = AnyRec> = { session: S };
+export type WithSession<S extends AnyRec = AnyRec> = { session: S };
 
-export type WithCookieSessionDeps = BaseArg & WithEncryptedCookiesArgs;
-export type WithCookieSessionHandler<A extends WithCookieSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
+export type WithCookieSessionDeps = Base & WithEncryptedCookies;
+export type WithCookieSessionHandler<X extends WithCookieSessionDeps, S> = (ctx: X & WithSession<S>) => Awaitable<Response>;
 
-export type WithSessionDeps = BaseArg & WithCookiesArgs;
-export type WithSessionHandler<A extends WithSessionDeps, S> = (args: A & WithSessionArgs<S>) => Awaitable<Response>;
+export type WithSessionDeps = Base & WithCookies;
+export type WithSessionHandler<X extends WithSessionDeps, S> = (ctx: X & WithSession<S>) => Awaitable<Response>;
 
 export interface CookieSessionOptions<S extends AnyRec = AnyRec> {
   /** You can override the name of the session cookie. Defaults to `sid`. */
@@ -33,22 +33,19 @@ export interface CookieSessionOptions<S extends AnyRec = AnyRec> {
 }
 
 export interface SessionOptions<S extends AnyRec = AnyRec> extends CookieSessionOptions<S> {
-  /** 
-   * The storage area where to persist the session objects. 
-   * If it is omitted, the session will be a pure cookie session.
-   */
+  /** The storage area where to persist the session objects. */
   storage?: StorageArea,
 }
 
 /**
  * Cookie session middleware for worker environments.
  * 
- * Requires an encrypted cookie store 
+ * Requires an encrypted cookie store.
  */
 export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = {}, cookieName = 'session', expirationTtl = 5 * 60 }: CookieSessionOptions = {}) =>
-  <A extends WithCookieSessionDeps>(handler: WithCookieSessionHandler<A, S>): Handler<A> =>
-    async (args: A): Promise<Response> => {
-      const { encryptedCookies: cookies, encryptedCookieStore: cookieStore, event } = args;
+  <X extends WithCookieSessionDeps>(handler: WithCookieSessionHandler<X, S>): Handler<X> =>
+    async (ctx: X): Promise<Response> => {
+      const { encryptedCookies: cookies, encryptedCookieStore: cookieStore, event } = ctx;
 
       const controller = new AbortController();
 
@@ -59,7 +56,7 @@ export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = 
         signal: controller.signal,
       });
 
-      const response = await handler({ ...args, session });
+      const response = await handler({ ...ctx, session });
 
       await cookieStore.set({
         name: cookieName,
@@ -89,11 +86,11 @@ export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = 
  * - Will "block" until session object is retrieved from KV => provide "unyielding" version that returns a promise?
  */
 export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession = {}, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions = {}) =>
-  <A extends WithSessionDeps>(handler: WithSessionHandler<A, S>): Handler<A> =>
-    async (args: A): Promise<Response> => {
+  <X extends WithSessionDeps>(handler: WithSessionHandler<X, S>): Handler<X> =>
+    async (ctx: X): Promise<Response> => {
       if (!storage) throw Error('StorageArea required for session');
 
-      const { cookies, cookieStore, event } = args;
+      const { cookies, cookieStore, event } = ctx;
 
       const [id, session] = await getSessionProxy<S>(cookies.get(cookieName), event, {
         storage,
@@ -102,11 +99,11 @@ export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession
         defaultSession,
       });
 
-      const response = await handler({ ...args, session });
+      const response = await handler({ ...ctx, session });
 
       await cookieStore.set({
         name: cookieName,
-        value: shortenId(id) ?? '',
+        value: shortenId(id),
         expires: new Date(Date.now() + expirationTtl * 1000),
         sameSite: 'lax',
         httpOnly: true,
@@ -125,7 +122,7 @@ async function getCookieSessionProxy<S extends AnyRec = AnyRec>(
   cookieVal: string | null | undefined,
   _: FetchEvent,
   { defaultSession, signal }: CookieSessionOptions & { signal: AbortSignal },
-): Promise<[UUID | null, S]> {
+): Promise<[null, S]> {
   const obj = (cookieVal && parseSessionCookie<S>(cookieVal)) || defaultSession;
 
   return [null, new Proxy(<any>obj, {
@@ -149,7 +146,7 @@ async function getSessionProxy<S extends AnyRec = AnyRec>(
   cookieVal: string | null | undefined,
   event: FetchEvent,
   { storage, expirationTtl, defaultSession }: Required<SessionOptions<S>>,
-): Promise<[UUID | null, S]> {
+): Promise<[UUID, S]> {
   const sessionId = parseUUID(cookieVal) || new UUID();
   const obj = (await storage.get<S>(sessionId)) || defaultSession;
 

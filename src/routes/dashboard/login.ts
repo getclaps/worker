@@ -1,19 +1,21 @@
 import * as re from '@werker/response-creators';
 import { html } from '@werker/html';
+import { JSONResponse } from '@werker/json-fetch';
 
+import { parseUUID } from '../../vendor/short-id';
+import { withCN } from '../../vendor/middleware';
+import * as mime from '../../vendor/middleware/mime';
 // import { withCookies } from '../../vendor/middleware/cookies';
 
 import { router } from '../../router';
 import { getDAO } from '../../dao/get-dao';
-import { parseUUID } from '../../vendor/short-id';
 
 import { page } from './components';
 import { dashSession, dashCookies as withCookies } from './with-dashboard';
-import { withContentNegotiation } from '../../vendor/middleware';
-import { JSONResponse } from '@werker/json-fetch';
 
-router.post('/login', withCookies(dashSession(withContentNegotiation(<const>{
-  types: ['application/json', 'text/html'],
+router.post('/login', withCookies(dashSession(withCN(<const>{
+  accepts: [mime.FORM],
+  types: [mime.JSON, mime.HTML],
 })(async ({ request, session, type, headers }) => {
   const dao = getDAO();
 

@@ -2,7 +2,7 @@ import { notAcceptable, unsupportedMediaType } from '@werker/response-creators';
 import negotiated from 'negotiated';
 
 import { Awaitable } from '../common-types';
-import { BaseArg } from '.';
+import { Base } from '.';
 
 const weightSortFn = <X extends { weight: number }>(a: X, b: X) => a.weight >= b.weight ? a : b;
 
@@ -101,9 +101,9 @@ export const withContentNegotiation = <
   AE extends readonly string[],
   AC extends readonly string[],
 >(opts: ContentNegotiationOptions<T, L, E, C, AT, AL, AE, AC> = {}) =>
-  <A extends BaseArg>(handler: (args: A & ContentNegotiationResults<T, L, E, C, AT, AL, AE, AC>) => Awaitable<Response>) =>
-    async (args: A): Promise<Response> => {
-      const headers = args.event.request.headers;
+  <X extends Base>(handler: (ctx: X & ContentNegotiationResults<T, L, E, C, AT, AL, AE, AC>) => Awaitable<Response>) =>
+    async (ctx: X): Promise<Response> => {
+      const headers = ctx.event.request.headers;
 
       const {
         types,
@@ -153,7 +153,7 @@ export const withContentNegotiation = <
       if (headers.has('accept-charset') && charsets && !charset) return notAcceptable();
 
       const response = await handler({
-        ...args,
+        ...ctx,
         type,
         language,
         encoding,

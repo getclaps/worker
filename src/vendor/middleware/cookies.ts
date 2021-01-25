@@ -1,35 +1,35 @@
 import * as re from '@werker/response-creators';
 import { CookieStore, RequestCookieStore } from "@werker/request-cookie-store";
-import { BaseArg, Handler } from ".";
+import { Base, Handler } from ".";
 import { Awaitable } from "../common-types";
 import { EncryptedCookieStore } from "../encrypted-cookie-store";
 import { SignedCookieStore } from "../signed-cookie-store";
-
-export type WithCookiesArgs = { cookieStore: CookieStore, cookies: Cookies };
-export type WithEncryptedCookiesArgs = { encryptedCookieStore: CookieStore, encryptedCookies: Cookies };
-
-export type WithCookiesHandler<A extends BaseArg> = (args: A & WithCookiesArgs) => Awaitable<Response>;
-export type WithEncryptedCookiesHandler<A extends BaseArg> = (args: A & WithEncryptedCookiesArgs) => Awaitable<Response>;
 
 /**
  * A readonly map of the cookies associated with this request.
  * This is for reading convenience (no await required) only.
  * Use `CookieStore` for making changes.
  */
-export type Cookies = ReadonlyMap<string, string>;
+export type Cookies = ReadonlyMap<string, string> & Pick<CookiesMap, 'update'>
 
-export interface WithCookieOptions {
+export type WithCookies = { cookieStore: CookieStore, cookies: Cookies };
+export type WithSignedCookies = { signedCookieStore: CookieStore, signedCookies: Cookies };
+export type WithEncryptedCookies = { encryptedCookieStore: CookieStore, encryptedCookies: Cookies };
+
+export type WithCookiesHandler<X extends Base> = (ctx: X & WithCookies) => Awaitable<Response>;
+export type WithSignedCookiesHandler<X extends Base> = (ctx: X & WithSignedCookies) => Awaitable<Response>;
+export type WithEncryptedCookiesHandler<X extends Base> = (ctx: X & WithEncryptedCookies) => Awaitable<Response>;
+
+export interface WithCookiesOptions {
   secret: string | BufferSource
   salt?: BufferSource
-  deriveHash?: string,
   iterations?: number
-  signHash?: string,
 }
 
-export const withCookies = () => <A extends BaseArg>(handler: WithCookiesHandler<A>) => async (args: A): Promise<Response> => {
-  const cookieStore = new RequestCookieStore(args.event.request);
-  const cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
-  const { status, statusText, body, headers } = await handler({ ...args, cookieStore, cookies });
+export const withCookies = () => <X extends Base>(handler: WithCookiesHandler<X>) => async (ctx: X): Promise<Response> => {
+  const cookieStore = new RequestCookieStore(ctx.event.request);
+  const cookies = await CookiesMap.from(cookieStore);
+  const { status, statusText, body, headers } = await handler({ ...ctx, cookieStore, cookies });
   const response = new Response(body, {
     status,
     statusText,
@@ -41,31 +41,24 @@ export const withCookies = () => <A extends BaseArg>(handler: WithCookiesHandler
   return response;
 }
 
-/**
- * Issues: 
- * - Forgetting to await a set cookie call can lead to response being sent without the signed cookie.
- *   - Maybe sign cookies in bulk during headers call? => needs knowledge about cookie store internals
- *   - Keep track of in-progress calls?
- * - Can't mix signed and unsigned cookies
- */
-export const withSignedCookies = (opts: WithCookieOptions) => {
+export const withSignedCookies = (opts: WithCookiesOptions) => {
   const keyPromise = SignedCookieStore.deriveCryptoKey(opts);
 
-  return <A extends BaseArg>(handler: WithCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
-    const reqCookieStore = new RequestCookieStore(args.event.request);
-    const cookieStore = new SignedCookieStore(reqCookieStore, await keyPromise);
+  return <X extends Base>(handler: WithSignedCookiesHandler<X>): Handler<X> => async (ctx: X): Promise<Response> => {
+    const reqCookieStore = new RequestCookieStore(ctx.event.request);
+    const signedCookieStore = new SignedCookieStore(reqCookieStore, await keyPromise);
 
-    let cookies: Cookies;
-    try {
-      cookies = new Map((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
-    } catch {
+    let signedCookies: Cookies; 
+    try { 
+      signedCookies = await CookiesMap.from(signedCookieStore);
+    } catch { 
       return re.forbidden();
     }
 
     const { status, statusText, body, headers } = await handler({
-      ...args,
-      cookieStore,
-      cookies,
+      ...ctx,
+      signedCookieStore,
+      signedCookies,
     });
 
     // New `Response` to work around a known limitation in `Headers` class:
@@ -81,22 +74,22 @@ export const withSignedCookies = (opts: WithCookieOptions) => {
   };
 }
 
-export const withEncryptedCookies = (opts: WithCookieOptions) => {
+export const withEncryptedCookies = (opts: WithCookiesOptions) => {
   const keyPromise = EncryptedCookieStore.deriveCryptoKey(opts);
 
-  return <A extends BaseArg>(handler: WithEncryptedCookiesHandler<A>): Handler<A> => async (args: A): Promise<Response> => {
-    const reqCookieStore = new RequestCookieStore(args.event.request);
+  return <X extends Base>(handler: WithEncryptedCookiesHandler<X>): Handler<X> => async (ctx: X): Promise<Response> => {
+    const reqCookieStore = new RequestCookieStore(ctx.event.request);
     const encryptedCookieStore = new EncryptedCookieStore(reqCookieStore, await keyPromise);
 
     let encryptedCookies: Cookies;
-    try {
-      encryptedCookies = new Map((await encryptedCookieStore.getAll()).map(({ name, value }) => [name, value]));
-    } catch {
+    try { 
+      encryptedCookies = await CookiesMap.from(encryptedCookieStore);
+    } catch { 
       return re.forbidden();
     }
 
     const { status, statusText, body, headers } = await handler({
-      ...args,
+      ...ctx,
       encryptedCookieStore,
       encryptedCookies,
     });
@@ -113,6 +106,20 @@ export const withEncryptedCookies = (opts: WithCookieOptions) => {
 
     return response;
   };
+}
+
+export class CookiesMap extends Map<string, string> {
+  static async from(cookieStore: CookieStore): Promise<Cookies> {
+    return new CookiesMap((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
+  }
+
+  /** Updates this cookie map with the values from `cookieStore`. */
+  async update(cookieStore: CookieStore): Promise<void> {
+    super.clear();
+    for (const { name, value } of await cookieStore.getAll()) {
+      super.set(name, value);
+    }
+  }
 }
 
 export * from '@werker/request-cookie-store';

@@ -19,7 +19,7 @@ export interface DeriveOptions {
 /**
  * # Encrypted Cookie Store
  * A partial implementation of the [Cookie Store API](https://wicg.github.io/cookie-store)
- * that transparently encrypts and decrypts cookie via AES-GCM.
+ * that transparently encrypts and decrypts cookies via AES-GCM.
  * 
  * This is likely only useful in server-side implementations, 
  * but written in a platform-agnostic way. 
