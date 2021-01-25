@@ -1,5 +1,5 @@
+import { Method } from "tiny-request-router";
 import { BaseArg, Handler } from ".";
-import { Awaitable } from "../common-types";
 
 const ORIGIN = 'origin';
 const REQUEST_METHOD = 'access-control-request-method';
@@ -11,6 +11,8 @@ const ALLOW_CREDENTIALS = 'access-control-allow-credentials';
 
 interface CORSOptions {
   origin?: string | URL,
+  methods?: Method[],
+  headers?: string[],
   credentials?: boolean;
 }
 
@@ -29,10 +31,10 @@ export const withCORS = (opt: CORSOptions = {}) => <A extends BaseArg>(handler: 
     res.headers.set(ALLOW_ORIGIN, origin?.origin ?? <string>req.headers.get(ORIGIN));
 
   if (!res.headers.has(ALLOW_METHODS) && req.headers.has(REQUEST_METHOD)) 
-    res.headers.set(ALLOW_METHODS, <string>req.headers.get(REQUEST_METHOD));
+    res.headers.set(ALLOW_METHODS, opt.methods?.join() ?? <string>req.headers.get(REQUEST_METHOD));
 
   if (!res.headers.has(ALLOW_HEADERS) && req.headers.has(REQUEST_HEADERS))
-    res.headers.set(ALLOW_HEADERS, <string>req.headers.get(REQUEST_HEADERS));
+    res.headers.set(ALLOW_HEADERS, opt.headers?.join() ?? <string>req.headers.get(REQUEST_HEADERS));
 
   if (!res.headers.has(ALLOW_CREDENTIALS) && opt.credentials) 
     res.headers.set(ALLOW_CREDENTIALS, 'true');

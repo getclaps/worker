@@ -6,9 +6,9 @@ import * as er from '../errors';
 const RE_PROTOCOL = /^[a-z][a-z0-9.+-]*:/i;
 
 export const validateURL = (url?: string | null) => {
+  if (!url) throw new er.BadRequestError('No url provided')
+  if (url.length > 4096) throw new er.BadRequestError('URL too long. 4096 characters max.');
   try {
-    if (!url) throw new er.BadRequestError('No url provided')
-    if (url.length > 4096) throw new er.BadRequestError('URL too long. 4096 characters max.');
     const withProtocol = url.match(RE_PROTOCOL) ? url : `https://${url}`;
     const targetURL = new URL(withProtocol);
     targetURL.search = '';

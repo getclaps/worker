@@ -162,7 +162,7 @@ async function settingsPage(
             <label class="bp3-control bp3-checkbox" style="margin-top:.5rem">
               <input type="checkbox" name="okay" required />
               <span class="bp3-control-indicator"></span>
-              I understand that the current key will be invalid after resetting.
+              I understand that the current key will be invalid after this operation and that I will be logged out on other devices.
             </label>
           </form>
         </div>

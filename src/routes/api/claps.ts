@@ -6,12 +6,13 @@ import { checkProofOfClap } from '@getclaps/proof-of-clap';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookies } from '../../vendor/middleware/cookies';
 import { withCORS } from '../../vendor/middleware/cors';
+import * as mime from '../../vendor/middleware/mime';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
 
-import { withErrors } from '../../errors';
+import { withErrors as errors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
@@ -19,11 +20,12 @@ import { storage } from '../../constants';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
-const acceptJSON = withContentNegotiation({ types: ['application/json'] });
+const json = withContentNegotiation(<const>{ accepts: [mime.JSON], types: [mime.JSON] });
 const cors = withCORS({ credentials: true });
+const cookies = withCookies();
 
 router.options('/claps', cors(() => re.ok()))
-router.post('/claps', cors(withErrors(withCookies()(acceptJSON(async ({ request, headers, cookies, searchParams }) => {
+router.post('/claps', cors(json(errors(cookies(async ({ request, headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
   const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -57,11 +59,10 @@ router.post('/claps', cors(withErrors(withCookies()(acceptJSON(async ({ request,
     dnt,
   });
 
-  // @ts-ignore
   return new JSONResponse(data);
 })))));
 
-router.get('/claps', cors(withErrors(acceptJSON(async ({ searchParams }) => {
+router.get('/claps', cors(json(errors(async ({ searchParams }) => {
   const dao: DAO = getDAO();
   // const originURL = validateURL(headers.get('Origin'));
   const url = validateURL(searchParams.get('href') || searchParams.get('url'));
@@ -70,6 +71,5 @@ router.get('/claps', cors(withErrors(acceptJSON(async ({ searchParams }) => {
     href: url.href,
   });
 
-  // @ts-ignore
   return new JSONResponse(data);
 }))));

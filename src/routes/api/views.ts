@@ -4,12 +4,13 @@ import { JSONResponse } from '@werker/json-fetch';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookies } from '../../vendor/middleware/cookies';
 import { withCORS } from '../../vendor/middleware/cors';
+import * as mime from '../../vendor/middleware/mime';
 
 import { DAO } from '../../dao';
 import { getDAO } from '../../dao/get-dao';
 import { router } from '../../router';
 
-import { withErrors } from '../../errors';
+import { withErrors as errors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
@@ -27,11 +28,12 @@ function getReferrer(referrerRaw: string | null, hostname: string): string | und
   }
 }
 
-const acceptJSON = withContentNegotiation({ types: ['application/json'] });
+const json = withContentNegotiation(<const>{ accepts: [mime.JSON], types: [mime.JSON] });
 const cors = withCORS({ credentials: true });
+const cookies = withCookies();
 
 router.options('/views', cors(() => re.ok()))
-router.post('/views', cors(withErrors(withCookies()(acceptJSON(async ({ headers, cookies, searchParams }) => {
+router.post('/views', cors(json(errors(cookies(async ({ headers, cookies, searchParams }) => {
   const dao: DAO = getDAO();
 
   const originURL = validateURL(headers.get('origin'));
@@ -53,6 +55,5 @@ router.post('/views', cors(withErrors(withCookies()(acceptJSON(async ({ headers,
     dnt,
   });
 
-  // @ts-ignore
   return new JSONResponse(data);
 })))));
