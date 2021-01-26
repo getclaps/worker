@@ -7,7 +7,6 @@ export interface DAO {
   cancelAll(toCancel: Dashboard[], toActivate?: Dashboard[]): Promise<void>;
   monthlyViews(hostname: string, date?: Date): Promise<number>;
   upsertDashboard(data: Dashboard): Promise<Required<Dashboard>>;
-  // tmpUpdateIP(id: UUID, ip: string): Promise<void>;
   getDashboard(id: UUID): Promise<Required<Dashboard> | null>;
   appendDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
   removeDomain(id: UUID, hostname: string): Promise<Required<Dashboard>>;
@@ -17,15 +16,12 @@ export interface DAO {
   getClapsAndUpdateViews(data: ViewData, options: UpdateOptions): Promise<{ [href: string]: ClapCount }>;
   getStats(did: UUID, timeFrame?: [number, TimeUnit]): Promise<StatsData>;
   getLog(did: UUID, timeFrame?: [number, TimeUnit]): Promise<LogEntry[]>;
-  // resetUsage(): Promise<void>;
 }
 
 export interface Dashboard {
   id: UUID,
   hostname?: string[],
   active?: boolean,
-  // ip?: string,
-  // dnt?: boolean,
   [k: string]: any,
 }
 
@@ -49,7 +45,6 @@ export interface ViewData extends ViewDataLike {
 }
 
 export interface UpdateOptions {
-  // ip: string | null,
   dnt?: boolean,
   originHostname: string,
 }
