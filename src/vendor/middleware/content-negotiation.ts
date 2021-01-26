@@ -6,27 +6,39 @@ import { Base } from '.';
 
 const weightSortFn = <X extends { weight: number }>(a: X, b: X) => a.weight >= b.weight ? a : b;
 
+const ACCEPT = 'Accept';
+const ACCEPT_ENCODING = 'Accept-Encoding';
+const ACCEPT_LANGUAGE = 'Accept-Language';
+const ACCEPT_CHARSET = 'Accept-Charset';
+
+const CONTENT_TYPE = 'Content-Type';
+const CONTENT_LANGUAGE = 'Content-Language';
+const CONTENT_ENCODING = 'Content-Encoding';
+const CHARSET = 'charset';
+
+const VARY = 'Vary';
+
 export interface ContentNegotiationOptions<
-  T extends readonly string[],
-  L extends readonly string[],
-  E extends readonly string[],
-  C extends readonly string[],
+  CT extends readonly string[],
+  CL extends readonly string[],
+  CE extends readonly string[],
+  CC extends readonly string[],
   AT extends readonly string[],
   AL extends readonly string[],
   AE extends readonly string[],
-  AC extends readonly string[]
+  AC extends readonly string[],
   > {
   /** The content types _provided_ by this endpoint. Not to be confused with `accepts`. */
-  types?: T,
+  types?: CT,
 
-  /** The languages provided by this endpoint */
-  languages?: L,
+  /** The languages _provided_ by this endpoint. Not to be confused with `acceptsLanguages`. */
+  languages?: CL,
 
-  /** The encodings provided by this endpoint */
-  encodings?: E,
+  /** The encodings _provided_ by this endpoint. Not to be confused with `acceptsEncodings`. */
+  encodings?: CE,
 
-  /** The character sets provided by this endpoint */
-  charsets?: C,
+  /** The character sets _provided_ by this endpoint. Not to be confused with `acceptsCharsets`.  */
+  charsets?: CC,
 
   /** The body content types _acceptable_ to this endpoint. Not to be confused with `types`. */
   accepts?: AT,
@@ -41,39 +53,30 @@ export interface ContentNegotiationOptions<
   acceptsCharsets?: AC,
 }
 
-export interface ContentNegotiationResults<
-  T extends readonly string[],
-  L extends readonly string[],
-  E extends readonly string[],
-  C extends readonly string[],
-  AT extends readonly string[],
-  AL extends readonly string[],
-  AE extends readonly string[],
-  AC extends readonly string[]
-  > {
+export interface ContentNegotiationResults<CT, CL, CE, CC, AT, AL, AE, AC> {
   /** The best content type _acceptable to the client_. */
-  type: T[number] | null,
+  type: CT | null,
 
   /** The best language _acceptable to the client_. */
-  language: L[number] | null,
+  language: CL | null,
 
   /** The best encoding _acceptable to the client_. */
-  encoding: E[number] | null,
+  encoding: CE | null,
 
   /** The best charset _acceptable to the client_. */
-  charset: C[number] | null,
+  charset: CC | null,
 
   /** The request's `Content-Type` header if (and only if) accepted by this endpoint */
-  accepted: AT[number] | null,
+  accepted: AT | null,
 
   /** The request's `Language` header if (and only if) accepted by this endpoint */
-  acceptedLanguage: AL[number] | null,
+  acceptedLanguage: AL | null,
 
   /** The request's `Encoding` header if (and only if) accepted by this endpoint */
-  acceptedEncoding: AE[number] | null,
+  acceptedEncoding: AE | null,
 
   /** The request's `Charset` header if (and only if) accepted by this endpoint */
-  acceptedCharset: AC[number] | null,
+  acceptedCharset: AC | null,
 }
 
 /**
@@ -92,16 +95,16 @@ export interface ContentNegotiationResults<
  * }); 
  */
 export const withContentNegotiation = <
-  T extends readonly string[],
-  L extends readonly string[],
-  E extends readonly string[],
-  C extends readonly string[],
+  CT extends readonly string[],
+  CL extends readonly string[],
+  CE extends readonly string[],
+  CC extends readonly string[],
   AT extends readonly string[],
   AL extends readonly string[],
   AE extends readonly string[],
   AC extends readonly string[],
->(opts: ContentNegotiationOptions<T, L, E, C, AT, AL, AE, AC> = {}) =>
-  <X extends Base>(handler: (ctx: X & ContentNegotiationResults<T, L, E, C, AT, AL, AE, AC>) => Awaitable<Response>) =>
+  >(opts: ContentNegotiationOptions<CT, CL, CE, CC, AT, AL, AE, AC> = {}) =>
+  <X extends Base>(handler: (ctx: X & ContentNegotiationResults<CT[number], CL[number], CE[number], CC[number], AT[number], AL[number], AE[number], AC[number]>) => Awaitable<Response>) =>
     async (ctx: X): Promise<Response> => {
       const headers = ctx.event.request.headers;
 
@@ -116,41 +119,42 @@ export const withContentNegotiation = <
         acceptsCharsets,
       } = opts;
 
-      const { type: accepted } = [...negotiated.mediaTypes(headers.get('content-type'))]?.[0] ?? { type: null };
-      const { language: acceptedLanguage } = [...negotiated.languages(headers.get('language'))]?.[0] ?? { language: null };
-      const { encoding: acceptedEncoding } = [...negotiated.encodings(headers.get('encoding'))]?.[0] ?? { encoding: null };
-      const { charset: acceptedCharset } = [...negotiated.charsets(headers.get('charset'))]?.[0] ?? { charset: null };
+      const { type: accepted, params } = [...negotiated.mediaTypes(headers.get(CONTENT_TYPE))]?.[0] ?? { type: '' };
+      const { language: acceptedLanguage } = [...negotiated.languages(headers.get(CONTENT_LANGUAGE))]?.[0] ?? { language: '' };
+      const { encoding: acceptedEncoding } = [...negotiated.encodings(headers.get(CONTENT_ENCODING))]?.[0] ?? { encoding: '' };
+      const contentCharset = [...negotiated.parameters(params)].find(p => p.key === CHARSET)?.value ?? '';
+      const { charset: acceptedCharset } = [...negotiated.charsets(contentCharset)]?.[0] ?? { charset: '' };
 
       if (accepts?.length && !accepts.includes(accepted)) return unsupportedMediaType();
       if (acceptsLanguages?.length && !acceptsLanguages.includes(acceptedLanguage)) return notAcceptable();
       if (acceptsEncodings?.length && !acceptsEncodings.includes(acceptedEncoding)) return notAcceptable();
       if (acceptsCharsets?.length && !acceptsCharsets.includes(acceptedCharset)) return notAcceptable();
 
-      const neverT = { weight: -1, type: null as T[number] | null };
-      const neverL = { weight: -1, language: null as L[number] | null };
-      const neverE = { weight: -1, encoding: null as E[number] | null };
-      const neverC = { weight: -1, charset: null as C[number] | null };
+      const neverT = { weight: -1, type: null as CT[number] | null };
+      const neverL = { weight: -1, language: null as CL[number] | null };
+      const neverE = { weight: -1, encoding: null as CE[number] | null };
+      const neverC = { weight: -1, charset: null as CC[number] | null };
 
-      const { type } = [...negotiated.mediaTypes(headers.get('accept'))]
+      const { type } = [...negotiated.mediaTypes(headers.get(ACCEPT))]
         .filter(t => !types || types.includes(t.type))
         .reduce(weightSortFn, neverT);
 
-      const { language } = [...negotiated.languages(headers.get('accept-language'))]
+      const { language } = [...negotiated.languages(headers.get(ACCEPT_LANGUAGE))]
         .filter(l => !languages || languages.includes(l.language))
         .reduce(weightSortFn, neverL);
 
-      const { encoding } = [...negotiated.encodings(headers.get('accept-encoding'))]
+      const { encoding } = [...negotiated.encodings(headers.get(ACCEPT_ENCODING))]
         .filter(e => !encodings || encodings.includes(e.encoding))
         .reduce(weightSortFn, neverE);
 
-      const { charset } = [...negotiated.charsets(headers.get('accept-charset'))]
+      const { charset } = [...negotiated.charsets(headers.get(ACCEPT_CHARSET))]
         .filter(c => !charsets || charsets.includes(c.charset))
         .reduce(weightSortFn, neverC);
 
-      if (headers.has('accept') && types && !type) return notAcceptable();
-      if (headers.has('accept-language') && languages && !language) return notAcceptable();
-      if (headers.has('accept-encoding') && encodings && !encoding) return notAcceptable();
-      if (headers.has('accept-charset') && charsets && !charset) return notAcceptable();
+      if (headers.has(ACCEPT) && types && !type) return notAcceptable();
+      if (headers.has(ACCEPT_LANGUAGE) && languages && !language) return notAcceptable();
+      if (headers.has(ACCEPT_ENCODING) && encodings && !encoding) return notAcceptable();
+      if (headers.has(ACCEPT_CHARSET) && charsets && !charset) return notAcceptable();
 
       const response = await handler({
         ...ctx,
@@ -165,12 +169,12 @@ export const withContentNegotiation = <
       });
 
       // If the server accepts more than 1 option, we set the vary header for correct caching
-      if (types?.length ?? 0 > 1) response.headers.append('Vary', 'Accept');
-      if (languages?.length ?? 0 > 1) response.headers.append('Vary', 'Accept-Language');
-      if (encodings?.length ?? 0 > 1) response.headers.append('Vary', 'Accept-Encoding');
-      if (charsets?.length ?? 0 > 1) response.headers.append('Vary', 'Accept-Charset');
+      if (types?.length ?? 0 > 1) response.headers.append(VARY, ACCEPT);
+      if (languages?.length ?? 0 > 1) response.headers.append(VARY, ACCEPT_LANGUAGE);
+      if (encodings?.length ?? 0 > 1) response.headers.append(VARY, ACCEPT_ENCODING);
+      if (charsets?.length ?? 0 > 1) response.headers.append(VARY, ACCEPT_CHARSET);
 
       return response;
     };
-  
+
 export { withContentNegotiation as withCN };
