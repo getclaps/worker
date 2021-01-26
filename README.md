@@ -4,6 +4,8 @@ The backend implementation for the [Clap Button](https://getclaps.dev/) web comp
 
 It is written as a [Worker Environment](https://workers.js.org/) using [Worker Tools](https://worker-tools.github.io/) as a web framework, but it is mainly intended to be deployed using [Cloudflare Workers](https://workers.cloudflare.com). 
 
+![Screenshot](https://getclaps.dev/assets/img/dashd.jpg)
+
 ## License
 This software is licensed under the permissive MIT license, but
 two sub-modules remain closed-source and are excluded from this distribution:
