@@ -1,13 +1,14 @@
-import { Method } from "tiny-request-router";
 import { Base, Handler } from ".";
 
-const ORIGIN = 'origin';
-const REQUEST_METHOD = 'access-control-request-method';
-const REQUEST_HEADERS = 'access-control-request-headers';
-const ALLOW_ORIGIN = 'access-control-allow-origin';
-const ALLOW_METHODS = 'access-control-allow-methods';
-const ALLOW_HEADERS = 'access-control-allow-headers';
-const ALLOW_CREDENTIALS = 'access-control-allow-credentials';
+export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
+
+const ORIGIN = 'Origin';
+const REQUEST_METHOD = 'Access-Control-Request-Method';
+const REQUEST_HEADERS = 'Access-Control-Request-Headers';
+const ALLOW_ORIGIN = 'Access-Control-Allow-Origin';
+const ALLOW_METHODS = 'Access-Control-Allow-Methods';
+const ALLOW_HEADERS = 'Access-Control-Allow-Headers';
+const ALLOW_CREDENTIALS = 'Access-Control-Allow-Credentials';
 
 interface CORSOptions {
   origin?: string | URL,

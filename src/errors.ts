@@ -11,7 +11,7 @@ export function handleError(err: any) {
   return re.internalServerError();
 }
 
-export const withErrors = <T extends { event: FetchEvent }>(handler: (args: T) => Awaitable<Response>) => async (args: T): Promise<Response> => {
+export const errors = <T extends { event: FetchEvent }>(handler: (args: T) => Awaitable<Response>) => async (args: T): Promise<Response> => {
   try {
     return await handler(args);
   } catch (err) {

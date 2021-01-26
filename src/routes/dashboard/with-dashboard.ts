@@ -12,7 +12,7 @@ import { RouteArgs, DashboardArgs, DashboardSession } from '../../router';
 import { storage } from '../../constants';
 import { dntCookieKey } from '../cookies';
 
-type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
+export type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
 const html = withContentNegotiation(<const>{ types: [mime.HTML] });
 const cookies = withCookies();
