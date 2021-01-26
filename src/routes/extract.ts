@@ -3,7 +3,7 @@ import * as ipAddr from 'ipaddr.js';
 import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 import { concatBufferSources } from 'typed-array-utils';
 
-import { IP_SALT_KEY, storage } from '../constants';
+import { DEBUG, IP_SALT_KEY, storage } from '../constants';
 
 async function getVisitor(ip: string | null, userAgent: string | null, hostname: string | null) {
   if (!ip) return null;
@@ -13,7 +13,7 @@ async function getVisitor(ip: string | null, userAgent: string | null, hostname:
       new TextEncoder().encode(userAgent ?? ''),
       new TextEncoder().encode(hostname ?? ''), 
     );
-    const dailyIPSalt = new UUID(await storage.get<Uint8Array>(IP_SALT_KEY));
+    const dailyIPSalt = new UUID(await storage.get(IP_SALT_KEY));
     return await UUID.v5(base, dailyIPSalt);
   } catch {
     return null;
