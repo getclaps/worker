@@ -101,7 +101,7 @@ function loginPage({ headers }: { headers: Headers }) {
         <button class="bp3-button" hidden>Open Credentials Manager</button>
       </form>
     </div>
-    <script type="module">
+    <!-- <script type="module">
       if ('PasswordCredential' in window) {
         async function openCredentialsManager(e) {
           if (e) e.preventDefault();
@@ -123,6 +123,6 @@ function loginPage({ headers }: { headers: Headers }) {
         btn2.hidden = false;
         btn2.addEventListener('click', openCredentialsManager);
       }
-    </script>
+    </script> -->
   `);
 };
