@@ -53,7 +53,7 @@ export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = 
 
       const controller = new AbortController();
 
-      const [, session] = await getCookieSessionProxy<S>(cookies.get(cookieName), event, {
+      const [, session, flag] = await getCookieSessionProxy<S>(cookies.get(cookieName), event, {
         cookieName,
         expirationTtl,
         defaultSession,
@@ -62,7 +62,7 @@ export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = 
 
       const response = await handler({ ...ctx, session });
 
-      await cookieStore.set({
+      if (flag.dirty) await cookieStore.set({
         name: cookieName,
         value: stringifySessionCookie(session),
         expires: new Date(Date.now() + expirationTtl * 1000),
@@ -126,13 +126,16 @@ async function getCookieSessionProxy<S extends AnyRec = AnyRec>(
   cookieVal: string | null | undefined,
   _: FetchEvent,
   { defaultSession, signal }: CookieSessionOptions & { signal: AbortSignal },
-): Promise<[null, S]> {
+): Promise<[null, S, { dirty: boolean }]> {
   const obj = (cookieVal && parseSessionCookie<S>(cookieVal)) || defaultSession;
+
+  const flag = { dirty: false };
 
   return [null, new Proxy(<any>obj, {
     set(target, prop, value) {
       if (signal.aborted)
         throw Error('Headers already sent, session can no longer be modified!');
+      flag.dirty = true;
       target[prop] = value;
       return true;
     },
@@ -140,10 +143,11 @@ async function getCookieSessionProxy<S extends AnyRec = AnyRec>(
     deleteProperty(target, prop) {
       if (signal.aborted)
         throw Error('Headers already sent, session can no longer be modified!');
+      flag.dirty = true;
       delete target[prop];
       return true;
     },
-  })];
+  }), flag];
 }
 
 async function getSessionProxy<S extends AnyRec = AnyRec>(
