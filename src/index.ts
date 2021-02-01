@@ -5,11 +5,15 @@ import { Method } from 'tiny-request-router'
 // import { RequestCookieStore } from './vendor/middleware/cookies';
 
 import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
-import { getDAO } from './dao/get-dao';
 import { router } from './router';
 import { dashSession, dashCookies } from './routes/dashboard/with-dashboard';
 
 import './routes/index';
+
+// IMPLEMENT THIS FUNCTION WHEN USING THE OPEN SOURCE VERSION!
+import { getDAO } from './dao/get-dao';
+
+// REMOVE THIS LINE WHEN USING THE OPEN SOURCE VERSION!
 import './billing/index';
 
 async function resetIPSalt() {
