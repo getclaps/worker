@@ -14,6 +14,8 @@ import { dntCookieKey } from '../cookies';
 
 export type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
+const CACHE_CONTROL = 'Cache-Control';
+
 const html = withContentNegotiation(<const>{ types: [mime.HTML] });
 const cookies = withCookies();
 
@@ -44,6 +46,8 @@ export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cook
   const [locale] = args.language?.split('-') ?? ['en'];
 
   const response = await handler({ ...args, locale, id, uuid, session, dao, isBookmarked });
+
+  response.headers.append(CACHE_CONTROL, 'private, max-age=600');
 
   const ip = headers.get('cf-connecting-ip');
   const hns = session.ids.map(id => session.hostnames.get(id));
