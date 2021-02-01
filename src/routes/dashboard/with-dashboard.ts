@@ -1,7 +1,7 @@
 import * as re from '@werker/response-creators';
 
 import { Awaitable } from '../../vendor/common-types';
-import { withCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
+import { withCookies, withSignedCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookieSession } from '../../vendor/middleware';
 import * as mime from '../../vendor/middleware/mime';
@@ -14,12 +14,10 @@ import { dntCookieKey } from '../cookies';
 
 export type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 
-const CACHE_CONTROL = 'Cache-Control';
-
 const html = withContentNegotiation(<const>{ types: [mime.HTML] });
 const cookies = withCookies();
 
-export const dashCookies = withEncryptedCookies({ secret: AUTH });
+export const dashCookies = withSignedCookies({ secret: AUTH });
 export const dashSession = withCookieSession<DashboardSession>({
   cookieName: 'getclaps.session',
   defaultSession: {
@@ -47,7 +45,8 @@ export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cook
 
   const response = await handler({ ...args, locale, id, uuid, session, dao, isBookmarked });
 
-  response.headers.append(CACHE_CONTROL, 'private, max-age=600');
+  response.headers.set('cache-control', 'private, max-age=600');
+  response.headers.append('vary', 'Cookie');
 
   const ip = headers.get('cf-connecting-ip');
   const hns = session.ids.map(id => session.hostnames.get(id));
