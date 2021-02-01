@@ -17,7 +17,7 @@ export type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
 const html = withContentNegotiation(<const>{ types: [mime.HTML] });
 const cookies = withCookies();
 
-export const dashCookies = withSignedCookies({ secret: AUTH });
+export const dashCookies = withEncryptedCookies({ secret: AUTH });
 export const dashSession = withCookieSession<DashboardSession>({
   cookieName: 'getclaps.session',
   defaultSession: {
@@ -44,9 +44,6 @@ export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cook
   const [locale] = args.language?.split('-') ?? ['en'];
 
   const response = await handler({ ...args, locale, id, uuid, session, dao, isBookmarked });
-
-  response.headers.set('cache-control', 'private, max-age=600');
-  response.headers.append('vary', 'Cookie');
 
   const ip = headers.get('cf-connecting-ip');
   const hns = session.ids.map(id => session.hostnames.get(id));
