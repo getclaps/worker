@@ -3,7 +3,7 @@ import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array, concatBufferSources, splitBufferSource } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
-const POSTFIX = '.enc';
+const EXT = '.enc';
 const IV_LENGTH = 16; // bytes
 
 const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 'string'
@@ -71,7 +71,7 @@ export class EncryptedCookieStore implements CookieStore {
   async get(name?: string | CookieStoreGetOptions): Promise<CookieListItem | null> {
     if (typeof name !== 'string') throw Error('Overload not implemented.');
 
-    const cookie = await this.#store.get(`${name}${POSTFIX}`);
+    const cookie = await this.#store.get(`${name}${EXT}`);
     if (!cookie) return cookie;
 
     // FIXME: empty values!
@@ -85,7 +85,7 @@ export class EncryptedCookieStore implements CookieStore {
 
     const list: CookieList = [];
     for (const cookie of await this.#store.getAll(options)) {
-      if (cookie.name.endsWith(POSTFIX)) {
+      if (cookie.name.endsWith(EXT)) {
         list.push(await this.#decrypt(cookie));
       }
     }
@@ -106,7 +106,7 @@ export class EncryptedCookieStore implements CookieStore {
     const cipherB64 = new Base64Encoder({ url: true }).encode(concatBufferSources(iv, cipher));
     return this.#store.set({
       ...typeof options === 'string' ? {} : options,
-      name: `${name}${POSTFIX}`,
+      name: `${name}${EXT}`,
       value: cipherB64,
     });
   }
@@ -115,7 +115,7 @@ export class EncryptedCookieStore implements CookieStore {
   delete(options: CookieStoreDeleteOptions): Promise<void>;
   delete(options: any) {
     if (typeof options !== 'string') throw Error('Overload not implemented.');
-    return this.#store.delete(`${options}${POSTFIX}`);
+    return this.#store.delete(`${options}${EXT}`);
   }
 
   #decrypt = async (cookie: CookieListItem): Promise<CookieListItem> => {
@@ -123,7 +123,7 @@ export class EncryptedCookieStore implements CookieStore {
     const [iv, cipher] = splitBufferSource(buffer, IV_LENGTH);
     const clearBuffer = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, this.#key, cipher);
     const clearText = new TextDecoder().decode(clearBuffer);
-    cookie.name = cookie.name.substring(0, cookie.name.length - POSTFIX.length);
+    cookie.name = cookie.name.substring(0, cookie.name.length - EXT.length);
     cookie.value = clearText;
     return cookie;
   }

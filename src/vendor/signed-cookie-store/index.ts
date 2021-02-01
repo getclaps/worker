@@ -3,7 +3,7 @@ import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
 
-const POSTFIX = '.sig';
+const EXT = '.sig';
 
 const secretToUint8Array = (secret: string | BufferSource) => typeof secret === 'string'
   ? new TextEncoder().encode(secret)
@@ -92,7 +92,7 @@ export class SignedCookieStore implements CookieStore {
     const cookie = await this.#store.get(name);
     if (!cookie) return null;
 
-    const sigCookie = await this.#store.get(`${name}${POSTFIX}`);
+    const sigCookie = await this.#store.get(`${name}${EXT}`);
     if (!sigCookie) return null;
 
     await this.#verify(cookie, sigCookie);
@@ -110,13 +110,13 @@ export class SignedCookieStore implements CookieStore {
     if (name != null) throw Error('Overload not implemented.');
 
     const all = await this.#store.getAll();
-    const sigCookies = all.filter(x => x.name.endsWith(POSTFIX))
+    const sigCookies = all.filter(x => x.name.endsWith(EXT))
 
     const list: CookieList = [];
 
     for (const sigCookie of sigCookies) {
       const name = sigCookie.name;
-      const baseCookieName = name.substring(0, name.length - POSTFIX.length);
+      const baseCookieName = name.substring(0, name.length - EXT.length);
       const cookie = await this.get(baseCookieName);
       if (cookie) list.push(cookie);
     }
@@ -131,10 +131,10 @@ export class SignedCookieStore implements CookieStore {
       ? [options, value ?? '']
       : [options.name, options.value ?? ''];
 
-    if (name.endsWith(POSTFIX)) throw new Error('Illegal name');
+    if (name.endsWith(EXT)) throw new Error('Illegal name');
 
     const signature = await this.#sign(name, val);
-    const sigCookieName = `${name}${POSTFIX}`;
+    const sigCookieName = `${name}${EXT}`;
 
     if (typeof options === 'string') {
       await Promise.all([
@@ -157,7 +157,7 @@ export class SignedCookieStore implements CookieStore {
 
     await Promise.all([
       this.#store.delete(name),
-      this.#store.delete(`${name}${POSTFIX}`),
+      this.#store.delete(`${name}${EXT}`),
     ]);
   }
 
