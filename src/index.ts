@@ -7,12 +7,10 @@ import { Method } from 'tiny-request-router'
 import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
 import { getDAO } from './dao/get-dao';
 import { router } from './router';
-import { resolveOrNull } from './util';
 import { dashSession, dashCookies } from './routes/dashboard/with-dashboard';
 
 import './routes/index';
-// @ts-ignore
-resolveOrNull(import(/* webpackMode: "eager" */ './billing')); 
+import './billing/index';
 
 async function resetIPSalt() {
   await storage.set(IP_SALT_KEY, new UUID());
