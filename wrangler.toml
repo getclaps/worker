@@ -32,7 +32,7 @@ kv_namespaces = [
 [env.production]
   name = "clap-worker-production"
   route = "https://worker.getclaps.app/*"
-  zone_id = "921f99936380db6078d69bc9bdf50bc7"
+  zone_id = "8951653b87b1882bd8547e59c78fb9fb"
   kv_namespaces = [
     { binding = "KV_NAMESPACE", id = "b4a2fe0155804185a6493e257b993f0b" }
   ]
