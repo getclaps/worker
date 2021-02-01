@@ -26,6 +26,19 @@ export interface WithCookiesOptions {
   iterations?: number
 }
 
+const XE = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun), /;
+const XR = '$1,�';
+const YE = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),�/;
+const YR = '$1, '
+
+function iterHeadersSetCookieFix(headers: Headers): [string, string][] {
+  return [...headers].flatMap(([h, v]) => h === 'set-cookie'
+    ? v.replace(new RegExp(XE, 'g'), XR)
+      .split(', ')
+      .map(x => [h, x.replace(new RegExp(YE, 'g'), YR)] as [string, string])
+    : [[h, v] as [string, string]])
+}
+
 export const withCookies = () => <X extends Base>(handler: WithCookiesHandler<X>) => async (ctx: X): Promise<Response> => {
   const cookieStore = new RequestCookieStore(ctx.event.request);
   const cookies = await CookiesMap.from(cookieStore);
@@ -34,7 +47,7 @@ export const withCookies = () => <X extends Base>(handler: WithCookiesHandler<X>
     status,
     statusText,
     headers: [
-      ...headers,
+      ...iterHeadersSetCookieFix(headers),
       ...cookieStore.headers,
     ],
   });
@@ -48,10 +61,10 @@ export const withSignedCookies = (opts: WithCookiesOptions) => {
     const cookieStore = new RequestCookieStore(ctx.event.request);
     const signedCookieStore = new SignedCookieStore(cookieStore, await keyPromise);
 
-    let signedCookies: Cookies; 
-    try { 
+    let signedCookies: Cookies;
+    try {
       signedCookies = await CookiesMap.from(signedCookieStore);
-    } catch { 
+    } catch {
       return re.forbidden();
     }
 
@@ -66,10 +79,11 @@ export const withSignedCookies = (opts: WithCookiesOptions) => {
       status,
       statusText,
       headers: [
-        ...headers,
+        ...iterHeadersSetCookieFix(headers),
         ...cookieStore.headers,
       ],
     });
+
     return response;
   };
 }
@@ -82,9 +96,9 @@ export const withEncryptedCookies = (opts: WithCookiesOptions) => {
     const encryptedCookieStore = new EncryptedCookieStore(cookieStore, await keyPromise);
 
     let encryptedCookies: Cookies;
-    try { 
+    try {
       encryptedCookies = await CookiesMap.from(encryptedCookieStore);
-    } catch { 
+    } catch {
       return re.forbidden();
     }
 
@@ -99,7 +113,7 @@ export const withEncryptedCookies = (opts: WithCookiesOptions) => {
       status,
       statusText,
       headers: [
-        ...headers,
+        ...iterHeadersSetCookieFix(headers),
         ...cookieStore.headers,
       ],
     });
