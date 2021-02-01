@@ -6,7 +6,7 @@ import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';
 // import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
-import { Base, Handler, WithCookies } from '.';
+import { Base, Handler, WithCookies, WithSignedCookies } from '.';
 import { Awaitable } from '../common-types';
 import { WithEncryptedCookies } from './cookies';
 import { shortenId, parseUUID } from '../short-id';
@@ -15,7 +15,7 @@ type AnyRec = Record<any, any>;
 
 export type WithSession<S extends AnyRec = AnyRec> = { session: S };
 
-export type WithCookieSessionDeps = Base & WithEncryptedCookies;
+export type WithCookieSessionDeps = Base & (WithEncryptedCookies | WithSignedCookies);
 export type WithCookieSessionHandler<X extends WithCookieSessionDeps, S> = (ctx: X & WithSession<S>) => Awaitable<Response>;
 
 export type WithSessionDeps = Base & WithCookies;
@@ -45,7 +45,11 @@ export interface SessionOptions<S extends AnyRec = AnyRec> extends CookieSession
 export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = {}, cookieName = 'session', expirationTtl = 5 * 60 }: CookieSessionOptions = {}) =>
   <X extends WithCookieSessionDeps>(handler: WithCookieSessionHandler<X, S>): Handler<X> =>
     async (ctx: X): Promise<Response> => {
-      const { encryptedCookies: cookies, encryptedCookieStore: cookieStore, event } = ctx;
+      const { event } = ctx;
+      const { encryptedCookies, encryptedCookieStore } = (ctx as WithEncryptedCookies);
+      const { signedCookies, signedCookieStore } = (ctx as WithSignedCookies);
+      const cookieStore = encryptedCookieStore || signedCookieStore;
+      const cookies = encryptedCookies || signedCookies;
 
       const controller = new AbortController();
 
