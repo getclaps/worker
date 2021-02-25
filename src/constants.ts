@@ -1,4 +1,4 @@
-import { CFStorageArea } from '@werker/cloudflare-kv-storage';
+import { CFStorageArea } from '@worker-tools/cloudflare-kv-storage';
 
 export const DEBUG = Boolean(Reflect.get(self, 'DEBUG') === 'true');
 export const KV = Reflect.get(self, 'KV_NAMESPACE') as KVNamespace;

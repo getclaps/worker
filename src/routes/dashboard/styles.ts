@@ -1,4 +1,4 @@
-import { css } from '@werker/html';
+import { css } from '@worker-tools/html';
 
 export const styles = css`
   [hidden] { display: none!important }

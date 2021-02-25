@@ -1,4 +1,4 @@
-import { html } from '@werker/html';
+import { html } from '@worker-tools/html';
 
 export * from './page';
 

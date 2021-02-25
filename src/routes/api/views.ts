@@ -1,5 +1,5 @@
-import * as re from '@werker/response-creators';
-import { JSONResponse } from '@werker/json-fetch';
+import * as re from '@worker-tools/response-creators';
+import { JSONResponse } from '@worker-tools/json-fetch';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookies } from '../../vendor/middleware/cookies';

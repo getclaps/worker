@@ -1,6 +1,6 @@
-import * as re from '@werker/response-creators';
+import * as re from '@worker-tools/response-creators';
 import { UUID } from 'uuid-class';
-import { JSONResponse } from '@werker/json-fetch';
+import { JSONResponse } from '@worker-tools/json-fetch';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';

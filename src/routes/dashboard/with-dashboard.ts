@@ -1,4 +1,4 @@
-import * as re from '@werker/response-creators';
+import * as re from '@worker-tools/response-creators';
 
 import { Awaitable } from '../../vendor/common-types';
 import { withCookies, withSignedCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';

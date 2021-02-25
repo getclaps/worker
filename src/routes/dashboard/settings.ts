@@ -1,5 +1,5 @@
 import { UUID } from 'uuid-class';
-import { html } from '@werker/html';
+import { html } from '@worker-tools/html';
 
 import { RequestCookieStore } from '../../vendor/middleware/cookies';
 import { withCN } from '../../vendor/middleware';

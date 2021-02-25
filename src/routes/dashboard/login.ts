@@ -1,6 +1,6 @@
-import * as re from '@werker/response-creators';
-import { html } from '@werker/html';
-import { JSONResponse } from '@werker/json-fetch';
+import * as re from '@worker-tools/response-creators';
+import { html } from '@worker-tools/html';
+import { JSONResponse } from '@worker-tools/json-fetch';
 
 import { parseUUID } from '../../vendor/short-id';
 import { withCN } from '../../vendor/middleware';

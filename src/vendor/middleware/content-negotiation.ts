@@ -1,4 +1,4 @@
-import { notAcceptable, unsupportedMediaType } from '@werker/response-creators';
+import { notAcceptable, unsupportedMediaType } from '@worker-tools/response-creators';
 import negotiated from 'negotiated';
 
 import { Awaitable } from '../common-types';

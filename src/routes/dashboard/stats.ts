@@ -1,4 +1,4 @@
-import { html, HTMLContent, fallback } from '@werker/html';
+import { html, HTMLContent, fallback } from '@worker-tools/html';
 
 import { TimeUnit } from '../../dao';
 import { countriesByCode } from '../../vendor/countries';

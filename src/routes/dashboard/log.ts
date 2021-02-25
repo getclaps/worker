@@ -1,4 +1,4 @@
-import { html, HTMLContent, fallback } from '@werker/html';
+import { html, HTMLContent, fallback } from '@worker-tools/html';
 import { renderIconSVG } from '@download/blockies';
 import { formatDistance } from 'date-fns';
 import { Base64Encoder } from 'base64-encoding';

@@ -1,4 +1,4 @@
-import { html, HTMLContent, HTMLResponse } from '@werker/html';
+import { html, HTMLContent, HTMLResponse } from '@worker-tools/html';
 import { UUID } from 'uuid-class';
 import { DashboardSession } from '../../router';
 

@@ -1,4 +1,4 @@
-import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "@werker/request-cookie-store/interface";
+import { CookieInit, CookieList, CookieListItem, CookieStore, CookieStoreDeleteOptions, CookieStoreGetOptions } from "@worker-tools/request-cookie-store/interface";
 import { UUID } from "uuid-class";
 import { bufferSourceToUint8Array } from "typed-array-utils";
 import { Base64Decoder, Base64Encoder } from "base64-encoding";
@@ -172,4 +172,4 @@ export class SignedCookieStore implements CookieStore {
   }
 }
 
-export * from "@werker/request-cookie-store/interface";
+export * from "@worker-tools/request-cookie-store/interface";

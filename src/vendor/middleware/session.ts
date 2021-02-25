@@ -1,6 +1,6 @@
 import 'abortcontroller-polyfill';
 
-import { StorageArea } from '@werker/cloudflare-kv-storage/interface';
+import { StorageArea } from '@worker-tools/cloudflare-kv-storage/interface';
 import { UUID } from 'uuid-class';
 import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';

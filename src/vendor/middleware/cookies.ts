@@ -1,5 +1,5 @@
-import * as re from '@werker/response-creators';
-import { CookieStore, RequestCookieStore } from "@werker/request-cookie-store";
+import * as re from '@worker-tools/response-creators';
+import { CookieStore, RequestCookieStore } from "@worker-tools/request-cookie-store";
 import { Base, Handler } from ".";
 import { Awaitable } from "../common-types";
 import { EncryptedCookieStore } from "../encrypted-cookie-store";
@@ -136,4 +136,4 @@ export class CookiesMap extends Map<string, string> {
   }
 }
 
-export * from '@werker/request-cookie-store';
+export * from '@worker-tools/request-cookie-store';
