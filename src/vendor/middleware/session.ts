@@ -3,7 +3,7 @@ import 'abortcontroller-polyfill';
 import { StorageArea } from '@worker-tools/cloudflare-kv-storage/interface';
 import { UUID } from 'uuid-class';
 import { Base64Decoder, Base64Encoder } from 'base64-encoding';
-import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr/browser';
+import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from '@qwtel/msgpackr';
 // import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
 import { Base, Handler, WithCookies, WithSignedCookies } from '.';
