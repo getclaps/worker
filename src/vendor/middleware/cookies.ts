@@ -31,6 +31,16 @@ const XR = '$1,�';
 const YE = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun),�/;
 const YR = '$1, '
 
+/** 
+ * Fixes the iteration of the `Headers` class with respect to `set-cookie` header:
+ * 
+ * By default, multiple `set-cookie` headers will be concatenated by the `Headers` class implementation.
+ * However, the HTTP protocol/browsers expect multiple `Set-Cookie` headers,
+ * and do not recognize concatenated `Set-Cookie` headers.
+ * 
+ * This helper function fixes this behavior, yielding multiple `set-cookie` key-value tuples,
+ * provided that no value contains the concatenation sequence `', '` (comma empty-space).
+ */
 function iterHeadersSetCookieFix(headers: Headers): [string, string][] {
   return [...headers].flatMap(([h, v]) => h === 'set-cookie'
     ? v.replace(new RegExp(XE, 'g'), XR)
@@ -127,7 +137,7 @@ export class CookiesMap extends Map<string, string> {
     return new CookiesMap((await cookieStore.getAll()).map(({ name, value }) => [name, value]));
   }
 
-  /** updates this cookie map with the values from `cookieStore`. */
+  /** Updates this cookie map with new values from `cookieStore`. */
   async update(cookieStore: CookieStore) {
     super.clear();
     for (const { name, value } of await cookieStore.getAll()) {
