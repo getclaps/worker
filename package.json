@@ -31,7 +31,6 @@
     "@worker-tools/stripe-webhook": "^1.1.2",
     "abortcontroller-polyfill": "^1.7.1",
     "base64-encoding": "^0.14.3",
-    "cbor-x": "^0.6.3",
     "date-fns": "^2.17.0",
     "device-detector-js": "^2.2.7",
     "faunadb": "^4.1.1",
