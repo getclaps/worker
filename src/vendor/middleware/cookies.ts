@@ -1,9 +1,10 @@
 import * as re from '@worker-tools/response-creators';
-import { CookieStore, RequestCookieStore } from "@worker-tools/request-cookie-store";
-import { Base, Handler } from ".";
+import { RequestCookieStore, CookieStore } from "@worker-tools/request-cookie-store";
+import { SignedCookieStore } from "@worker-tools/signed-cookie-store";
+import { EncryptedCookieStore } from "@worker-tools/encrypted-cookie-store";
+
 import { Awaitable } from "../common-types";
-import { EncryptedCookieStore } from "../encrypted-cookie-store";
-import { SignedCookieStore } from "../signed-cookie-store";
+import { Base, Handler } from ".";
 
 /**
  * A readonly map of the cookies associated with this request.
