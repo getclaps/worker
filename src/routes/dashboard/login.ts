@@ -3,7 +3,7 @@ import { html } from '@worker-tools/html';
 import { JSONResponse } from '@worker-tools/json-fetch';
 
 import { parseUUID } from '../../vendor/short-id';
-import { withCN } from '../../vendor/middleware';
+import { withCN } from '../../vendor/middleware/content-negotiation';
 import * as mime from '../../vendor/middleware/mime';
 // import { withCookies } from '../../vendor/middleware/cookies';
 

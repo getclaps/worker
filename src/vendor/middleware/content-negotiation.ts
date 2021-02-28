@@ -2,7 +2,7 @@ import { notAcceptable, unsupportedMediaType } from '@worker-tools/response-crea
 import negotiated from 'negotiated';
 
 import { Awaitable } from '../common-types';
-import { Base } from '.';
+import { Base } from './index';
 
 const weightSortFn = <X extends { weight: number }>(a: X, b: X) => a.weight >= b.weight ? a : b;
 

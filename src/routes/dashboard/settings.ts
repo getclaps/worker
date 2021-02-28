@@ -2,7 +2,7 @@ import { UUID } from 'uuid-class';
 import { html } from '@worker-tools/html';
 
 import { RequestCookieStore } from '../../vendor/middleware/cookies';
-import { withCN } from '../../vendor/middleware';
+import { withCN } from '../../vendor/middleware/content-negotiation';
 import * as mime from '../../vendor/middleware/mime';
 import { shortenId } from '../../vendor/short-id';
 

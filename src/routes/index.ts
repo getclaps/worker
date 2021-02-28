@@ -1,2 +1,2 @@
-import './api';
-import './dashboard';
+import './api/index';
+import './dashboard/index';

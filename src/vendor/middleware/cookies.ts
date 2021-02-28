@@ -4,7 +4,7 @@ import { SignedCookieStore } from "@worker-tools/signed-cookie-store";
 import { EncryptedCookieStore } from "@worker-tools/encrypted-cookie-store";
 
 import { Awaitable } from "../common-types";
-import { Base, Handler } from ".";
+import { Base, Handler } from "./index";
 
 /**
  * A readonly map of the cookies associated with this request.

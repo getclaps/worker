@@ -1,4 +1,4 @@
-import { Base, Handler } from ".";
+import { Base, Handler } from "./index";
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'HEAD' | 'OPTIONS';
 

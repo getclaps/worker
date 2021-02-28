@@ -6,7 +6,7 @@ import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr';
 // import { Encoder as CBOREncoder, Decoder as CBORDecoder } from 'cbor-x/browser';
 
-import { Base, Handler, WithCookies, WithSignedCookies } from '.';
+import { Base, Handler, WithCookies, WithSignedCookies } from './index';
 import { Awaitable } from '../common-types';
 import { WithEncryptedCookies } from './cookies';
 import { shortenId, parseUUID } from '../short-id';

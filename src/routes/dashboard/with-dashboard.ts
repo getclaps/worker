@@ -3,7 +3,7 @@ import * as re from '@worker-tools/response-creators';
 import { Awaitable } from '../../vendor/common-types';
 import { withCookies, withSignedCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
-import { withCookieSession } from '../../vendor/middleware';
+import { withCookieSession } from '../../vendor/middleware/session';
 import * as mime from '../../vendor/middleware/mime';
 
 import { getDAO } from '../../dao/get-dao';
