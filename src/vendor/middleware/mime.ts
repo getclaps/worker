@@ -49,7 +49,7 @@ export const SVG = 'image/svg+xml';
 export const SWF = 'application/x-shockwave-flash';
 export const TAR = 'application/x-tar';
 export const TIFF = 'image/tiff';
-export const TS = 'video/mp2t';
+export const MP2T = 'video/mp2t';
 export const TTF = 'font/ttf';
 export const TXT = 'text/plain';
 export const VSD = 'application/vnd.visio';
@@ -74,21 +74,6 @@ export const SEVENZ = 'application/x-7z-compressed';
 
 export const FORM = 'application/x-www-form-urlencoded'
 export const FORM_DATA = 'multipart/form-data';
-export const GET_FORM = 'application/x-www-form-urlencoded'
-export const POST_FORM = 'multipart/form-data';
 
-// export const MIME = Object.freeze({
-//   AAC, ABW, ARC, AVI, AZW, BIN, BMP, BZ, BZ2, CSH, CSS,
-//   CSV, DOC, DOCX, EOT, EPUB, GZ, GIF, HTML, ICO, ICS, JAR,
-//   JPG, JS, JSON, JSONLD, MIDI, MJS, MP3, MPEG, MPKG, ODP, ODS,
-//   ODT, OGA, OGV, OGX, OPUS, OTF, PNG, PDF, PHP, PPT, PPTX,
-//   RAR, RTF, SH, SVG, SWF, TAR, TIFF, TS, TTF, TXT,
-//   VSD, WAV, WEBA, WEBM, WEBP, WOFF, WOFF2, XHTML, XLS, XLSX,
-//   XML, XML_CASUAL, XUL, ZIP, THREEGP, THREEGP_AUDIO, THREEGP2, THREEGP2_AUDIO, SEVENZ, 
-//   '3G2': THREEGP,
-//   '3G2_AUDIO': THREEGP_AUDIO,
-//   '3GP': THREEGP2,
-//   '3GP_AUDIO': THREEGP2_AUDIO,
-//   '7Z': SEVENZ,
-//   FORM, FORM_DATA,
-// });
+export { FORM as GET_FORM };
+export { FORM_DATA as POST_FORM };

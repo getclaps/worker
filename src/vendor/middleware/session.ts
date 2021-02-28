@@ -1,6 +1,6 @@
 import 'abortcontroller-polyfill';
 
-import { StorageArea } from '@worker-tools/cloudflare-kv-storage/interface';
+import { StorageArea } from 'kv-storage-interface';
 import { UUID } from 'uuid-class';
 import { Base64Decoder, Base64Encoder } from 'base64-encoding';
 import { Encoder as MsgPackEncoder, Decoder as MsgPackDecoder } from 'msgpackr';
@@ -34,7 +34,7 @@ export interface CookieSessionOptions<S extends AnyRec = AnyRec> {
 
 export interface SessionOptions<S extends AnyRec = AnyRec> extends CookieSessionOptions<S> {
   /** The storage area where to persist the session objects. */
-  storage?: StorageArea,
+  storage: StorageArea,
 }
 
 /**
@@ -89,11 +89,9 @@ export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = 
  * Issues
  * - Will "block" until session object is retrieved from KV => provide "unyielding" version that returns a promise?
  */
-export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession = {}, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions = {}) =>
+export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession = {}, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
   <X extends WithSessionDeps>(handler: WithSessionHandler<X, S>): Handler<X> =>
     async (ctx: X): Promise<Response> => {
-      if (!storage) throw Error('StorageArea required for session');
-
       const { cookies, cookieStore, event } = ctx;
 
       const [id, session] = await getSessionProxy<S>(cookies.get(cookieName), event, {
