@@ -9,7 +9,7 @@ import * as mime from '../../vendor/middleware/mime';
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 import { RouteArgs, DashboardArgs, DashboardSession } from '../../router';
-import { AUTH, storage } from '../../constants';
+import { storage } from '../../constants';
 import { dntCookieKey } from '../cookies';
 
 export type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;

@@ -4,7 +4,7 @@ import { Method } from 'tiny-request-router'
 
 // import { RequestCookieStore } from './vendor/middleware/cookies';
 
-import { AUTH, DEBUG, IP_SALT_KEY, storage } from './constants';
+import { DEBUG, IP_SALT_KEY, storage } from './constants';
 import { router } from './router';
 import { dashSession, dashCookies } from './routes/dashboard/with-dashboard';
 

@@ -14,6 +14,7 @@ kv_namespaces = [
   WORKER_DOMAIN = 'http://localhost:8787'
   STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
   STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
+  CF_STORAGE_AREA__DEFAULT_KV_NAMESPACE = 'KV_NAMESPACE'
 
 [env.staging]
   name = "clap-worker-stage"

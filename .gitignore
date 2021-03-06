@@ -10,3 +10,4 @@ temp/
 node_modules/
 .cargo-ok
 cert.pem
+*.sqlite

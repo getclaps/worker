@@ -2,7 +2,10 @@
 
 The backend implementation for the [Clap Button](https://getclaps.dev/) web component.
 
-It is written as a [Worker Environment](https://workers.js.org/) using [Worker Tools](https://worker-tools.github.io/) as a web framework, but it is mainly intended to be deployed using [Cloudflare Workers](https://workers.cloudflare.com). 
+It is written as a [Worker Environment](https://workers.js.org/) using [Worker Tools](https://worker-tools.github.io/) as a web framework. 
+
+Currently it can only run on [Cloudflare Workers](https://workers.cloudflare.com), 
+but an experimental Deno build exists that should work once Service Workers and the Web Cryptography API land in Deno.
 
 ![Screenshot](https://getclaps.dev/assets/img/dashd.jpg)
 

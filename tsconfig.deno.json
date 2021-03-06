@@ -3,7 +3,7 @@
     "baseUrl": ".",
     "paths": {
       "@worker-tools/kv-storage": [
-        "./node_modules/@worker-tools/cloudflare-kv-storage"
+        "./node_modules/@worker-tools/deno-kv-storage/dist/sqlite.js"
       ],
     },
     "outDir": "./dist",
@@ -22,7 +22,6 @@
     "strict": true,
     "types": [
       "@types/node",
-      "@cloudflare/workers-types",
     ],
   },
   "include": [
