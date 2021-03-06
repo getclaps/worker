@@ -1,3 +1,5 @@
+import './vendor/location-polyfill';
+
 import * as re from '@worker-tools/response-creators';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'

@@ -10,7 +10,7 @@ kv_namespaces = [
   crons = ["0 0 * * *"]
 
 [vars]
-  WORKER_DOMAIN = 'http://localhost:8787'
+  WORKER_LOCATION = 'http://localhost:8787'
   STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
   STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
   CF_STORAGE_AREA__DEFAULT_KV_NAMESPACE = 'KV_NAMESPACE'
@@ -24,7 +24,7 @@ kv_namespaces = [
   ]
 
   [env.staging.vars]
-    WORKER_DOMAIN = 'https://worker.getclaps.dev'
+    WORKER_LOCATION = 'https://worker.getclaps.dev'
     STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
     STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
 
@@ -37,6 +37,6 @@ kv_namespaces = [
   ]
 
   [env.production.vars]
-    WORKER_DOMAIN = 'https://worker.getclaps.app'
+    WORKER_LOCATION = 'https://worker.getclaps.app'
     STRIPE_PRICE_ID = "price_1IQ3nmJ61lhnKf1rUMT8b71Y"
     STRIPE_PUBLISHABLE_KEY = "pk_live_51HGcLVJ61lhnKf1r2Ic1uZGgvsexTk8aGpJvMB7cqIav7kvO7Fk9639sWNescJ4tQJekG4ACRPmrJGaEWTBSnKJZ00wJw7qbkN"
