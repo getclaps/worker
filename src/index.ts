@@ -4,7 +4,7 @@ import { Method } from 'tiny-request-router'
 
 // import { RequestCookieStore } from './vendor/middleware/cookies';
 
-import { DEBUG, IP_SALT_KEY, storage } from './constants';
+import { IP_SALT_KEY, storage } from './constants';
 import { router } from './router';
 import { dashSession, dashCookies } from './routes/dashboard/with-dashboard';
 
@@ -88,5 +88,3 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('scheduled', (event) => {
   event.waitUntil(handleScheduled(new Date(event.scheduledTime)));
 });
-
-export { DEBUG };

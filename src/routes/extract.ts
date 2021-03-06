@@ -3,7 +3,7 @@ import * as ipAddr from 'ipaddr.js';
 import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 import { concatBufferSources } from 'typed-array-utils';
 
-import { DEBUG, IP_SALT_KEY, storage } from '../constants';
+import { IP_SALT_KEY, storage } from '../constants';
 
 async function getVisitor(ip: string | null, userAgent: string | null, hostname: string | null) {
   if (!ip) return null;

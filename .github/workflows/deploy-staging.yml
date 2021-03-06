@@ -30,4 +30,3 @@ jobs:
           AUTH: ${{ secrets.AUTH_TEST }}
           FAUNA_DB_KEY: ${{ secrets.FAUNA_DB_KEY_TEST }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
-          DEBUG: true

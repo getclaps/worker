@@ -10,7 +10,6 @@ kv_namespaces = [
   crons = ["0 0 * * *"]
 
 [vars]
-  DEBUG = 'true'
   WORKER_DOMAIN = 'http://localhost:8787'
   STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
   STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
