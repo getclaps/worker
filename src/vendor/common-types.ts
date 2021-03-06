@@ -1,7 +1,7 @@
 export type Repeatable<T> = T | T[];
 export type Awaitable<T> = T | Promise<T>;
 export type Callable<T> = T | (() => T);
-export type Primitive = undefined | boolean | number | string | BigInt | Symbol;
+export type Primitive = undefined | boolean | number | string | bigint | symbol;
 
 // /** See: https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm */
 // export type StructuredCloneable = Omit<Primitive, symbol>
