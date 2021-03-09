@@ -28,7 +28,7 @@ export const dashSession = withCookieSession<DashboardSession>({
   expirationTtl: 60 * 60 * 24 * 365,
 });
 
-export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cookies(dashCookies(dashSession(async (args): Promise<Response> => {
+export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cookies(dashCookies(dashSession(async (args) => {
   const { headers, event, session, cookies } = args;
 
   const dao = getDAO();

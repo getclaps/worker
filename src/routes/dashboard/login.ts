@@ -11,9 +11,9 @@ import { router } from '../../router';
 import { getDAO } from '../../dao/get-dao';
 
 import { page } from './components';
-import { dashSession, dashCookies as withCookies } from './with-dashboard';
+import { dashSession, dashCookies } from './with-dashboard';
 
-router.post('/login', withCookies(dashSession(withCN(<const>{
+router.post('/login', dashCookies(dashSession(withCN(<const>{
   accepts: [mime.FORM],
   types: [mime.JSON, mime.HTML],
 })(async ({ request, session, type, headers }) => {
@@ -41,17 +41,17 @@ router.post('/login', withCookies(dashSession(withCN(<const>{
   session.bookmarked.add(id);
   if (hostname) session.hostnames.set(id, hostname);
 
-  if (type === 'text/html') {
+  if (type === mime.HTML) {
     return re.seeOther(location);
   }
-  if (type === 'application/json') {
+  if (type === mime.JSON) {
     return new JSONResponse({ location });
   }
   return re.badRequest();
 }))));
 
 // TODO: make POST
-router.get('/logout', withCookies(dashSession(async ({ session }) => {
+router.get('/logout', dashCookies(dashSession(async ({ session }) => {
   const cid = session.cid;
   const ids = session.ids.filter(id => id !== cid);
 

@@ -33,15 +33,6 @@ router.get('/__resetIPSalt', async ({ headers }) => {
   return re.ok('Reset success');
 });
 
-// router.get('/__tmp', async ({ request }) => {
-//   const cookieStore = new RequestCookieStore(request);
-//   await cookieStore.set('foo', 'bar');
-//   await cookieStore.set('fizz', 'buzz');
-//   const response = new Response(null, cookieStore);
-//   console.log(JSON.stringify([...response.headers]))
-//   return response;
-// });
-
 router.get('/', dashCookies(dashSession(async ({ session }) => {
   const cid = session.cid;
   if (!cid) return re.seeOther('/login');
@@ -88,3 +79,25 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('scheduled', (event) => {
   event.waitUntil(handleScheduled(new Date(event.scheduledTime)));
 });
+
+// // Misc
+// import { JSONResponse } from '@worker-tools/json-fetch';
+// import { StorageArea } from '@worker-tools/kv-storage';
+// router.get('/__storage', async ({ request }) => {
+//   const storage2 = new StorageArea('foobar');
+//   await storage2.set('foo', 'bar');
+//   await storage2.set('fizz', 'buzz');
+//   const entries = [];
+//   for await (const x of storage.entries()) entries.push(x);
+//   return new JSONResponse(entries);
+// });
+//
+// import { RequestCookieStore } from '@worker-tools/request-cookie-store';
+// router.get('/__cookies', async ({ request }) => {
+//   const cookieStore = new RequestCookieStore(request);
+//   await cookieStore.set('foo', 'bar');
+//   await cookieStore.set('fizz', 'buzz');
+//   const response = new Response(null, cookieStore);
+//   console.log(JSON.stringify([...response.headers]))
+//   return response;
+// });
