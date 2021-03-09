@@ -1,4 +1,4 @@
-import './vendor/location-polyfill';
+import '@worker-tools/location-polyfill';
 
 import * as re from '@worker-tools/response-creators';
 import { UUID } from 'uuid-class';
