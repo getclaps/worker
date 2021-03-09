@@ -18,7 +18,7 @@ export type WithSession<S extends AnyRec = AnyRec> = { session: S };
 export type WithCookieSessionDeps = Base & (WithEncryptedCookies | WithSignedCookies);
 export type WithCookieSessionHandler<X extends WithCookieSessionDeps, S> = (ctx: X & WithSession<S>) => Awaitable<Response>;
 
-export type WithSessionDeps = Base & WithCookies;
+export type WithSessionDeps = Base & (WithEncryptedCookies | WithSignedCookies | WithCookies);
 export type WithSessionHandler<X extends WithSessionDeps, S> = (ctx: X & WithSession<S>) => Awaitable<Response>;
 
 export interface CookieSessionOptions<S extends AnyRec = AnyRec> {
@@ -40,14 +40,14 @@ export interface SessionOptions<S extends AnyRec = AnyRec> extends CookieSession
 /**
  * Cookie session middleware for worker environments.
  * 
- * Requires an encrypted cookie store.
+ * Requires an encrypted or signed cookie store.
  */
 export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = {}, cookieName = 'session', expirationTtl = 5 * 60 }: CookieSessionOptions = {}) =>
   <X extends WithCookieSessionDeps>(handler: WithCookieSessionHandler<X, S>): Handler<X> =>
     async (ctx: X): Promise<Response> => {
       const { event } = ctx;
-      const { encryptedCookies, encryptedCookieStore } = (ctx as WithEncryptedCookies);
-      const { signedCookies, signedCookieStore } = (ctx as WithSignedCookies);
+      const { encryptedCookies, encryptedCookieStore } = ctx as WithEncryptedCookies;
+      const { signedCookies, signedCookieStore } = ctx as WithSignedCookies;
       const cookieStore = encryptedCookieStore || signedCookieStore;
       const cookies = encryptedCookies || signedCookies;
 
@@ -92,7 +92,12 @@ export const withCookieSession = <S extends AnyRec = AnyRec>({ defaultSession = 
 export const withSession = <S extends AnyRec = AnyRec>({ storage, defaultSession = {}, cookieName = 'sid', expirationTtl = 5 * 60 }: SessionOptions) =>
   <X extends WithSessionDeps>(handler: WithSessionHandler<X, S>): Handler<X> =>
     async (ctx: X): Promise<Response> => {
-      const { cookies, cookieStore, event } = ctx;
+      const { event } = ctx;
+      const { encryptedCookies, encryptedCookieStore } = ctx as WithEncryptedCookies;
+      const { signedCookies, signedCookieStore } = ctx as WithSignedCookies;
+      const { cookies: baseCookies, cookieStore: baseCookieStore } = ctx as WithCookies;
+      const cookieStore = encryptedCookieStore || signedCookieStore || baseCookieStore;
+      const cookies = encryptedCookies || signedCookies || baseCookies;
 
       const [id, session] = await getSessionProxy<S>(cookies.get(cookieName), event, {
         storage,

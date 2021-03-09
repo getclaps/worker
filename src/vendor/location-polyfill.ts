@@ -29,15 +29,23 @@ class LocationPolyfill implements Location {
   }
 }
 
+function defineProperty(url: string) {
+  Object.defineProperty(self, 'location', {
+    configurable: false,
+    enumerable: true,
+    writable: false,
+    value: new LocationPolyfill(url),
+  });
+}
+
 if (!('location' in self)) {
   if (Reflect.get(self, 'WORKER_LOCATION')) {
-    self.location = new LocationPolyfill(Reflect.get(self, 'WORKER_LOCATION'));
+    defineProperty(Reflect.get(self, 'WORKER_LOCATION'));
   } else {
     self.addEventListener('fetch', polyfillLocation);
   }
 }
 
 function polyfillLocation(event: FetchEvent): void {
-  // self.removeEventListener('fetch', <any>polyfillLocation);
-  self.location = new LocationPolyfill(event.request.url);
+  defineProperty(event.request.url);
 }
