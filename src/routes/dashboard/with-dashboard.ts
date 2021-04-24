@@ -1,4 +1,5 @@
 import * as re from '@worker-tools/response-creators';
+import { StorageArea } from '@worker-tools/kv-storage';
 
 import { Awaitable } from '../../vendor/common-types';
 import { withCookies, withSignedCookies, withEncryptedCookies } from '../../vendor/middleware/cookies';
@@ -9,7 +10,6 @@ import * as mime from '../../vendor/middleware/mime';
 import { getDAO } from '../../dao/get-dao';
 import { parseUUID } from '../../vendor/short-id';
 import { RouteArgs, DashboardArgs, DashboardSession } from '../../router';
-import { storage } from '../../constants';
 import { dntCookieKey } from '../cookies';
 
 export type DashboardHandler = (args: DashboardArgs) => Awaitable<Response>;
@@ -51,7 +51,7 @@ export const withDashboard = (handler: DashboardHandler) => html<RouteArgs>(cook
     event.waitUntil(Promise.all(hns.map(hn => {
       if (!hn) return null;
       const dnt = cookies.has(dntCookieKey(hn));
-      return storage.set(hn, dnt ? [ip] : []);
+      return new StorageArea().set(hn, dnt ? [ip] : []);
     })));
   }
 

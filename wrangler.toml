@@ -9,11 +9,14 @@ kv_namespaces = [
 [triggers]
   crons = ["0 0 * * *"]
 
+[build.upload]
+  format = "modules"
+  main = "./index.mjs"
+
 [vars]
   WORKER_LOCATION = 'http://localhost:8787'
   STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
   STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
-  CF_STORAGE_AREA__DEFAULT_KV_NAMESPACE = 'KV_NAMESPACE'
 
 [env.staging]
   name = "clap-worker-stage"
@@ -27,7 +30,6 @@ kv_namespaces = [
     WORKER_LOCATION = 'https://worker.getclaps.dev'
     STRIPE_PRICE_ID = "price_1HF9nBAKMWLvHNfJlxejlWKp"
     STRIPE_PUBLISHABLE_KEY = "pk_test_RqlBfBtNXivTjXiQXRtcDzd1"
-    CF_STORAGE_AREA__DEFAULT_KV_NAMESPACE = 'KV_NAMESPACE'
 
 [env.production]
   name = "clap-worker-production"
@@ -41,4 +43,3 @@ kv_namespaces = [
     WORKER_LOCATION = 'https://worker.getclaps.app'
     STRIPE_PRICE_ID = "price_1IQ3nmJ61lhnKf1rUMT8b71Y"
     STRIPE_PUBLISHABLE_KEY = "pk_live_51HGcLVJ61lhnKf1r2Ic1uZGgvsexTk8aGpJvMB7cqIav7kvO7Fk9639sWNescJ4tQJekG4ACRPmrJGaEWTBSnKJZ00wJw7qbkN"
-    CF_STORAGE_AREA__DEFAULT_KV_NAMESPACE = 'KV_NAMESPACE'
