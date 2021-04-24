@@ -18,15 +18,15 @@ jobs:
         with:
           node-version: '14'
       - run: npm install
+        env:
+          WORKER_AUTH: ${{ secrets.AUTH_TEST }}
       - uses: cloudflare/wrangler-action@1.3.0
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           environment: 'staging'
           secrets: |
-            AUTH
             FAUNA_DB_KEY
             STRIPE_SECRET_KEY
         env:
-          AUTH: ${{ secrets.AUTH_TEST }}
           FAUNA_DB_KEY: ${{ secrets.FAUNA_DB_KEY_TEST }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY_TEST }}
