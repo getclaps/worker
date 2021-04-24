@@ -9,8 +9,8 @@
   "scripts": {
     "clean": "rm -rf dist",
     "postinstall": "npm run build",
-    "build": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/index.mjs --define:global=self --define:DEBUG=false --define:AUTH=$WORKER_AUTH --tsconfig=tsconfig.json --inject:cf-env.js ",
-    "watch": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/index.mjs --define:global=self --define:DEBUG=true --define:AUTH=$WORKER_AUTH --tsconfig=tsconfig.json --inject:cf-env.js --sourcemap --watch",
+    "build": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/index.mjs --define:global=self --define:DEBUG=false --define:AUTH=\"'$WORKER_AUTH'\" --tsconfig=tsconfig.json --inject:cf-env.js ",
+    "watch": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/index.mjs --define:global=self --define:DEBUG=true --define:AUTH=\"'$WORKER_AUTH'\" --tsconfig=tsconfig.json --inject:cf-env.js --sourcemap --watch",
     "build-deno": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/deno.js --define:global=self --define:DEBUG=false --tsconfig=tsconfig.deno.json --inject:deno-env.js",
     "watch-deno": "esbuild src/index.ts --bundle --format=esm --target=es2020 --outfile=dist/deno.js --define:global=self --define:DEBUG=true --tsconfig=tsconfig.deno.json --inject:deno-env.js --sourcemap --watch",
     "serve": "wrangler dev",
