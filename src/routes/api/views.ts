@@ -1,5 +1,6 @@
 import * as re from '@worker-tools/response-creators';
 import { JSONResponse } from '@worker-tools/json-fetch';
+import { StorageArea } from '@worker-tools/kv-storage';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
 import { withCookies } from '../../vendor/middleware/cookies';
@@ -14,7 +15,6 @@ import { errors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
-import { storage } from '../../constants';
 
 function getReferrer(referrerRaw: string | null, hostname: string): string | undefined {
   if (referrerRaw != null) {
@@ -43,7 +43,7 @@ router.post('/views', cors(json(errors(cookies(async ({ headers, cookies, search
   const extractedData = await extractData(headers, originURL.hostname);
 
   const dnt = cookies.has(cc.dntCookieKey(url.hostname)) ||
-    ((await storage.get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
+    ((await new StorageArea().get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
 
   const data = await dao.getClapsAndUpdateViews({
     hostname: url.hostname,

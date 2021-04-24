@@ -1,9 +1,10 @@
+import { StorageArea } from '@worker-tools/kv-storage';
 import { UUID } from 'uuid-class';
 import * as ipAddr from 'ipaddr.js';
 import DeviceDetector, { DeviceDetectorResult } from "device-detector-js";
 import { concatBufferSources } from 'typed-array-utils';
 
-import { IP_SALT_KEY, storage } from '../constants';
+import { IP_SALT_KEY } from '../constants';
 
 async function getVisitor(ip: string | null, userAgent: string | null, hostname: string | null) {
   if (!ip) return null;
@@ -13,6 +14,7 @@ async function getVisitor(ip: string | null, userAgent: string | null, hostname:
       new TextEncoder().encode(userAgent ?? ''),
       new TextEncoder().encode(hostname ?? ''), 
     );
+    const storage = new StorageArea();
     const dailyIPSalt = new UUID(await storage.get(IP_SALT_KEY));
     return await UUID.v5(base, dailyIPSalt);
   } catch {
