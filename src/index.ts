@@ -1,12 +1,10 @@
-export { default } from './vendor/make-cf-workers-great-again';
 import '@worker-tools/location-polyfill';
 
 import * as re from '@worker-tools/response-creators';
-import { StorageArea } from '@worker-tools/kv-storage';
 import { UUID } from 'uuid-class';
 import { Method } from 'tiny-request-router'
 
-import { IP_SALT_KEY } from './constants';
+import { IP_SALT_KEY, storage } from './constants';
 import { router } from './router';
 import { dashSession, dashCookies } from './routes/dashboard/with-dashboard';
 
@@ -19,7 +17,7 @@ import { getDAO } from './dao/get-dao';
 import './billing/index';
 
 async function resetIPSalt() {
-  await new StorageArea().set(IP_SALT_KEY, new UUID());
+  await storage.set(IP_SALT_KEY, new UUID());
 }
 
 router.get('/__init', async ({ headers }) => {

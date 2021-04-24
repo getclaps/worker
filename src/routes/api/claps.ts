@@ -1,7 +1,6 @@
 import * as re from '@worker-tools/response-creators';
 import { UUID } from 'uuid-class';
 import { JSONResponse } from '@worker-tools/json-fetch';
-import { StorageArea } from '@worker-tools/kv-storage';
 import { checkProofOfClap } from '@getclaps/proof-of-clap';
 
 import { withContentNegotiation } from '../../vendor/middleware/content-negotiation';
@@ -17,6 +16,7 @@ import { errors } from '../../errors';
 import * as cc from '../cookies';
 import { validateURL } from '../validate';
 import { extractData } from '../extract';
+import { storage } from '../../constants';
 
 const RE_UUID = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -45,7 +45,7 @@ router.post('/claps', cors(jsonBody(errors(cookies(async ({ request, headers, co
   const extractedData = await extractData(headers, originURL.hostname);
 
   const dnt = cookies.has(cc.dntCookieKey(url.hostname)) ||
-    ((await new StorageArea().get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
+    ((await storage.get<string[]>(url.hostname))?.includes(headers.get('cf-connecting-ip') ?? '') ?? false);
 
   const data = await dao.updateClaps({
     claps,

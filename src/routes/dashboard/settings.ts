@@ -1,6 +1,5 @@
 import { UUID } from 'uuid-class';
 import { html } from '@worker-tools/html';
-import { StorageArea } from '@worker-tools/kv-storage';
 
 import { RequestCookieStore } from '../../vendor/middleware/cookies';
 import { withCN } from '../../vendor/middleware/content-negotiation';
@@ -14,6 +13,7 @@ import * as cc from '../cookies';
 import { withDashboard } from './with-dashboard';
 import { page } from './components';
 import { validateURL } from '../validate';
+import { storage } from '../../constants';
 
 const storePassword = html`<button type="submit" class="bp3-button bp3-minimal bp3-small" style="display:inline-block">Store Password</button>`;
 
@@ -147,7 +147,7 @@ async function settingsPage(
               </small>
             </p>
             ${cookieDNT 
-               ? html`<p><small>Last login from: <code>${new StorageArea().get<string[]>(hn)?.then(x => x[0])}</code></small></p>`
+               ? html`<p><small>Last login from: <code>${storage.get<string[]>(hn)?.then(x => x[0])}</code></small></p>`
                : ''}
             <script>
               document.querySelector('input[name="dnt"]').addEventListener('change', e => setTimeout(() => e.target.form.submit(), 500))
